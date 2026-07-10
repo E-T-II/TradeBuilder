@@ -5,13 +5,13 @@ users define their risk tolerance of up to 2% of their account balance and their
 
 the trade builder then takes basic user input: 
   1) high time frame supply and demand zone distal line price points and divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
-  2) whether the user is looking for income greater than or equal to the weekly time frame or less than or equal to the daily time frame to establish a stop buffer of either 10% or 2%.
-  3) the trend the asset is in; uptrend, sideways trend, or downtrend
-  4) Is the user looking to buy long or sell short
-  5) the proximal and distal line price points for the entry zone
-  6) the proximal and distal line price points for the target zone
-  7) the users account balance
-  8) the assets daily atr (may automate through api)
+  2) the user defines their trade objective and income goals; greater than or equal to the weekly time frame or less than or equal to the daily time frame to establish a stop buffer of either 10 or 2%.
+  3) the user inputs the trend the asset is in; uptrend, sideways trend, or downtrend based on trade strategy
+  4) the user determines whether to buy long or sell short
+  5) the user inputs the proximal and distal line price points for the entry zone
+  6) the user inputs the proximal and distal line price points for the target zone
+  7) the users inputs their account balance with their broker, which is used to define risk and captial requirement limits
+  8) the user inputs the assets daily atr (may automate through api)
 
 the above data establishes three of the six odds enhancers; curve, trend, and profit zone.
 the odds enhancers scorecard evaluates where the entry price is located on the curve. if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short.
