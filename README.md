@@ -1,4 +1,4 @@
-# Trade-Builder
+# TradeBuilder
 the Trade Builder is basically a souped-up calculator. 
 
 users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
