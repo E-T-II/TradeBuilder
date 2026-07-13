@@ -23,7 +23,7 @@ the trade builder finalizes all data and provides the entry price based on the o
 a proximal entry is 8.5 to 10 points, a confirmation entry is 7 to 8 points, and no trade is less than 7 points.
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above the entry zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back above the proximal line.
-the trade builder also calculates the stop loss based on the users income objective and multiplies either 2 or 10% of the assets daily atr, then subtracts that number from the entry zones distal line to establish the stop loss price.
+the trade builder also calculates the stop loss based on the users income objective and multiplies either 2 or 10% of the assets daily atr, then subtracts that number from the a demand zone distal line or adds that number to a supply zone distal line to establish the stop loss price.
 the difference between the entry price and the stop loss establishes the risk on that trade.
 the trade builder takes the risk on the trade and determines how many shares/contracts the user may purchase based on the users pre-defined risk tolerance of up to 2% of their account balance before determining the capital requirement.
 if the captial requirement exceeds 50% of the users account balance the position size is automatically adjusted to meet this requirement.
