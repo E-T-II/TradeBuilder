@@ -165,7 +165,7 @@ export function TradeBuilderApp() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl pb-16">
+    <div className="mx-auto w-full max-w-2xl pb-16 lg:max-w-5xl">
       {step < RESULTS_STEP ? (
         <TradeForm
           form={form}
@@ -173,6 +173,7 @@ export function TradeBuilderApp() {
           step={step}
           onBack={() => goToStep(Math.max(0, step - 1))}
           onNext={() => goToStep(step + 1)}
+          onJump={goToStep}
           onLoadExample={() => update(exampleState)}
           onReset={() => {
             update(initialState);
@@ -182,13 +183,15 @@ export function TradeBuilderApp() {
           onToggleAdvanced={() => setShowAdvanced((s) => !s)}
         />
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="mx-auto flex max-w-2xl flex-col gap-6 lg:max-w-none">
           {result ? (
-            <>
+            <div className="grid gap-6 lg:grid-cols-2">
               <Scorecard result={result} />
-              <OrderTicket result={result} direction={form.direction} />
-              <RiskChecks result={result} />
-            </>
+              <div className="flex flex-col gap-6">
+                <OrderTicket result={result} direction={form.direction} />
+                <RiskChecks result={result} />
+              </div>
+            </div>
           ) : (
             <Card>
               <CardContent className="py-10 text-center text-sm text-muted-foreground">
