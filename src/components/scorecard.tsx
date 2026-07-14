@@ -54,7 +54,7 @@ function Row({
           </span>
         ) : null}
       </span>
-      <span className="tabular-nums">
+      <span className="font-mono tabular-nums">
         {points}
         <span className="text-muted-foreground"> / {max}</span>
       </span>
@@ -128,7 +128,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
         <div className="mt-3 border-t pt-3">
           <div className="flex items-center justify-between font-medium">
             <span>Total score</span>
-            <span className="tabular-nums">{s.total} / 10</span>
+            <span className="font-mono tabular-nums">{s.total} / 10</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
             <div

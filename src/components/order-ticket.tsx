@@ -30,7 +30,7 @@ function Line({
       }`}
     >
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
-      <span className="tabular-nums">{value}</span>
+      <span className="font-mono tabular-nums">{value}</span>
     </div>
   );
 }

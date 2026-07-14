@@ -45,7 +45,7 @@ export function ScoreChip({
     >
       <span>
         Score{" "}
-        <span className="font-semibold tabular-nums">
+        <span className="font-mono font-semibold tabular-nums">
           {result.scorecard.total} / 10
         </span>
       </span>
