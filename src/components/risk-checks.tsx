@@ -1,5 +1,3 @@
-"use client";
-
 import { Check, X } from "lucide-react";
 import type { TradeResult } from "@/lib/trade-builder";
 import {

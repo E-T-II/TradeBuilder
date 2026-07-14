@@ -1,5 +1,3 @@
-"use client";
-
 import type { Direction, TradeResult } from "@/lib/trade-builder";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
