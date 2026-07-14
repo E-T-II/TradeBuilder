@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Blocks, RotateCcw } from "lucide-react";
 import {
   buildTrade,
@@ -80,13 +80,21 @@ function missingFields(form: FormState): number {
   return REQUIRED.filter((key) => form[key].trim() === "").length;
 }
 
+// Empty or out-of-range percents fall back to the default and cap at max, so
+// a cleared or over-typed field can't silently size the trade at 0% or 5%.
+function clampPercent(raw: string, fallback: number, max: number): number {
+  const n = raw.trim() === "" ? fallback : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return Math.min(n, max);
+}
+
 function toInputs(form: FormState): TradeInputs | null {
   if (missingFields(form) > 0) return null;
 
   const numbers = {
     accountBalance: Number(form.accountBalance),
-    riskTolerancePct: Number(form.riskTolerance) / 100,
-    targetBufferPct: Number(form.targetBuffer) / 100,
+    riskTolerancePct: clampPercent(form.riskTolerance, 2, 2) / 100,
+    targetBufferPct: clampPercent(form.targetBuffer, 75, 100) / 100,
     atr: Number(form.atr),
     curveLow: Number(form.curveLow),
     curveHigh: Number(form.curveHigh),
@@ -118,6 +126,8 @@ export function TradeBuilderApp() {
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const firstPersist = useRef(true);
+
   // In an effect, not initial state: localStorage is client-only, so reading
   // it during render would desync server and client markup.
   useEffect(() => {
@@ -128,14 +138,20 @@ export function TradeBuilderApp() {
     } catch {}
   }, []);
 
+  // Persist on change. Skip the first run so we don't overwrite the stored
+  // value before the hydration effect above has applied it.
+  useEffect(() => {
+    if (firstPersist.current) {
+      firstPersist.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+    } catch {}
+  }, [form]);
+
   const update = (patch: Partial<FormState>) => {
-    setForm((f) => {
-      const next = { ...f, ...patch };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    setForm((f) => ({ ...f, ...patch }));
   };
 
   const inputs = useMemo(() => toInputs(form), [form]);
