@@ -2,13 +2,13 @@
 
 import type { TradeResult } from "@/lib/trade-builder";
 
-const verdictLabel = {
+export const verdictLabel = {
   proximal: "Proximal entry",
   confirmation: "Confirmation entry",
   "no-trade": "No trade",
 } as const;
 
-const verdictClasses = {
+export const verdictClasses = {
   proximal:
     "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
   confirmation:
@@ -19,7 +19,8 @@ const verdictClasses = {
 /**
  * Sticky bar pinned to the bottom of small screens: shows how many fields
  * are left, then the live score and verdict once the trade is scoreable.
- * Tapping it jumps to the full results.
+ * Tapping it jumps to the full results. Mobile only — on large screens the
+ * same live score lives in the form header (see ScoreChip in trade-form).
  */
 export function ScoreBar({
   result,
@@ -34,7 +35,7 @@ export function ScoreBar({
     <button
       type="button"
       onClick={onView}
-      className="fixed inset-x-0 bottom-20 z-20 border-t bg-background/95 px-4 py-3 text-left backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:bottom-0"
+      className="fixed inset-x-0 bottom-20 z-20 border-t bg-background/95 px-4 py-3 text-left backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden"
     >
       {result ? (
         <span className="flex items-center justify-between gap-3">

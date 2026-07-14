@@ -2,13 +2,14 @@
 
 import { Fragment } from "react";
 import type { FormState } from "@/components/trade-builder-app";
-import { JUDGED_MAX } from "@/lib/trade-builder";
+import { JUDGED_MAX, type TradeResult } from "@/lib/trade-builder";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
+import { verdictClasses, verdictLabel } from "@/components/score-bar";
 
 export const STEPS = [
   { title: "Account", blurb: "How much you're working with" },
@@ -51,6 +52,51 @@ interface TradeFormProps {
   onReset: () => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
+  result: TradeResult | null;
+  missingCount: number;
+  onView: () => void;
+}
+
+/**
+ * The live score, shown in the card header on large screens (the mobile
+ * equivalent is the sticky ScoreBar). Clickable to jump to the results once
+ * the trade is scoreable.
+ */
+function ScoreChip({
+  result,
+  missingCount,
+  onView,
+}: {
+  result: TradeResult | null;
+  missingCount: number;
+  onView: () => void;
+}) {
+  if (!result) {
+    return (
+      <p className="text-xs font-medium text-muted-foreground">
+        {missingCount} field{missingCount === 1 ? "" : "s"} left to score
+      </p>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onView}
+      className="flex items-center gap-2 text-sm transition-opacity hover:opacity-70"
+    >
+      <span>
+        Score{" "}
+        <span className="font-semibold tabular-nums">
+          {result.scorecard.total} / 10
+        </span>
+      </span>
+      <span
+        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${verdictClasses[result.entryType]}`}
+      >
+        {verdictLabel[result.entryType]}
+      </span>
+    </button>
+  );
 }
 
 function Field({
@@ -179,6 +225,9 @@ export function TradeForm({
   onReset,
   showAdvanced,
   onToggleAdvanced,
+  result,
+  missingCount,
+  onView,
 }: TradeFormProps) {
   const remaining = STEP_FIELDS[step].filter(
     (key) => form[key].trim() === "",
@@ -193,11 +242,18 @@ export function TradeForm({
       </div>
 
       <div className="flex min-h-[70svh] flex-col p-6 lg:min-h-[460px] lg:p-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-medium text-muted-foreground lg:hidden">
             Step {step + 1} of {STEPS.length}
           </p>
-          <div className="flex gap-2 lg:ml-auto">
+          <div className="hidden lg:block">
+            <ScoreChip
+              result={result}
+              missingCount={missingCount}
+              onView={onView}
+            />
+          </div>
+          <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={onLoadExample}>
               Load example
             </Button>

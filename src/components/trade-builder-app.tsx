@@ -182,6 +182,11 @@ export function TradeBuilderApp() {
             }}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((s) => !s)}
+            result={result}
+            missingCount={missingFields(form)}
+            onView={() => {
+              if (result) goToStep(RESULTS_STEP);
+            }}
           />
         </div>
       ) : (
