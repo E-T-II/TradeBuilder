@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+
 interface RatingChipsProps {
   value: number;
   max: number;
@@ -7,6 +9,7 @@ interface RatingChipsProps {
   lowLabel?: string;
   highLabel?: string;
   "aria-label"?: string;
+  "aria-labelledby"?: string;
 }
 
 export function RatingChips({
@@ -16,9 +19,34 @@ export function RatingChips({
   lowLabel,
   highLabel,
   "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledby,
 }: RatingChipsProps) {
   const steps: number[] = [];
   for (let v = 0; v <= max; v += 0.5) steps.push(v);
+
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const selectedIndex = Math.max(0, steps.indexOf(value));
+
+  // Arrow keys move the selection (WAI-ARIA radiogroup pattern).
+  const focusTo = (index: number) => {
+    onChange(steps[index]);
+    buttons.current[index]?.focus();
+  };
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault();
+      focusTo((selectedIndex + 1) % steps.length);
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault();
+      focusTo((selectedIndex - 1 + steps.length) % steps.length);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusTo(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusTo(steps.length - 1);
+    }
+  };
 
   return (
     // w-fit keeps the end anchors under the first and last chip.
@@ -26,16 +54,22 @@ export function RatingChips({
       <div
         role="radiogroup"
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledby}
+        onKeyDown={onKeyDown}
         className="flex flex-wrap gap-1.5"
       >
-        {steps.map((step) => {
+        {steps.map((step, index) => {
           const selected = step === value;
           return (
             <button
               key={step}
+              ref={(el) => {
+                buttons.current[index] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={selected}
+              tabIndex={index === selectedIndex ? 0 : -1}
               onClick={() => onChange(step)}
               className={`h-9 min-w-11 rounded-full border px-2 text-sm tabular-nums transition-colors ${
                 selected

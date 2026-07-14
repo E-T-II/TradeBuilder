@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import {
   ArrowRight,
   Check,
@@ -58,20 +58,26 @@ interface TradeFormProps {
   onToggleAdvanced: () => void;
 }
 
+// `group` fields wrap a radiogroup (a div, which <label htmlFor> can't target),
+// so the label carries an id for the control to point at via aria-labelledby.
 function Field({
   id,
   label,
   hint,
+  group,
   children,
 }: {
   id: string;
   label: string;
   hint?: string;
+  group?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label id={`${id}-label`} htmlFor={group ? undefined : id}>
+        {label}
+      </Label>
       {children}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
@@ -196,6 +202,18 @@ export function TradeForm({
   ).length;
   const isLast = step === STEPS.length - 1;
 
+  // Move focus to the new step's heading so keyboard and screen-reader users
+  // aren't stranded on the old Next button. Skip the initial mount.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [step]);
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col px-5 py-10 lg:py-14">
       <p className="text-xs font-medium text-muted-foreground lg:hidden">
@@ -214,7 +232,11 @@ export function TradeForm({
       </div>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-tight outline-none"
+        >
           {STEPS[step].title}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -290,9 +312,9 @@ export function TradeForm({
         {step === 1 ? (
           <>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field id="direction" label="Direction">
+              <Field id="direction" label="Direction" group>
                 <SegmentedControl
-                  aria-label="Direction"
+                  aria-labelledby="direction-label"
                   value={form.direction}
                   options={[
                     {
@@ -315,9 +337,10 @@ export function TradeForm({
                 id="timeframe"
                 label="Income objective"
                 hint="Sets the stop buffer: 2% or 10% of ATR"
+                group
               >
                 <SegmentedControl
-                  aria-label="Income objective"
+                  aria-labelledby="timeframe-label"
                   value={form.timeframe}
                   options={[
                     { value: "daily", label: "Daily" },
@@ -327,9 +350,9 @@ export function TradeForm({
                 />
               </Field>
             </div>
-            <Field id="trend" label="Trend">
+            <Field id="trend" label="Trend" group>
               <SegmentedControl
-                aria-label="Trend"
+                aria-labelledby="trend-label"
                 value={form.trend}
                 options={[
                   {
@@ -447,9 +470,10 @@ export function TradeForm({
               id="strength"
               label="Strength"
               hint="How sharply price rejected the zone"
+              group
             >
               <RatingChips
-                aria-label="Strength"
+                aria-labelledby="strength-label"
                 value={Number(form.strength)}
                 max={JUDGED_MAX.strength}
                 lowLabel="Weak move"
@@ -461,9 +485,10 @@ export function TradeForm({
               id="time"
               label="Time"
               hint="How little time price spent at the zone"
+              group
             >
               <RatingChips
-                aria-label="Time"
+                aria-labelledby="time-label"
                 value={Number(form.time)}
                 max={JUDGED_MAX.time}
                 lowLabel="Lingered"
@@ -475,9 +500,10 @@ export function TradeForm({
               id="freshness"
               label="Freshness"
               hint="How untouched the zone is since it formed"
+              group
             >
               <RatingChips
-                aria-label="Freshness"
+                aria-labelledby="freshness-label"
                 value={Number(form.freshness)}
                 max={JUDGED_MAX.freshness}
                 lowLabel="Retested"

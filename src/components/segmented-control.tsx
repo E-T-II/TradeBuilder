@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 
 interface SegmentOption<T extends string> {
@@ -14,6 +15,7 @@ interface SegmentedControlProps<T extends string> {
   options: SegmentOption<T>[];
   onChange: (value: T) => void;
   "aria-label"?: string;
+  "aria-labelledby"?: string;
 }
 
 const accentText = {
@@ -26,22 +28,57 @@ export function SegmentedControl<T extends string>({
   options,
   onChange,
   "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledby,
 }: SegmentedControlProps<T>) {
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  );
+
+  // Arrow keys move the selection (WAI-ARIA radiogroup pattern); a single tab
+  // stop lands on the checked option via the roving tabindex below.
+  const focusTo = (index: number) => {
+    onChange(options[index].value);
+    buttons.current[index]?.focus();
+  };
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      focusTo((selectedIndex + 1) % options.length);
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      focusTo((selectedIndex - 1 + options.length) % options.length);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusTo(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusTo(options.length - 1);
+    }
+  };
+
   return (
     <div
       role="radiogroup"
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledby}
+      onKeyDown={onKeyDown}
       className="flex w-full rounded-lg border bg-muted/40 p-1"
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const selected = option.value === value;
         const Icon = option.icon;
         return (
           <button
             key={option.value}
+            ref={(el) => {
+              buttons.current[index] = el;
+            }}
             type="button"
             role="radio"
             aria-checked={selected}
+            tabIndex={index === selectedIndex ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm transition-colors ${
               selected
