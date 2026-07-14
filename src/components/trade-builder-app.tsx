@@ -165,25 +165,27 @@ export function TradeBuilderApp() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl pb-16 lg:max-w-5xl">
+    <div className="mx-auto w-full">
       {step < RESULTS_STEP ? (
-        <TradeForm
-          form={form}
-          onChange={update}
-          step={step}
-          onBack={() => goToStep(Math.max(0, step - 1))}
-          onNext={() => goToStep(step + 1)}
-          onJump={goToStep}
-          onLoadExample={() => update(exampleState)}
-          onReset={() => {
-            update(initialState);
-            goToStep(0);
-          }}
-          showAdvanced={showAdvanced}
-          onToggleAdvanced={() => setShowAdvanced((s) => !s)}
-        />
+        <div className="mx-auto max-w-2xl pb-36 lg:max-w-3xl lg:pb-16">
+          <TradeForm
+            form={form}
+            onChange={update}
+            step={step}
+            onBack={() => goToStep(Math.max(0, step - 1))}
+            onNext={() => goToStep(step + 1)}
+            onJump={goToStep}
+            onLoadExample={() => update(exampleState)}
+            onReset={() => {
+              update(initialState);
+              goToStep(0);
+            }}
+            showAdvanced={showAdvanced}
+            onToggleAdvanced={() => setShowAdvanced((s) => !s)}
+          />
+        </div>
       ) : (
-        <div className="mx-auto flex max-w-2xl flex-col gap-6 lg:max-w-none">
+        <div className="mx-auto flex max-w-2xl flex-col gap-6 pb-8 lg:max-w-5xl">
           {result ? (
             <div className="grid gap-6 lg:grid-cols-2">
               <Scorecard result={result} />

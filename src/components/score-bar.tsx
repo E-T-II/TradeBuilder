@@ -34,7 +34,7 @@ export function ScoreBar({
     <button
       type="button"
       onClick={onView}
-      className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 py-3 text-left backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="fixed inset-x-0 bottom-20 z-20 border-t bg-background/95 px-4 py-3 text-left backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:bottom-0"
     >
       {result ? (
         <span className="flex items-center justify-between gap-3">
