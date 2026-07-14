@@ -1,0 +1,193 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  buildTrade,
+  type Direction,
+  type IncomeTimeframe,
+  type TradeInputs,
+  type Trend,
+} from "@/lib/trade-builder";
+import { TradeForm } from "@/components/trade-form";
+import { Scorecard } from "@/components/scorecard";
+import { OrderTicket } from "@/components/order-ticket";
+import { RiskChecks } from "@/components/risk-checks";
+import { ScoreBar } from "@/components/score-bar";
+import { Card, CardContent } from "@/components/ui/card";
+
+export interface FormState {
+  accountBalance: string;
+  riskTolerance: string; // percent, e.g. "2"
+  targetBuffer: string; // percent, e.g. "75"
+  direction: Direction;
+  trend: Trend;
+  timeframe: IncomeTimeframe;
+  atr: string;
+  curveLow: string;
+  curveHigh: string;
+  entryProximal: string;
+  entryDistal: string;
+  targetProximal: string;
+  targetDistal: string;
+  strength: string;
+  time: string;
+  freshness: string;
+  openTradeRisk: string;
+}
+
+const initialState: FormState = {
+  accountBalance: "",
+  riskTolerance: "2",
+  targetBuffer: "75",
+  direction: "long",
+  trend: "uptrend",
+  timeframe: "daily",
+  atr: "",
+  curveLow: "",
+  curveHigh: "",
+  entryProximal: "",
+  entryDistal: "",
+  targetProximal: "",
+  targetDistal: "",
+  strength: "0",
+  time: "0",
+  freshness: "0",
+  openTradeRisk: "0",
+};
+
+const exampleState: FormState = {
+  accountBalance: "2500",
+  riskTolerance: "2",
+  targetBuffer: "75",
+  direction: "long",
+  trend: "uptrend",
+  timeframe: "daily",
+  atr: "4",
+  curveLow: "100",
+  curveHigh: "130",
+  entryProximal: "108",
+  entryDistal: "106",
+  targetProximal: "124",
+  targetDistal: "126",
+  strength: "1",
+  time: "0.5",
+  freshness: "1",
+  openTradeRisk: "0",
+};
+
+const STORAGE_KEY = "tradebuilder-form-v1";
+
+const REQUIRED: (keyof FormState)[] = [
+  "accountBalance",
+  "atr",
+  "curveLow",
+  "curveHigh",
+  "entryProximal",
+  "entryDistal",
+  "targetProximal",
+  "targetDistal",
+];
+
+function missingFields(form: FormState): number {
+  return REQUIRED.filter((key) => form[key].trim() === "").length;
+}
+
+function toInputs(form: FormState): TradeInputs | null {
+  if (missingFields(form) > 0) return null;
+
+  const numbers = {
+    accountBalance: Number(form.accountBalance),
+    riskTolerancePct: Number(form.riskTolerance) / 100,
+    targetBufferPct: Number(form.targetBuffer) / 100,
+    atr: Number(form.atr),
+    curveLow: Number(form.curveLow),
+    curveHigh: Number(form.curveHigh),
+    entryProximal: Number(form.entryProximal),
+    entryDistal: Number(form.entryDistal),
+    targetProximal: Number(form.targetProximal),
+    targetDistal: Number(form.targetDistal),
+    strength: Number(form.strength),
+    time: Number(form.time),
+    freshness: Number(form.freshness),
+    openTradeRisk: Number(form.openTradeRisk || "0"),
+  };
+
+  if (Object.values(numbers).some((n) => !Number.isFinite(n))) return null;
+  if (numbers.accountBalance <= 0) return null;
+
+  return {
+    ...numbers,
+    direction: form.direction,
+    trend: form.trend,
+    timeframe: form.timeframe,
+  };
+}
+
+export function TradeBuilderApp() {
+  const [form, setForm] = useState<FormState>(initialState);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Restore the last session after mount. This has to happen in an effect —
+  // localStorage doesn't exist during server rendering, and reading it in the
+  // initial state would make the server and client markup disagree.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+      if (stored) setForm({ ...initialState, ...JSON.parse(stored) });
+    } catch {
+      // ignore a corrupt or blocked store
+    }
+  }, []);
+
+  const update = (patch: Partial<FormState>) => {
+    setForm((f) => {
+      const next = { ...f, ...patch };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // storage may be unavailable (private mode) — the app still works
+      }
+      return next;
+    });
+  };
+
+  const inputs = useMemo(() => toInputs(form), [form]);
+  const result = useMemo(() => (inputs ? buildTrade(inputs) : null), [inputs]);
+
+  return (
+    <div className="grid gap-6 pb-16 lg:grid-cols-[minmax(0,1fr)_400px] lg:pb-0">
+      <TradeForm
+        form={form}
+        onChange={update}
+        onLoadExample={() => update(exampleState)}
+        onReset={() => update(initialState)}
+      />
+
+      <div ref={resultsRef} className="flex flex-col gap-6">
+        {result ? (
+          <>
+            <Scorecard result={result} />
+            <OrderTicket result={result} direction={form.direction} />
+            <RiskChecks result={result} />
+          </>
+        ) : (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              Fill in the trade details to score it. The results update as you
+              type.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <ScoreBar
+        result={result}
+        missingCount={missingFields(form)}
+        onView={() =>
+          resultsRef.current?.scrollIntoView({ behavior: "smooth" })
+        }
+      />
+    </div>
+  );
+}
