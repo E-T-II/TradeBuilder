@@ -17,10 +17,52 @@ export const verdictClasses = {
 } as const;
 
 /**
+ * Compact live score for the top bar on large screens — the desktop
+ * counterpart of the sticky ScoreBar. Clickable to jump to the results
+ * once the trade is scoreable.
+ */
+export function ScoreChip({
+  result,
+  missingCount,
+  onView,
+}: {
+  result: TradeResult | null;
+  missingCount: number;
+  onView: () => void;
+}) {
+  if (!result) {
+    return (
+      <p className="text-xs font-medium text-muted-foreground">
+        {missingCount} field{missingCount === 1 ? "" : "s"} left to score
+      </p>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onView}
+      className="flex items-center gap-2 text-sm transition-opacity hover:opacity-70"
+    >
+      <span>
+        Score{" "}
+        <span className="font-semibold tabular-nums">
+          {result.scorecard.total} / 10
+        </span>
+      </span>
+      <span
+        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${verdictClasses[result.entryType]}`}
+      >
+        {verdictLabel[result.entryType]}
+      </span>
+    </button>
+  );
+}
+
+/**
  * Sticky bar pinned to the bottom of small screens: shows how many fields
  * are left, then the live score and verdict once the trade is scoreable.
  * Tapping it jumps to the full results. Mobile only — on large screens the
- * same live score lives in the form header (see ScoreChip in trade-form).
+ * same live score lives in the top bar (see ScoreChip above).
  */
 export function ScoreBar({
   result,

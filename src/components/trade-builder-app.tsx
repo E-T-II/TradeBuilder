@@ -8,11 +8,16 @@ import {
   type TradeInputs,
   type Trend,
 } from "@/lib/trade-builder";
-import { STEPS, TradeForm } from "@/components/trade-form";
+import {
+  firstIncompleteStep,
+  STEPS,
+  TopStepper,
+  TradeForm,
+} from "@/components/trade-form";
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
 import { RiskChecks } from "@/components/risk-checks";
-import { ScoreBar } from "@/components/score-bar";
+import { ScoreBar, ScoreChip } from "@/components/score-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -164,17 +169,49 @@ export function TradeBuilderApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const reachable = firstIncompleteStep(form);
+  const missing = missingFields(form);
+  const inForm = step < RESULTS_STEP;
+  const viewResults = () => {
+    if (result) goToStep(RESULTS_STEP);
+  };
+
   return (
-    <div className="mx-auto w-full">
-      {step < RESULTS_STEP ? (
-        <div className="mx-auto max-w-2xl pb-36 lg:max-w-3xl lg:pb-16">
+    <div className="flex flex-1 flex-col">
+      {/* Typeform-style top bar: brand left, step rail centered, live score
+          right. The rail and score are desktop-only; mobile keeps its own
+          progress strip and sticky score bar. */}
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b px-5 py-4 lg:px-8">
+        <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+          <span aria-hidden className="text-base leading-none">
+            ▲
+          </span>
+          Trade Builder
+        </span>
+        <div className="hidden lg:block">
+          {inForm ? (
+            <TopStepper step={step} reachable={reachable} onJump={goToStep} />
+          ) : null}
+        </div>
+        <div className="hidden justify-end lg:flex">
+          {inForm ? (
+            <ScoreChip
+              result={result}
+              missingCount={missing}
+              onView={viewResults}
+            />
+          ) : null}
+        </div>
+      </header>
+
+      {inForm ? (
+        <div className="flex flex-1 flex-col pb-36 lg:justify-center lg:pb-0">
           <TradeForm
             form={form}
             onChange={update}
             step={step}
             onBack={() => goToStep(Math.max(0, step - 1))}
             onNext={() => goToStep(step + 1)}
-            onJump={goToStep}
             onLoadExample={() => update(exampleState)}
             onReset={() => {
               update(initialState);
@@ -182,15 +219,10 @@ export function TradeBuilderApp() {
             }}
             showAdvanced={showAdvanced}
             onToggleAdvanced={() => setShowAdvanced((s) => !s)}
-            result={result}
-            missingCount={missingFields(form)}
-            onView={() => {
-              if (result) goToStep(RESULTS_STEP);
-            }}
           />
         </div>
       ) : (
-        <div className="mx-auto flex max-w-2xl flex-col gap-6 pb-8 lg:max-w-5xl">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
           {result ? (
             <div className="grid gap-6 lg:grid-cols-2">
               <Scorecard result={result} />
@@ -224,13 +256,11 @@ export function TradeBuilderApp() {
         </div>
       )}
 
-      {step < RESULTS_STEP ? (
+      {inForm ? (
         <ScoreBar
           result={result}
-          missingCount={missingFields(form)}
-          onView={() => {
-            if (result) goToStep(RESULTS_STEP);
-          }}
+          missingCount={missing}
+          onView={viewResults}
         />
       ) : null}
     </div>
