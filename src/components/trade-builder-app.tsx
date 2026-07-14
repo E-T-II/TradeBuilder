@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChartCandlestick } from "lucide-react";
 import {
   buildTrade,
   type Direction,
@@ -183,9 +184,7 @@ export function TradeBuilderApp() {
           progress strip and sticky score bar. */}
       <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b px-5 py-4 lg:px-8">
         <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-          <span aria-hidden className="text-base leading-none">
-            ▲
-          </span>
+          <ChartCandlestick className="size-5 text-primary" aria-hidden />
           Trade Builder
         </span>
         <div className="hidden lg:block">

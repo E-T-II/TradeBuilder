@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { ArrowRight, Check, ChevronLeft, RotateCcw, Sparkles } from "lucide-react";
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ export function TopStepper({
                       : "border text-muted-foreground"
                 }`}
               >
-                {done ? "✓" : i + 1}
+                {done ? <Check className="size-3.5" aria-hidden /> : i + 1}
               </span>
               <span
                 className={`whitespace-nowrap text-sm ${
@@ -191,9 +192,11 @@ export function TradeForm({
         </p>
         <div className="flex gap-2 lg:ml-auto">
           <Button variant="outline" size="sm" onClick={onLoadExample}>
+            <Sparkles aria-hidden />
             Load example
           </Button>
           <Button variant="ghost" size="sm" onClick={onReset}>
+            <RotateCcw aria-hidden />
             Reset
           </Button>
         </div>
@@ -464,6 +467,7 @@ export function TradeForm({
           disabled={step === 0}
           className={step === 0 ? "hidden lg:inline-flex lg:invisible" : ""}
         >
+          <ChevronLeft aria-hidden />
           Back
         </Button>
         <Button
@@ -477,6 +481,7 @@ export function TradeForm({
             : isLast
               ? "See my trade"
               : "Next"}
+          {remaining === 0 ? <ArrowRight aria-hidden /> : null}
         </Button>
       </div>
     </div>

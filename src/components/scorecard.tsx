@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import type { TradeResult } from "@/lib/trade-builder";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { Badge } from "@/components/ui/badge";
@@ -29,19 +30,27 @@ function Row({
   points,
   max,
   detail,
+  positive,
 }: {
   label: string;
   points: number;
   max: number;
   detail?: string;
+  positive?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span>
         {label}
         {detail ? (
-          <span className="ml-1.5 text-xs text-muted-foreground">
+          <span className="ml-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
             {detail}
+            {positive ? (
+              <Check
+                className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                aria-hidden
+              />
+            ) : null}
           </span>
         ) : null}
       </span>
@@ -73,9 +82,10 @@ export function Scorecard({ result }: { result: TradeResult }) {
           label="Curve"
           points={s.curve}
           max={1}
+          positive={s.curve === 1}
           detail={
             s.curve === 1
-              ? `${s.curveZone} — right side ✓`
+              ? `${s.curveZone} — right side`
               : s.curve === 0.5
                 ? `${s.curveZone} — middle of the range`
                 : `${s.curveZone} — wrong side for this direction`
@@ -85,9 +95,10 @@ export function Scorecard({ result }: { result: TradeResult }) {
           label="Trend"
           points={s.trend}
           max={2}
+          positive={s.trend === 2}
           detail={
             s.trend === 2
-              ? "with the trend ✓"
+              ? "with the trend"
               : s.trend === 1
                 ? "sideways — half credit"
                 : "against the trend"
@@ -97,9 +108,10 @@ export function Scorecard({ result }: { result: TradeResult }) {
           label="Profit zone"
           points={s.profitZone}
           max={2}
+          positive={s.profitZone === 2}
           detail={
             s.profitZone === 2
-              ? `${ratio}:1 — 5:1 or better ✓`
+              ? `${ratio}:1 — 5:1 or better`
               : s.profitZone === 1
                 ? `${ratio}:1 — meets 3:1`
                 : `${ratio}:1 — below 3:1`
