@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import type { TradeResult } from "@/lib/trade-builder";
 import { JUDGED_MAX } from "@/lib/trade-builder";
+import { Reveal, usePrefersReducedMotion } from "@/components/reveal";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,6 +26,29 @@ const entryTypeClasses = {
     "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
   "no-trade": "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200",
 } as const;
+
+/** Ease a number from 0 up to target over duration ms. duration 0 snaps. */
+function useCountUp(target: number, duration: number) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let start = 0;
+    const tick = (now: number) => {
+      if (!start) start = now;
+      const p = duration <= 0 ? 1 : Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      if (p < 1) {
+        setValue(target * eased);
+        raf = requestAnimationFrame(tick);
+      } else {
+        setValue(target);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
 
 function Row({
   label,
@@ -62,6 +87,12 @@ function Row({
   );
 }
 
+// Trim a trailing .0 (8.0 -> 8, 7.5 -> 7.5).
+function formatScore(n: number) {
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 export function Scorecard({ result }: { result: TradeResult }) {
   const s = result.scorecard;
   const ratio =
@@ -69,83 +100,109 @@ export function Scorecard({ result }: { result: TradeResult }) {
       ? Math.round(s.profitZoneRatio)
       : Math.round(s.profitZoneRatio * 10) / 10;
 
+  const reduced = usePrefersReducedMotion();
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    // Next frame, so transitions have a from-state to animate.
+    const raf = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const animatedTotal = useCountUp(s.total, reduced ? 0 : 750);
+  const barWidth = Math.min(100, (animatedTotal / 10) * 100);
+
+  const rows = [
+    <Row
+      key="curve"
+      label="Curve"
+      points={s.curve}
+      max={1}
+      positive={s.curve === 1}
+      detail={
+        s.curve === 1
+          ? `${s.curveZone} (good side)`
+          : s.curve === 0.5
+            ? `${s.curveZone} (mid range)`
+            : `${s.curveZone} (wrong side)`
+      }
+    />,
+    <Row
+      key="trend"
+      label="Trend"
+      points={s.trend}
+      max={2}
+      positive={s.trend === 2}
+      detail={
+        s.trend === 2
+          ? "with the trend"
+          : s.trend === 1
+            ? "sideways (half credit)"
+            : "against the trend"
+      }
+    />,
+    <Row
+      key="profit"
+      label="Profit zone"
+      points={s.profitZone}
+      max={2}
+      positive={s.profitZone === 2}
+      detail={
+        s.profitZone === 2
+          ? `${ratio}:1 (5:1 or better)`
+          : s.profitZone === 1
+            ? `${ratio}:1 (meets 3:1)`
+            : `${ratio}:1 (below 3:1)`
+      }
+    />,
+    <Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
+    <Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
+    <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
+  ];
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Odds enhancers</CardTitle>
-        <Badge className={entryTypeClasses[result.entryType]}>
+        <Badge
+          className={`${entryTypeClasses[result.entryType]} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${
+            shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
+          }`}
+        >
           {entryTypeLabel[result.entryType]}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Row
-          label="Curve"
-          points={s.curve}
-          max={1}
-          positive={s.curve === 1}
-          detail={
-            s.curve === 1
-              ? `${s.curveZone} — right side`
-              : s.curve === 0.5
-                ? `${s.curveZone} — middle of the range`
-                : `${s.curveZone} — wrong side for this direction`
-          }
-        />
-        <Row
-          label="Trend"
-          points={s.trend}
-          max={2}
-          positive={s.trend === 2}
-          detail={
-            s.trend === 2
-              ? "with the trend"
-              : s.trend === 1
-                ? "sideways — half credit"
-                : "against the trend"
-          }
-        />
-        <Row
-          label="Profit zone"
-          points={s.profitZone}
-          max={2}
-          positive={s.profitZone === 2}
-          detail={
-            s.profitZone === 2
-              ? `${ratio}:1 — 5:1 or better`
-              : s.profitZone === 1
-                ? `${ratio}:1 — meets 3:1`
-                : `${ratio}:1 — below 3:1`
-          }
-        />
-        <Row label="Strength" points={s.strength} max={JUDGED_MAX.strength} />
-        <Row label="Time" points={s.time} max={JUDGED_MAX.time} />
-        <Row
-          label="Freshness"
-          points={s.freshness}
-          max={JUDGED_MAX.freshness}
-        />
+        {rows.map((row, i) => (
+          <Reveal key={i} delay={80 + i * 60}>
+            {row}
+          </Reveal>
+        ))}
 
-        <div className="mt-3 border-t pt-3">
-          <div className="flex items-center justify-between font-medium">
-            <span>Total score</span>
-            <span className="font-mono tabular-nums">{s.total} / 10</span>
+        <Reveal delay={80 + rows.length * 60}>
+          <div className="mt-3 border-t pt-3">
+            <div className="flex items-center justify-between font-medium">
+              <span>Total score</span>
+              <span className="font-mono tabular-nums">
+                {formatScore(animatedTotal)} / 10
+              </span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full ${
+                  result.entryType === "proximal"
+                    ? "bg-emerald-500"
+                    : result.entryType === "confirmation"
+                      ? "bg-amber-500"
+                      : "bg-red-500"
+                }`}
+                style={{ width: `${barWidth}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              8.5+ proximal · 7 to 8.5 confirmation · below 7 no trade
+            </p>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full transition-all ${
-                result.entryType === "proximal"
-                  ? "bg-emerald-500"
-                  : result.entryType === "confirmation"
-                    ? "bg-amber-500"
-                    : "bg-red-500"
-              }`}
-              style={{ width: `${Math.min(100, (s.total / 10) * 100)}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            8.5+ proximal · 7 to 8.5 confirmation · below 7 no trade
-          </p>
-        </div>
+        </Reveal>
       </CardContent>
     </Card>
   );

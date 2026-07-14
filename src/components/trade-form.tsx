@@ -1,9 +1,17 @@
 "use client";
 
 import { Fragment } from "react";
-import { ArrowRight, Check, ChevronLeft, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  MoveRight,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
+import { DISCLAIMER } from "@/lib/copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +22,11 @@ export const STEPS = [
   { title: "Account", blurb: "How much you're working with" },
   { title: "Trade", blurb: "What you're trading and which way" },
   { title: "Zones", blurb: "The price lines from your chart" },
-  { title: "Your judgment", blurb: "Score the zone quality yourself" },
+  { title: "Your read", blurb: "Score the zone quality yourself" },
 ] as const;
 
-/** Required fields per step — Next stays disabled until these are filled. */
-export const STEP_FIELDS: (keyof FormState)[][] = [
+// Required fields per step; Next stays disabled until these are filled.
+const STEP_FIELDS: (keyof FormState)[][] = [
   ["accountBalance"],
   ["atr"],
   [
@@ -32,7 +40,7 @@ export const STEP_FIELDS: (keyof FormState)[][] = [
   [],
 ];
 
-/** The first step that still has an empty required field (or one past the end). */
+// First step with an empty required field (or STEPS.length if all filled).
 export function firstIncompleteStep(form: FormState): number {
   for (let i = 0; i < STEP_FIELDS.length; i++) {
     if (STEP_FIELDS[i].some((key) => form[key].trim() === "")) return i;
@@ -46,8 +54,6 @@ interface TradeFormProps {
   step: number;
   onBack: () => void;
   onNext: () => void;
-  onLoadExample: () => void;
-  onReset: () => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
 }
@@ -72,7 +78,26 @@ function Field({
   );
 }
 
-function PriceInput({
+// Digits and one decimal point only; this is what we store, so Number() stays clean.
+function sanitizeNumber(input: string): string {
+  let cleaned = input.replace(/[^\d.]/g, "");
+  const dot = cleaned.indexOf(".");
+  if (dot !== -1) {
+    cleaned = cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, "");
+  }
+  return cleaned;
+}
+
+// Thousands separators for display only.
+function formatNumber(raw: string): string {
+  if (raw === "") return "";
+  const [intPart, decPart] = raw.split(".");
+  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
+}
+
+// type="text" because type="number" refuses to render commas.
+function NumberInput({
   id,
   value,
   onChange,
@@ -86,23 +111,16 @@ function PriceInput({
   return (
     <Input
       id={id}
-      type="number"
-      min="0"
-      step="0.01"
+      type="text"
       inputMode="decimal"
+      autoComplete="off"
       placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+      value={formatNumber(value)}
+      onChange={(e) => onChange(sanitizeNumber(e.target.value))}
     />
   );
 }
 
-/**
- * Horizontal step indicator for the top bar on large screens — a checkmark
- * for finished steps, the current step outlined, and a connecting line
- * that's solid behind completed steps and dashed ahead. Completed steps
- * are clickable to jump back.
- */
 export function TopStepper({
   step,
   reachable,
@@ -126,7 +144,7 @@ export function TopStepper({
                 className={`mx-2 w-8 xl:w-12 ${
                   i <= step
                     ? "h-px bg-primary"
-                    : "border-t border-dashed border-border"
+                    : "border-t border-dotted border-neutral-300 dark:border-neutral-600"
                 }`}
               />
             ) : null}
@@ -140,22 +158,18 @@ export function TopStepper({
             >
               <span
                 className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                  done
+                  done || current
                     ? "bg-primary text-primary-foreground"
-                    : current
-                      ? "border-2 border-primary text-primary"
-                      : "border text-muted-foreground"
+                    : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
                 }`}
               >
                 {done ? <Check className="size-3.5" aria-hidden /> : i + 1}
               </span>
               <span
                 className={`whitespace-nowrap text-sm ${
-                  current
+                  done || current
                     ? "font-medium text-foreground"
-                    : done || clickable
-                      ? "text-foreground"
-                      : "text-muted-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 {s.title}
@@ -174,8 +188,6 @@ export function TradeForm({
   step,
   onBack,
   onNext,
-  onLoadExample,
-  onReset,
   showAdvanced,
   onToggleAdvanced,
 }: TradeFormProps) {
@@ -186,21 +198,9 @@ export function TradeForm({
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col px-5 py-10 lg:py-14">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium text-muted-foreground lg:hidden">
-          Step {step + 1} of {STEPS.length}
-        </p>
-        <div className="flex gap-2 lg:ml-auto">
-          <Button variant="outline" size="sm" onClick={onLoadExample}>
-            <Sparkles aria-hidden />
-            Load example
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onReset}>
-            <RotateCcw aria-hidden />
-            Reset
-          </Button>
-        </div>
-      </div>
+      <p className="text-xs font-medium text-muted-foreground lg:hidden">
+        Step {step + 1} of {STEPS.length}
+      </p>
 
       <div className="mt-4 flex gap-1.5 lg:hidden">
         {STEPS.map((s, i) => (
@@ -228,16 +228,13 @@ export function TradeForm({
             <Field
               id="balance"
               label="Account balance ($)"
-              hint="Your balance with your broker — sets every risk limit"
+              hint="Your balance with your broker, used for all risk limits"
             >
-              <Input
+              <NumberInput
                 id="balance"
-                type="number"
-                min="0"
-                inputMode="decimal"
                 placeholder="600"
                 value={form.accountBalance}
-                onChange={(e) => onChange({ accountBalance: e.target.value })}
+                onChange={(accountBalance) => onChange({ accountBalance })}
               />
             </Field>
 
@@ -277,16 +274,12 @@ export function TradeForm({
                 <Field
                   id="openRisk"
                   label="Risk in open trades ($)"
-                  hint="For the 6% rule — 0 if this is your only trade"
+                  hint="For the 6% rule. Leave 0 if this is your only trade"
                 >
-                  <Input
+                  <NumberInput
                     id="openRisk"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
                     value={form.openTradeRisk}
-                    onChange={(e) => onChange({ openTradeRisk: e.target.value })}
+                    onChange={(openTradeRisk) => onChange({ openTradeRisk })}
                   />
                 </Field>
               </div>
@@ -302,8 +295,18 @@ export function TradeForm({
                   aria-label="Direction"
                   value={form.direction}
                   options={[
-                    { value: "long", label: "Buy long" },
-                    { value: "short", label: "Sell short" },
+                    {
+                      value: "long",
+                      label: "Buy long",
+                      icon: TrendingUp,
+                      accent: "green",
+                    },
+                    {
+                      value: "short",
+                      label: "Sell short",
+                      icon: TrendingDown,
+                      accent: "red",
+                    },
                   ]}
                   onChange={(direction) => onChange({ direction })}
                 />
@@ -329,9 +332,19 @@ export function TradeForm({
                 aria-label="Trend"
                 value={form.trend}
                 options={[
-                  { value: "uptrend", label: "Uptrend" },
-                  { value: "sideways", label: "Sideways" },
-                  { value: "downtrend", label: "Downtrend" },
+                  {
+                    value: "uptrend",
+                    label: "Uptrend",
+                    icon: TrendingUp,
+                    accent: "green",
+                  },
+                  { value: "sideways", label: "Sideways", icon: MoveRight },
+                  {
+                    value: "downtrend",
+                    label: "Downtrend",
+                    icon: TrendingDown,
+                    accent: "red",
+                  },
                 ]}
                 onChange={(trend) => onChange({ trend })}
               />
@@ -339,9 +352,9 @@ export function TradeForm({
             <Field
               id="atr"
               label="Daily ATR ($)"
-              hint="From finviz.com — 14-day average true range"
+              hint="From finviz.com (14-day average true range)"
             >
-              <PriceInput
+              <NumberInput
                 id="atr"
                 placeholder="5.93"
                 value={form.atr}
@@ -359,7 +372,7 @@ export function TradeForm({
                 label="Curve low ($)"
                 hint="HTF demand zone distal line"
               >
-                <PriceInput
+                <NumberInput
                   id="curveLow"
                   value={form.curveLow}
                   onChange={(curveLow) => onChange({ curveLow })}
@@ -370,7 +383,7 @@ export function TradeForm({
                 label="Curve high ($)"
                 hint="HTF supply zone distal line"
               >
-                <PriceInput
+                <NumberInput
                   id="curveHigh"
                   value={form.curveHigh}
                   onChange={(curveHigh) => onChange({ curveHigh })}
@@ -383,7 +396,7 @@ export function TradeForm({
                 label="Entry proximal ($)"
                 hint="The line you enter at"
               >
-                <PriceInput
+                <NumberInput
                   id="entryProximal"
                   value={form.entryProximal}
                   onChange={(entryProximal) => onChange({ entryProximal })}
@@ -392,9 +405,9 @@ export function TradeForm({
               <Field
                 id="entryDistal"
                 label="Entry distal ($)"
-                hint="The far edge — your stop hides behind it"
+                hint="The far edge, where your stop sits"
               >
-                <PriceInput
+                <NumberInput
                   id="entryDistal"
                   value={form.entryDistal}
                   onChange={(entryDistal) => onChange({ entryDistal })}
@@ -407,14 +420,14 @@ export function TradeForm({
                 label="Target proximal ($)"
                 hint="Near edge of the zone you exit into"
               >
-                <PriceInput
+                <NumberInput
                   id="targetProximal"
                   value={form.targetProximal}
                   onChange={(targetProximal) => onChange({ targetProximal })}
                 />
               </Field>
               <Field id="targetDistal" label="Target distal ($)">
-                <PriceInput
+                <NumberInput
                   id="targetDistal"
                   value={form.targetDistal}
                   onChange={(targetDistal) => onChange({ targetDistal })}
@@ -430,27 +443,45 @@ export function TradeForm({
               Score the entry zone from your own analysis per the trade
               methodology.
             </p>
-            <Field id="strength" label="Strength">
+            <Field
+              id="strength"
+              label="Strength"
+              hint="How sharply price rejected the zone"
+            >
               <RatingChips
                 aria-label="Strength"
                 value={Number(form.strength)}
                 max={JUDGED_MAX.strength}
+                lowLabel="Weak move"
+                highLabel="Strong move"
                 onChange={(v) => onChange({ strength: String(v) })}
               />
             </Field>
-            <Field id="time" label="Time">
+            <Field
+              id="time"
+              label="Time"
+              hint="How little time price spent at the zone"
+            >
               <RatingChips
                 aria-label="Time"
                 value={Number(form.time)}
                 max={JUDGED_MAX.time}
+                lowLabel="Lingered"
+                highLabel="In and out"
                 onChange={(v) => onChange({ time: String(v) })}
               />
             </Field>
-            <Field id="freshness" label="Freshness">
+            <Field
+              id="freshness"
+              label="Freshness"
+              hint="How untouched the zone is since it formed"
+            >
               <RatingChips
                 aria-label="Freshness"
                 value={Number(form.freshness)}
                 max={JUDGED_MAX.freshness}
+                lowLabel="Retested"
+                highLabel="Untested"
                 onChange={(v) => onChange({ freshness: String(v) })}
               />
             </Field>
@@ -458,14 +489,22 @@ export function TradeForm({
         ) : null}
       </div>
 
-      {/* On mobile this is a full-width action bar pinned above the score
-          bar; on large screens it sits in the normal content flow. */}
+      {/* On mobile the footer sits behind the fixed action bar, so repeat it
+          inline here for small screens. */}
+      <p className="mt-10 text-center text-xs text-muted-foreground lg:hidden">
+        {DISCLAIMER}
+      </p>
+
+      {/* Fixed action bar on mobile; in normal flow on large screens. */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t bg-background px-5 py-3 lg:static lg:mt-10 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0">
         <Button
           variant="ghost"
+          size="lg"
           onClick={onBack}
           disabled={step === 0}
-          className={step === 0 ? "hidden lg:inline-flex lg:invisible" : ""}
+          // -ml-2.5 cancels the button padding so "Back" lines up with the
+          // field labels above; the mobile bar keeps its inset.
+          className={`lg:-ml-2.5 ${step === 0 ? "hidden lg:inline-flex lg:invisible" : ""}`}
         >
           <ChevronLeft aria-hidden />
           Back

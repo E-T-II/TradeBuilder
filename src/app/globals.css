@@ -128,3 +128,27 @@
     @apply font-sans;
   }
 }
+
+/* The splash-hide rule is an inline <style> in layout.tsx; Tailwind strips
+   it from this file. */
+@keyframes intro-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes intro-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}

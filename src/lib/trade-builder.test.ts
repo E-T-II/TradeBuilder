@@ -207,19 +207,19 @@ describe("position sizing (README examples)", () => {
     expect(positionSize(12, 0)).toBe(0);
   });
 
-  it("Scenario 1 — Ford at $13.34: 24 shares adjusts down to 22", () => {
+  it("Scenario 1, Ford at $13.34: 24 shares adjusts down to 22", () => {
     // capital 24 x 13.34 = 320.16, over 50% of $600
     expect(applyCapitalCap(24, 13.34, 600)).toBe(22);
     expect(22 * 13.34).toBeCloseTo(293.48, 2);
   });
 
-  it("Scenario 2 — Ford at $70: 24 shares adjusts down to 4", () => {
+  it("Scenario 2, Ford at $70: 24 shares adjusts down to 4", () => {
     // capital 1680, way over $300
     expect(applyCapitalCap(24, 70, 600)).toBe(4);
     expect(4 * 70).toBe(280);
   });
 
-  it("Scenario 3 — Lucid at $24.66 entry, $24.45 stop: 57 shares adjusts to 12", () => {
+  it("Scenario 3, Lucid at $24.66 entry, $24.45 stop: 57 shares adjusts to 12", () => {
     const risk = tradeRiskPerShare(24.66, 24.45);
     expect(risk).toBe(0.21);
     const size = positionSize(maxAccountRisk(600, 0.02), risk);
@@ -259,7 +259,7 @@ describe("rewardRiskRatio", () => {
   });
 });
 
-// ── End to end ─────────────────────────────────────────────────────────
+// End-to-end tests
 
 const longTrade: TradeInputs = {
   accountBalance: 2500,
@@ -280,7 +280,7 @@ const longTrade: TradeInputs = {
   freshness: 1,
 };
 
-describe("buildTrade — long confirmation entry with the 50% cap", () => {
+describe("buildTrade, long confirmation entry with the 50% cap", () => {
   const result = buildTrade(longTrade);
 
   it("scores the trade 7.5 and calls a confirmation entry", () => {
@@ -314,7 +314,7 @@ describe("buildTrade — long confirmation entry with the 50% cap", () => {
   });
 });
 
-describe("buildTrade — the same setup in a sideways trend", () => {
+describe("buildTrade, the same setup in a sideways trend", () => {
   const result = buildTrade({ ...longTrade, trend: "sideways" });
 
   it("drops to 6.5 and refuses the trade", () => {
@@ -325,7 +325,7 @@ describe("buildTrade — the same setup in a sideways trend", () => {
   });
 });
 
-describe("buildTrade — short trade, everything mirrored", () => {
+describe("buildTrade, short trade, everything mirrored", () => {
   const result = buildTrade({
     ...longTrade,
     direction: "short",
@@ -356,7 +356,7 @@ describe("buildTrade — short trade, everything mirrored", () => {
   });
 });
 
-describe("buildTrade — the 6% multiple-trade rule", () => {
+describe("buildTrade, the 6% multiple-trade rule", () => {
   it("flags a new trade that would push open risk past 6%", () => {
     // $600 account -> $36 limit. This trade risks ~$11 on its own.
     const base: TradeInputs = {

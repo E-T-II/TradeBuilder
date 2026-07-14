@@ -1,6 +1,5 @@
-// ── Trade Builder engine ───────────────────────────────────────────────
-// Eugene's "Engineered Risk" logic, one small pure function at a time.
-// No React in here — just math we can test in isolation.
+// Trade Builder engine: Eugene's "Engineered Risk" logic, one small pure
+// function at a time. No React in here, just math we can test in isolation.
 
 /** Which way the trade is betting. */
 export type Direction = "long" | "short";
@@ -9,7 +8,7 @@ export type Direction = "long" | "short";
 export type Trend = "uptrend" | "sideways" | "downtrend";
 
 /**
- * Scorecard factor #2 — TREND (max 2 points).
+ * Scorecard factor #2, TREND (max 2 points).
  *
  * Trading *with* the trend scores higher than fighting it.
  *   Long:  uptrend = 2, sideways = 1, downtrend = 0
@@ -19,7 +18,7 @@ export function trendScore(trend: Trend, direction: Direction): number {
   if (direction === "long") {
     if (trend === "uptrend") return 2;
     if (trend === "sideways") return 1;
-    return 0; // downtrend — fighting the current
+    return 0; // downtrend, fighting the current
   }
 
   // short: everything flips
@@ -32,12 +31,12 @@ export function trendScore(trend: Trend, direction: Direction): number {
 export type CurveZone = "wholesale" | "equilibrium" | "retail";
 
 /**
- * Split the range (low → high) into three equal slices and report which
+ * Split the range from low to high into three equal slices and report which
  * one `price` falls in. A price sitting exactly on a boundary line counts
  * as the higher zone (we use `<`, not `<=`).
  *
- *   low ────110──── 120 ──── high   (for low=100, high=130)
- *   wholesale │ equilibrium │ retail
+ * For low=100, high=130: wholesale is 100 to 110, equilibrium 110 to 120,
+ * retail 120 to 130.
  */
 export function locateOnCurve(price: number, low: number, high: number): CurveZone {
   const third = (high - low) / 3;
@@ -47,7 +46,7 @@ export function locateOnCurve(price: number, low: number, high: number): CurveZo
 }
 
 /**
- * Scorecard factor #1 — CURVE (max 1 point).
+ * Scorecard factor #1, CURVE (max 1 point).
  *
  * Buying long while price is down in wholesale (cheap) is high-odds;
  * doing it up in retail (expensive) is not. Short is the mirror image.
@@ -58,7 +57,7 @@ export function curveScore(zone: CurveZone, direction: Direction): number {
   if (direction === "long") {
     if (zone === "wholesale") return 1;
     if (zone === "equilibrium") return 0.5;
-    return 0; // retail — buying expensive
+    return 0; // retail, buying expensive
   }
 
   // short: everything flips
@@ -73,13 +72,13 @@ export type IncomeTimeframe = "daily" | "weekly";
 /** What the total score says to do. */
 export type EntryType = "proximal" | "confirmation" | "no-trade";
 
-// Money helpers — prices round to the cent, and the stop buffer always
+// Money helpers, prices round to the cent, and the stop buffer always
 // rounds UP ("always round up when applicable").
 const roundToCent = (n: number) => Math.round(n * 100) / 100;
 const roundUpToCent = (n: number) => Math.ceil(n * 100 - 1e-9) / 100;
 
 /**
- * Scorecard factor #3 — PROFIT ZONE ratio.
+ * Scorecard factor #3, PROFIT ZONE ratio.
  *
  * How many times the entry zone's height fits into the distance between
  * the entry proximal and the target proximal. Bigger = more room to profit
@@ -91,7 +90,7 @@ export function profitZoneRatio(
   targetProximal: number,
 ): number {
   const zoneHeight = Math.abs(entryProximal - entryDistal);
-  if (zoneHeight === 0) return 0; // degenerate zone — no meaningful ratio
+  if (zoneHeight === 0) return 0; // degenerate zone, no meaningful ratio
   return Math.abs(targetProximal - entryProximal) / zoneHeight;
 }
 
@@ -105,7 +104,7 @@ export function profitZoneScore(ratio: number): number {
 /**
  * The user-judged factors and their assumed maximums.
  * ASSUMPTION (open question for Eugene): the README never states the point
- * split for strength/time/freshness — only that the whole card is out of 10
+ * split for strength/time/freshness, only that the whole card is out of 10
  * and the computed factors cap at 5. We assume strength 2, time 1,
  * freshness 2 until he confirms.
  */
@@ -148,7 +147,7 @@ const CONFIRMATION_OFFSET = 0.1;
 /**
  * The entry price. A proximal entry is a limit order right at the proximal
  * line. A confirmation entry waits for price to re-cross the proximal line,
- * so the order sits 10 cents past it (above for long, below for short —
+ * so the order sits 10 cents past it (above for long, below for short -
  * mirrored per the strategy).
  */
 export function entryPrice(
@@ -208,7 +207,7 @@ export function positionSize(maxRisk: number, riskPerShare: number): number {
 /**
  * Cap the position so its capital never exceeds 50% of the balance.
  * If it does, the adjusted size is 50% of balance / entry price, rounded
- * down — which lands on the same shares as Eugene's divide-then-divide
+ * down, which lands on the same shares as Eugene's divide-then-divide
  * method in his scenarios (Ford: 22 and 4, Lucid: 12).
  */
 export function applyCapitalCap(
@@ -264,9 +263,9 @@ export interface TradeInputs {
   timeframe: IncomeTimeframe;
   /** the asset's daily ATR, looked up by the user */
   atr: number;
-  /** HTF demand zone distal — bottom of the curve */
+  /** HTF demand zone distal, bottom of the curve */
   curveLow: number;
-  /** HTF supply zone distal — top of the curve */
+  /** HTF supply zone distal, top of the curve */
   curveHigh: number;
   entryProximal: number;
   entryDistal: number;
@@ -318,7 +317,7 @@ export interface TradeResult {
 
 /**
  * The orchestrator: all the inputs in, the full scored trade out.
- * Pure — no state, no side effects — so the UI can call it on every
+ * Pure, no state, no side effects, so the UI can call it on every
  * keystroke.
  */
 export function buildTrade(inputs: TradeInputs): TradeResult {

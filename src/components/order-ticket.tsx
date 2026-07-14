@@ -68,7 +68,7 @@ export function OrderTicket({
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm font-medium">
-          {verb} {o.positionSize} shares — {orderKind}
+          {verb} {o.positionSize} shares, {orderKind}
         </p>
         <Line label="Entry price" value={usd.format(o.entry)} strong />
         <Line label="Stop loss" value={usd.format(o.stop)} strong />

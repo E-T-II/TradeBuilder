@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks } from "lucide-react";
+import { Blocks, RotateCcw } from "lucide-react";
 import {
   buildTrade,
   type Direction,
@@ -18,7 +18,8 @@ import {
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
 import { RiskChecks } from "@/components/risk-checks";
-import { ScoreBar, ScoreChip } from "@/components/score-bar";
+import { Reveal } from "@/components/reveal";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -59,26 +60,6 @@ const initialState: FormState = {
   strength: "0",
   time: "0",
   freshness: "0",
-  openTradeRisk: "0",
-};
-
-const exampleState: FormState = {
-  accountBalance: "2500",
-  riskTolerance: "2",
-  targetBuffer: "75",
-  direction: "long",
-  trend: "uptrend",
-  timeframe: "daily",
-  atr: "4",
-  curveLow: "100",
-  curveHigh: "130",
-  entryProximal: "108",
-  entryDistal: "106",
-  targetProximal: "124",
-  targetDistal: "126",
-  strength: "1",
-  time: "0.5",
-  freshness: "1",
   openTradeRisk: "0",
 };
 
@@ -137,17 +118,14 @@ export function TradeBuilderApp() {
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Restore the last session after mount. This has to happen in an effect —
-  // localStorage doesn't exist during server rendering, and reading it in the
-  // initial state would make the server and client markup disagree.
+  // In an effect, not initial state: localStorage is client-only, so reading
+  // it during render would desync server and client markup.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
       if (stored) setForm({ ...initialState, ...JSON.parse(stored) });
-    } catch {
-      // ignore a corrupt or blocked store
-    }
+    } catch {}
   }, []);
 
   const update = (patch: Partial<FormState>) => {
@@ -155,9 +133,7 @@ export function TradeBuilderApp() {
       const next = { ...f, ...patch };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // storage may be unavailable (private mode) — the app still works
-      }
+      } catch {}
       return next;
     });
   };
@@ -171,20 +147,14 @@ export function TradeBuilderApp() {
   };
 
   const reachable = firstIncompleteStep(form);
-  const missing = missingFields(form);
   const inForm = step < RESULTS_STEP;
-  const viewResults = () => {
-    if (result) goToStep(RESULTS_STEP);
-  };
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Typeform-style top bar: brand left, step rail centered, live score
-          right. The rail and score are desktop-only; mobile keeps its own
-          progress strip and sticky score bar. */}
-      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b px-5 py-4 lg:px-8">
-        <span className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-          <Blocks className="size-5 text-primary" aria-hidden />
+      {/* Brand left, step rail center (desktop only), actions right. */}
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 px-5 py-4 lg:gap-10 lg:px-8">
+        <span className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight">
+          <Blocks className="size-5 shrink-0 text-primary" aria-hidden />
           Trade Builder
         </span>
         <div className="hidden lg:block">
@@ -192,76 +162,82 @@ export function TradeBuilderApp() {
             <TopStepper step={step} reachable={reachable} onJump={goToStep} />
           ) : null}
         </div>
-        <div className="hidden justify-end lg:flex">
+        <div className="flex items-center justify-end gap-2 lg:gap-3">
           {inForm ? (
-            <ScoreChip
-              result={result}
-              missingCount={missing}
-              onView={viewResults}
-            />
-          ) : null}
-        </div>
-      </header>
-
-      {inForm ? (
-        <div className="flex flex-1 flex-col pb-36 lg:justify-center lg:pb-0">
-          <TradeForm
-            form={form}
-            onChange={update}
-            step={step}
-            onBack={() => goToStep(Math.max(0, step - 1))}
-            onNext={() => goToStep(step + 1)}
-            onLoadExample={() => update(exampleState)}
-            onReset={() => {
-              update(initialState);
-              goToStep(0);
-            }}
-            showAdvanced={showAdvanced}
-            onToggleAdvanced={() => setShowAdvanced((s) => !s)}
-          />
-        </div>
-      ) : (
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
-          {result ? (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Scorecard result={result} />
-              <div className="flex flex-col gap-6">
-                <OrderTicket result={result} direction={form.direction} />
-                <RiskChecks result={result} />
-              </div>
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                Some inputs don&apos;t look like numbers — go back and check
-                them.
-              </CardContent>
-            </Card>
-          )}
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => goToStep(0)}>
-              Edit trade
-            </Button>
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 update(initialState);
                 goToStep(0);
               }}
+              aria-label="Reset"
             >
-              Start over
+              <RotateCcw aria-hidden />
+              <span className="hidden sm:inline">Reset</span>
             </Button>
-          </div>
+          ) : null}
+          <ThemeToggle />
         </div>
-      )}
+      </header>
 
-      {inForm ? (
-        <ScoreBar
-          result={result}
-          missingCount={missing}
-          onView={viewResults}
-        />
-      ) : null}
+      {/* Inset rounded panel on large screens; mobile is full-bleed. */}
+      <div className="flex flex-1 flex-col lg:px-4 lg:pb-4">
+        <div className="flex flex-1 flex-col lg:rounded-3xl lg:bg-neutral-200/60 dark:lg:bg-neutral-800/30">
+          {inForm ? (
+            <div className="flex flex-1 flex-col pb-24 lg:justify-center lg:pb-0">
+              <TradeForm
+                form={form}
+                onChange={update}
+                step={step}
+                onBack={() => goToStep(Math.max(0, step - 1))}
+                onNext={() => goToStep(step + 1)}
+                showAdvanced={showAdvanced}
+                onToggleAdvanced={() => setShowAdvanced((s) => !s)}
+              />
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
+              {result ? (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <Reveal>
+                    <Scorecard result={result} />
+                  </Reveal>
+                  <div className="flex flex-col gap-6">
+                    <Reveal delay={140}>
+                      <OrderTicket result={result} direction={form.direction} />
+                    </Reveal>
+                    <Reveal delay={240}>
+                      <RiskChecks result={result} />
+                    </Reveal>
+                  </div>
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                    Some inputs don&apos;t look like numbers. Go back and check
+                    them.
+                  </CardContent>
+                </Card>
+              )}
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => goToStep(0)}>
+                  Edit trade
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    update(initialState);
+                    goToStep(0);
+                  }}
+                >
+                  Start over
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
