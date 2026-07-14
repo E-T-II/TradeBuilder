@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { Button } from "@/components/ui/button";
@@ -15,13 +14,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
-import { Separator } from "@/components/ui/separator";
+
+export const STEPS = [
+  { title: "Account", blurb: "How much you're working with" },
+  { title: "Trade", blurb: "What you're trading and which way" },
+  { title: "Zones", blurb: "The price lines from your chart" },
+  { title: "Your judgment", blurb: "Score the zone quality yourself" },
+] as const;
+
+/** Required fields per step — Next stays disabled until these are filled. */
+export const STEP_FIELDS: (keyof FormState)[][] = [
+  ["accountBalance"],
+  ["atr"],
+  [
+    "curveLow",
+    "curveHigh",
+    "entryProximal",
+    "entryDistal",
+    "targetProximal",
+    "targetDistal",
+  ],
+  [],
+];
 
 interface TradeFormProps {
   form: FormState;
   onChange: (patch: Partial<FormState>) => void;
+  step: number;
+  onBack: () => void;
+  onNext: () => void;
   onLoadExample: () => void;
   onReset: () => void;
+  showAdvanced: boolean;
+  onToggleAdvanced: () => void;
 }
 
 function Field({
@@ -69,281 +94,322 @@ function PriceInput({
   );
 }
 
-function SectionTitle({ step, title }: { step: string; title: string }) {
-  return (
-    <h3 className="flex items-center gap-2 text-sm font-medium">
-      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-        {step}
-      </span>
-      {title}
-    </h3>
-  );
-}
-
 export function TradeForm({
   form,
   onChange,
+  step,
+  onBack,
+  onNext,
   onLoadExample,
   onReset,
+  showAdvanced,
+  onToggleAdvanced,
 }: TradeFormProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const remaining = STEP_FIELDS[step].filter(
+    (key) => form[key].trim() === "",
+  ).length;
+  const isLast = step === STEPS.length - 1;
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle>Build a trade</CardTitle>
-          <CardDescription>
-            Read your zones off the chart and enter them here — the score
-            updates as you go.
-          </CardDescription>
+    <Card className="flex min-h-[70svh] flex-col">
+      <CardHeader className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-muted-foreground">
+            Step {step + 1} of {STEPS.length}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onLoadExample}>
+              Load example
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onReset}>
+              Reset
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onLoadExample}>
-            Load example
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onReset}>
-            Reset
-          </Button>
+        <div className="flex gap-1.5">
+          {STEPS.map((s, i) => (
+            <div
+              key={s.title}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                i <= step ? "bg-primary" : "bg-muted"
+              }`}
+            />
+          ))}
+        </div>
+        <div>
+          <CardTitle className="text-xl">{STEPS[step].title}</CardTitle>
+          <CardDescription className="mt-1">
+            {STEPS[step].blurb}
+          </CardDescription>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <section className="space-y-4">
-          <SectionTitle step="1" title="Account" />
-          <Field
-            id="balance"
-            label="Account balance ($)"
-            hint="Your balance with your broker — sets every risk limit"
-          >
-            <Input
-              id="balance"
-              type="number"
-              min="0"
-              inputMode="decimal"
-              placeholder="600"
-              value={form.accountBalance}
-              onChange={(e) => onChange({ accountBalance: e.target.value })}
-            />
-          </Field>
-
-          <button
-            type="button"
-            className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-            onClick={() => setShowAdvanced((s) => !s)}
-          >
-            {showAdvanced ? "Hide" : "Show"} advanced settings
-          </button>
-
-          {showAdvanced ? (
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field id="risk" label="Risk per trade (%)" hint="2% max">
+      <CardContent className="flex flex-1 flex-col">
+        <div className="flex-1 space-y-5">
+          {step === 0 ? (
+            <>
+              <Field
+                id="balance"
+                label="Account balance ($)"
+                hint="Your balance with your broker — sets every risk limit"
+              >
                 <Input
-                  id="risk"
+                  id="balance"
                   type="number"
                   min="0"
-                  max="2"
-                  step="0.1"
                   inputMode="decimal"
-                  value={form.riskTolerance}
-                  onChange={(e) => onChange({ riskTolerance: e.target.value })}
+                  placeholder="600"
+                  value={form.accountBalance}
+                  onChange={(e) =>
+                    onChange({ accountBalance: e.target.value })
+                  }
                 />
               </Field>
-              <Field id="buffer" label="Target buffer (%)" hint="75 to 80%">
-                <Input
-                  id="buffer"
-                  type="number"
-                  min="0"
-                  max="100"
-                  inputMode="decimal"
-                  value={form.targetBuffer}
-                  onChange={(e) => onChange({ targetBuffer: e.target.value })}
+
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                onClick={onToggleAdvanced}
+              >
+                {showAdvanced ? "Hide" : "Show"} advanced settings
+              </button>
+
+              {showAdvanced ? (
+                <div className="space-y-5">
+                  <Field id="risk" label="Risk per trade (%)" hint="2% max">
+                    <Input
+                      id="risk"
+                      type="number"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={form.riskTolerance}
+                      onChange={(e) =>
+                        onChange({ riskTolerance: e.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id="buffer"
+                    label="Target buffer (%)"
+                    hint="75 to 80%"
+                  >
+                    <Input
+                      id="buffer"
+                      type="number"
+                      min="0"
+                      max="100"
+                      inputMode="decimal"
+                      value={form.targetBuffer}
+                      onChange={(e) =>
+                        onChange({ targetBuffer: e.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id="openRisk"
+                    label="Risk in open trades ($)"
+                    hint="For the 6% rule — 0 if this is your only trade"
+                  >
+                    <Input
+                      id="openRisk"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={form.openTradeRisk}
+                      onChange={(e) =>
+                        onChange({ openTradeRisk: e.target.value })
+                      }
+                    />
+                  </Field>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
+          {step === 1 ? (
+            <>
+              <Field id="direction" label="Direction">
+                <SegmentedControl
+                  aria-label="Direction"
+                  value={form.direction}
+                  options={[
+                    { value: "long", label: "Buy long" },
+                    { value: "short", label: "Sell short" },
+                  ]}
+                  onChange={(direction) => onChange({ direction })}
+                />
+              </Field>
+              <Field id="trend" label="Trend">
+                <SegmentedControl
+                  aria-label="Trend"
+                  value={form.trend}
+                  options={[
+                    { value: "uptrend", label: "Uptrend" },
+                    { value: "sideways", label: "Sideways" },
+                    { value: "downtrend", label: "Downtrend" },
+                  ]}
+                  onChange={(trend) => onChange({ trend })}
                 />
               </Field>
               <Field
-                id="openRisk"
-                label="Risk in open trades ($)"
-                hint="For the 6% rule — 0 if this is your only trade"
+                id="timeframe"
+                label="Income objective"
+                hint="Sets the stop buffer: 2% or 10% of ATR"
               >
-                <Input
-                  id="openRisk"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputMode="decimal"
-                  value={form.openTradeRisk}
-                  onChange={(e) => onChange({ openTradeRisk: e.target.value })}
+                <SegmentedControl
+                  aria-label="Income objective"
+                  value={form.timeframe}
+                  options={[
+                    { value: "daily", label: "Daily" },
+                    { value: "weekly", label: "Weekly +" },
+                  ]}
+                  onChange={(timeframe) => onChange({ timeframe })}
                 />
               </Field>
-            </div>
+              <Field
+                id="atr"
+                label="Daily ATR ($)"
+                hint="From finviz.com — 14-day average true range"
+              >
+                <PriceInput
+                  id="atr"
+                  placeholder="5.93"
+                  value={form.atr}
+                  onChange={(atr) => onChange({ atr })}
+                />
+              </Field>
+            </>
           ) : null}
-        </section>
 
-        <Separator />
+          {step === 2 ? (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  id="curveLow"
+                  label="Curve low ($)"
+                  hint="HTF demand zone distal line"
+                >
+                  <PriceInput
+                    id="curveLow"
+                    value={form.curveLow}
+                    onChange={(curveLow) => onChange({ curveLow })}
+                  />
+                </Field>
+                <Field
+                  id="curveHigh"
+                  label="Curve high ($)"
+                  hint="HTF supply zone distal line"
+                >
+                  <PriceInput
+                    id="curveHigh"
+                    value={form.curveHigh}
+                    onChange={(curveHigh) => onChange({ curveHigh })}
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  id="entryProximal"
+                  label="Entry proximal ($)"
+                  hint="The line you enter at"
+                >
+                  <PriceInput
+                    id="entryProximal"
+                    value={form.entryProximal}
+                    onChange={(entryProximal) => onChange({ entryProximal })}
+                  />
+                </Field>
+                <Field
+                  id="entryDistal"
+                  label="Entry distal ($)"
+                  hint="The far edge — your stop hides behind it"
+                >
+                  <PriceInput
+                    id="entryDistal"
+                    value={form.entryDistal}
+                    onChange={(entryDistal) => onChange({ entryDistal })}
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  id="targetProximal"
+                  label="Target proximal ($)"
+                  hint="Near edge of the zone you exit into"
+                >
+                  <PriceInput
+                    id="targetProximal"
+                    value={form.targetProximal}
+                    onChange={(targetProximal) =>
+                      onChange({ targetProximal })
+                    }
+                  />
+                </Field>
+                <Field id="targetDistal" label="Target distal ($)">
+                  <PriceInput
+                    id="targetDistal"
+                    value={form.targetDistal}
+                    onChange={(targetDistal) => onChange({ targetDistal })}
+                  />
+                </Field>
+              </div>
+            </>
+          ) : null}
 
-        <section className="space-y-4">
-          <SectionTitle step="2" title="Trade" />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="direction" label="Direction">
-              <SegmentedControl
-                aria-label="Direction"
-                value={form.direction}
-                options={[
-                  { value: "long", label: "Buy long" },
-                  { value: "short", label: "Sell short" },
-                ]}
-                onChange={(direction) => onChange({ direction })}
-              />
-            </Field>
-            <Field
-              id="timeframe"
-              label="Income objective"
-              hint="Sets the stop buffer: 2% or 10% of ATR"
-            >
-              <SegmentedControl
-                aria-label="Income objective"
-                value={form.timeframe}
-                options={[
-                  { value: "daily", label: "Daily" },
-                  { value: "weekly", label: "Weekly +" },
-                ]}
-                onChange={(timeframe) => onChange({ timeframe })}
-              />
-            </Field>
-          </div>
-          <Field id="trend" label="Trend">
-            <SegmentedControl
-              aria-label="Trend"
-              value={form.trend}
-              options={[
-                { value: "uptrend", label: "Uptrend" },
-                { value: "sideways", label: "Sideways" },
-                { value: "downtrend", label: "Downtrend" },
-              ]}
-              onChange={(trend) => onChange({ trend })}
-            />
-          </Field>
-          <Field
-            id="atr"
-            label="Daily ATR ($)"
-            hint="From finviz.com — 14-day average true range"
+          {step === 3 ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Score the entry zone from your own analysis per the trade
+                methodology.
+              </p>
+              <Field id="strength" label="Strength">
+                <RatingChips
+                  aria-label="Strength"
+                  value={Number(form.strength)}
+                  max={JUDGED_MAX.strength}
+                  onChange={(v) => onChange({ strength: String(v) })}
+                />
+              </Field>
+              <Field id="time" label="Time">
+                <RatingChips
+                  aria-label="Time"
+                  value={Number(form.time)}
+                  max={JUDGED_MAX.time}
+                  onChange={(v) => onChange({ time: String(v) })}
+                />
+              </Field>
+              <Field id="freshness" label="Freshness">
+                <RatingChips
+                  aria-label="Freshness"
+                  value={Number(form.freshness)}
+                  max={JUDGED_MAX.freshness}
+                  onChange={(v) => onChange({ freshness: String(v) })}
+                />
+              </Field>
+            </>
+          ) : null}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            disabled={step === 0}
+            className={step === 0 ? "invisible" : ""}
           >
-            <PriceInput
-              id="atr"
-              placeholder="5.93"
-              value={form.atr}
-              onChange={(atr) => onChange({ atr })}
-            />
-          </Field>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-4">
-          <SectionTitle step="3" title="Zones" />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              id="curveLow"
-              label="Curve low ($)"
-              hint="HTF demand zone distal line"
-            >
-              <PriceInput
-                id="curveLow"
-                value={form.curveLow}
-                onChange={(curveLow) => onChange({ curveLow })}
-              />
-            </Field>
-            <Field
-              id="curveHigh"
-              label="Curve high ($)"
-              hint="HTF supply zone distal line"
-            >
-              <PriceInput
-                id="curveHigh"
-                value={form.curveHigh}
-                onChange={(curveHigh) => onChange({ curveHigh })}
-              />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              id="entryProximal"
-              label="Entry proximal ($)"
-              hint="The line you enter at"
-            >
-              <PriceInput
-                id="entryProximal"
-                value={form.entryProximal}
-                onChange={(entryProximal) => onChange({ entryProximal })}
-              />
-            </Field>
-            <Field
-              id="entryDistal"
-              label="Entry distal ($)"
-              hint="The far edge — your stop hides behind it"
-            >
-              <PriceInput
-                id="entryDistal"
-                value={form.entryDistal}
-                onChange={(entryDistal) => onChange({ entryDistal })}
-              />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              id="targetProximal"
-              label="Target proximal ($)"
-              hint="Near edge of the zone you exit into"
-            >
-              <PriceInput
-                id="targetProximal"
-                value={form.targetProximal}
-                onChange={(targetProximal) => onChange({ targetProximal })}
-              />
-            </Field>
-            <Field id="targetDistal" label="Target distal ($)">
-              <PriceInput
-                id="targetDistal"
-                value={form.targetDistal}
-                onChange={(targetDistal) => onChange({ targetDistal })}
-              />
-            </Field>
-          </div>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-4">
-          <SectionTitle step="4" title="Your judgment" />
-          <p className="text-xs text-muted-foreground">
-            Score the entry zone from your own analysis per the trade
-            methodology.
-          </p>
-          <Field id="strength" label="Strength">
-            <RatingChips
-              aria-label="Strength"
-              value={Number(form.strength)}
-              max={JUDGED_MAX.strength}
-              onChange={(v) => onChange({ strength: String(v) })}
-            />
-          </Field>
-          <Field id="time" label="Time">
-            <RatingChips
-              aria-label="Time"
-              value={Number(form.time)}
-              max={JUDGED_MAX.time}
-              onChange={(v) => onChange({ time: String(v) })}
-            />
-          </Field>
-          <Field id="freshness" label="Freshness">
-            <RatingChips
-              aria-label="Freshness"
-              value={Number(form.freshness)}
-              max={JUDGED_MAX.freshness}
-              onChange={(v) => onChange({ freshness: String(v) })}
-            />
-          </Field>
-        </section>
+            Back
+          </Button>
+          <Button onClick={onNext} disabled={remaining > 0} size="lg">
+            {remaining > 0
+              ? `${remaining} field${remaining === 1 ? "" : "s"} left`
+              : isLast
+                ? "See my trade"
+                : "Next"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

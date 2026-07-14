@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildTrade,
   type Direction,
@@ -8,11 +8,12 @@ import {
   type TradeInputs,
   type Trend,
 } from "@/lib/trade-builder";
-import { TradeForm } from "@/components/trade-form";
+import { STEPS, TradeForm } from "@/components/trade-form";
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
 import { RiskChecks } from "@/components/risk-checks";
 import { ScoreBar } from "@/components/score-bar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface FormState {
@@ -123,9 +124,12 @@ function toInputs(form: FormState): TradeInputs | null {
   };
 }
 
+const RESULTS_STEP = STEPS.length;
+
 export function TradeBuilderApp() {
   const [form, setForm] = useState<FormState>(initialState);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState(0);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Restore the last session after mount. This has to happen in an effect —
   // localStorage doesn't exist during server rendering, and reading it in the
@@ -155,39 +159,70 @@ export function TradeBuilderApp() {
   const inputs = useMemo(() => toInputs(form), [form]);
   const result = useMemo(() => (inputs ? buildTrade(inputs) : null), [inputs]);
 
+  const goToStep = (next: number) => {
+    setStep(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <div className="grid gap-6 pb-16 lg:grid-cols-[minmax(0,1fr)_400px] lg:pb-0">
-      <TradeForm
-        form={form}
-        onChange={update}
-        onLoadExample={() => update(exampleState)}
-        onReset={() => update(initialState)}
-      />
+    <div className="mx-auto w-full max-w-2xl pb-16">
+      {step < RESULTS_STEP ? (
+        <TradeForm
+          form={form}
+          onChange={update}
+          step={step}
+          onBack={() => goToStep(Math.max(0, step - 1))}
+          onNext={() => goToStep(step + 1)}
+          onLoadExample={() => update(exampleState)}
+          onReset={() => {
+            update(initialState);
+            goToStep(0);
+          }}
+          showAdvanced={showAdvanced}
+          onToggleAdvanced={() => setShowAdvanced((s) => !s)}
+        />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {result ? (
+            <>
+              <Scorecard result={result} />
+              <OrderTicket result={result} direction={form.direction} />
+              <RiskChecks result={result} />
+            </>
+          ) : (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                Some inputs don&apos;t look like numbers — go back and check
+                them.
+              </CardContent>
+            </Card>
+          )}
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => goToStep(0)}>
+              Edit trade
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                update(initialState);
+                goToStep(0);
+              }}
+            >
+              Start over
+            </Button>
+          </div>
+        </div>
+      )}
 
-      <div ref={resultsRef} className="flex flex-col gap-6">
-        {result ? (
-          <>
-            <Scorecard result={result} />
-            <OrderTicket result={result} direction={form.direction} />
-            <RiskChecks result={result} />
-          </>
-        ) : (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Fill in the trade details to score it. The results update as you
-              type.
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <ScoreBar
-        result={result}
-        missingCount={missingFields(form)}
-        onView={() =>
-          resultsRef.current?.scrollIntoView({ behavior: "smooth" })
-        }
-      />
+      {step < RESULTS_STEP ? (
+        <ScoreBar
+          result={result}
+          missingCount={missingFields(form)}
+          onView={() => {
+            if (result) goToStep(RESULTS_STEP);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
