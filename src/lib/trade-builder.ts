@@ -130,10 +130,12 @@ export function totalScore(factors: {
 }
 
 /**
- * Score -> entry type.
- *   8.5 to 10 = proximal entry, 7 to 8 = confirmation entry, below 7 = no trade.
- * ASSUMPTION: the README leaves 8 to 8.5 undefined; we treat everything from
- * 7 up to (not including) 8.5 as a confirmation entry until Eugene confirms.
+ * Score -> entry type: 8.5 and up is a proximal entry, 7 up to 8.5 is a
+ * confirmation entry, below 7 is no trade. The README labels 7 to 8 and
+ * 8.5 to 10 and seems to skip 8 to 8.5, but that band is unreachable: every
+ * factor moves in 0.5 steps, so the total does too. The score steps straight
+ * from 8.0 (confirmation) to 8.5 (proximal) with nothing in between.
+ * (Confirmed by Eugene.)
  */
 export function entryType(score: number): EntryType {
   if (score >= 8.5) return "proximal";
