@@ -102,11 +102,9 @@ export function profitZoneScore(ratio: number): number {
 }
 
 /**
- * The user-judged factors and their assumed maximums.
- * ASSUMPTION (open question for Eugene): the README never states the point
- * split for strength/time/freshness, only that the whole card is out of 10
- * and the computed factors cap at 5. We assume strength 2, time 1,
- * freshness 2 until he confirms.
+ * The user-judged factors and their maximums: strength 2, time 1,
+ * freshness 2. Confirmed by Eugene, and matches the computed factors
+ * (curve 1, trend 2, profit zone 2) adding up to 10 in total.
  */
 export const JUDGED_MAX = { strength: 2, time: 1, freshness: 2 } as const;
 
@@ -273,7 +271,7 @@ export interface TradeInputs {
   entryDistal: number;
   targetProximal: number;
   targetDistal: number;
-  /** user-judged odds enhancers (see JUDGED_MAX for assumed ranges) */
+  /** user-judged odds enhancers (see JUDGED_MAX for the confirmed ranges) */
   strength: number;
   time: number;
   freshness: number;
