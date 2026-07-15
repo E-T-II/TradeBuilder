@@ -101,11 +101,7 @@ export function profitZoneScore(ratio: number): number {
   return 0;
 }
 
-/**
- * The user-judged factors and their maximums: strength 2, time 1,
- * freshness 2. Confirmed by Eugene, and matches the computed factors
- * (curve 1, trend 2, profit zone 2) adding up to 10 in total.
- */
+/** The user-judged factors and their maximums. Confirmed by Eugene. */
 export const JUDGED_MAX = { strength: 2, time: 1, freshness: 2 } as const;
 
 /** Sum the six odds enhancers into the total score out of 10. */
@@ -129,11 +125,9 @@ export function totalScore(factors: {
 
 /**
  * Score -> entry type: 8.5 and up is a proximal entry, 7 up to 8.5 is a
- * confirmation entry, below 7 is no trade. The README labels 7 to 8 and
- * 8.5 to 10 and seems to skip 8 to 8.5, but that band is unreachable: every
- * factor moves in 0.5 steps, so the total does too. The score steps straight
- * from 8.0 (confirmation) to 8.5 (proximal) with nothing in between.
- * (Confirmed by Eugene.)
+ * confirmation entry, below 7 is no trade. The README's 7-to-8 and 8.5-to-10
+ * labels look like they skip 8 to 8.5, but every factor moves in 0.5 steps,
+ * so a score there is impossible. Confirmed by Eugene.
  */
 export function entryType(score: number): EntryType {
   if (score >= 8.5) return "proximal";
