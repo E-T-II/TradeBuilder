@@ -27,7 +27,7 @@ the difference between the entry price and the stop loss establishes the risk on
 the trade builder takes the risk on the trade and determines how many shares/contracts the user may purchase based on the users pre-defined risk tolerance of up to 2% of their account balance before determining the capital requirement.
 if the captial requirement exceeds 50% of the users account balance the position size is automatically adjusted to meet this requirement.
 the trade builder evaluates the profit zone (distance between entry zone proximal line and target zone proximal line) and sets a target to exit the trade based on the users pre-defined target buffer of 75 to 80%.
-the trade builder informs the user of their entry price, stop loss price, and sell limit price so the user may place the final order to their broker.
+the trade builder informs the user of their Stop Loss price, Entry price, Sell limit price, and Size of their Position (S.E.T.S.) so the user may place the final order to their broker.
 
 the trade builder is based on the following risk management rules contained in the Engineered Risk Trading Strategy
 
