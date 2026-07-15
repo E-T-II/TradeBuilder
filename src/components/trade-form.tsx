@@ -12,6 +12,7 @@ import {
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
+import { validateZones } from "@/lib/validate-zones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,12 +66,14 @@ function Field({
   label,
   hint,
   group,
+  error,
   children,
 }: {
   id: string;
   label: string;
   hint?: string;
   group?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -79,7 +82,13 @@ function Field({
         {label}
       </Label>
       {children}
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {error ? (
+        <p id={`${id}-error`} className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : hint ? (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }
@@ -108,11 +117,13 @@ function NumberInput({
   value,
   onChange,
   placeholder,
+  invalid,
 }: {
   id: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  invalid?: boolean;
 }) {
   return (
     <Input
@@ -120,10 +131,43 @@ function NumberInput({
       type="text"
       inputMode="decimal"
       autoComplete="off"
+      aria-invalid={invalid || undefined}
+      aria-describedby={invalid ? `${id}-error` : undefined}
       placeholder={placeholder}
       value={formatNumber(value)}
       onChange={(e) => onChange(sanitizeNumber(e.target.value))}
     />
+  );
+}
+
+// A price input wired to a Field, with an optional geometry error.
+function PriceField({
+  id,
+  label,
+  hint,
+  value,
+  onChange,
+  error,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  placeholder?: string;
+}) {
+  return (
+    <Field id={id} label={label} hint={hint} error={error}>
+      <NumberInput
+        id={id}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        invalid={!!error}
+      />
+    </Field>
   );
 }
 
@@ -201,6 +245,14 @@ export function TradeForm({
     (key) => form[key].trim() === "",
   ).length;
   const isLast = step === STEPS.length - 1;
+  const long = form.direction === "long";
+
+  // Zone geometry errors block advancing once the user is on the Zones step
+  // (index 2) or beyond, so a nonsensical setup can't reach the results.
+  const zoneErrors = validateZones(form);
+  const hasZoneErrors = Object.keys(zoneErrors).length > 0;
+  const blockedByZones = hasZoneErrors && step >= 2;
+  const disableNext = remaining > 0 || blockedByZones;
 
   // Move focus to the new step's heading so keyboard and screen-reader users
   // aren't stranded on the old Next button. Skip the initial mount.
@@ -390,72 +442,56 @@ export function TradeForm({
         {step === 2 ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field
+              <PriceField
                 id="curveLow"
                 label="Curve low ($)"
                 hint="HTF demand zone distal line"
-              >
-                <NumberInput
-                  id="curveLow"
-                  value={form.curveLow}
-                  onChange={(curveLow) => onChange({ curveLow })}
-                />
-              </Field>
-              <Field
+                value={form.curveLow}
+                onChange={(curveLow) => onChange({ curveLow })}
+              />
+              <PriceField
                 id="curveHigh"
                 label="Curve high ($)"
                 hint="HTF supply zone distal line"
-              >
-                <NumberInput
-                  id="curveHigh"
-                  value={form.curveHigh}
-                  onChange={(curveHigh) => onChange({ curveHigh })}
-                />
-              </Field>
+                value={form.curveHigh}
+                onChange={(curveHigh) => onChange({ curveHigh })}
+                error={zoneErrors.curveHigh}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field
+              <PriceField
                 id="entryProximal"
                 label="Entry proximal ($)"
                 hint="The line you enter at"
-              >
-                <NumberInput
-                  id="entryProximal"
-                  value={form.entryProximal}
-                  onChange={(entryProximal) => onChange({ entryProximal })}
-                />
-              </Field>
-              <Field
+                value={form.entryProximal}
+                onChange={(entryProximal) => onChange({ entryProximal })}
+              />
+              <PriceField
                 id="entryDistal"
                 label="Entry distal ($)"
-                hint="The far edge, where your stop sits"
-              >
-                <NumberInput
-                  id="entryDistal"
-                  value={form.entryDistal}
-                  onChange={(entryDistal) => onChange({ entryDistal })}
-                />
-              </Field>
+                hint={`Far edge, ${long ? "below" : "above"} the proximal (stop goes here)`}
+                value={form.entryDistal}
+                onChange={(entryDistal) => onChange({ entryDistal })}
+                error={zoneErrors.entryDistal}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field
+              <PriceField
                 id="targetProximal"
                 label="Target proximal ($)"
-                hint="Near edge of the zone you exit into"
-              >
-                <NumberInput
-                  id="targetProximal"
-                  value={form.targetProximal}
-                  onChange={(targetProximal) => onChange({ targetProximal })}
-                />
-              </Field>
-              <Field id="targetDistal" label="Target distal ($)">
-                <NumberInput
-                  id="targetDistal"
-                  value={form.targetDistal}
-                  onChange={(targetDistal) => onChange({ targetDistal })}
-                />
-              </Field>
+                hint={`Near edge of the target zone, ${long ? "above" : "below"} your entry`}
+                value={form.targetProximal}
+                onChange={(targetProximal) => onChange({ targetProximal })}
+                error={zoneErrors.targetProximal}
+              />
+              <PriceField
+                id="targetDistal"
+                label="Target distal ($)"
+                hint="Far edge of the target zone"
+                value={form.targetDistal}
+                onChange={(targetDistal) => onChange({ targetDistal })}
+                error={zoneErrors.targetDistal}
+              />
             </div>
           </>
         ) : null}
@@ -515,6 +551,15 @@ export function TradeForm({
         ) : null}
       </div>
 
+      {/* On the last step the erroring zone fields aren't visible, so point
+          the user back to fix them. */}
+      {isLast && hasZoneErrors ? (
+        <p className="mt-6 text-center text-xs text-destructive">
+          Some zone values are inconsistent. Go back to Zones to fix the
+          highlighted fields.
+        </p>
+      ) : null}
+
       {/* On mobile the footer sits behind the fixed action bar, so repeat it
           inline here for small screens. */}
       <p className="mt-10 text-center text-xs text-muted-foreground lg:hidden">
@@ -537,16 +582,18 @@ export function TradeForm({
         </Button>
         <Button
           onClick={onNext}
-          disabled={remaining > 0}
+          disabled={disableNext}
           size="lg"
           className="flex-1 lg:flex-none"
         >
           {remaining > 0
             ? `${remaining} field${remaining === 1 ? "" : "s"} left`
-            : isLast
-              ? "See my trade"
-              : "Next"}
-          {remaining === 0 ? <ArrowRight aria-hidden /> : null}
+            : blockedByZones
+              ? "Check the highlighted values"
+              : isLast
+                ? "See my trade"
+                : "Next"}
+          {!disableNext ? <ArrowRight aria-hidden /> : null}
         </Button>
       </div>
     </div>
