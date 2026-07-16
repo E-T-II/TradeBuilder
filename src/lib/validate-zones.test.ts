@@ -25,7 +25,7 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   ...overrides,
 });
 
-describe("given the zone validator", () => {
+describe("validateZones()", () => {
   test("given a valid long setup: should report no errors", () => {
     const actual = validateZones(form());
     expect(actual).toEqual({});
