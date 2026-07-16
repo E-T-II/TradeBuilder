@@ -1,8 +1,8 @@
 # How the calculator reads a chart
 
-Notes on what the Trade Builder actually does with the numbers. The example below is a long trade on a stock whose curve runs from 100 to 130.
+Notes on what the Trade Builder actually does with the numbers. The example below is a long trade on a stock whose curve runs from 100 to 130. It assumes the setup scored 8.5 or higher, a proximal entry, so you buy right at the proximal line (108).
 
-![price map](./price-map.svg)
+![Vertical price chart from 100 to 130, split into wholesale, equilibrium and retail thirds, with a demand zone at 106 to 108 where you buy, a stop just below at 105.92, and a target of 120 below the supply zone at 124 to 126](./price-map.svg)
 
 ## Two steps
 
@@ -52,7 +52,7 @@ buffer = ATR x 2% = 4 x 0.02 = 0.08
 stop   = 106 - 0.08 = 105.92
 ```
 
-Daily trades use 2% of ATR, weekly or longer use 10%. The gap here is tiny, which is why the stop line on the diagram is drawn a bit lower than scale so you can see it.
+Daily trades use 2% of ATR, weekly or longer use 10%. The gap here is tiny, so on the diagram the stop sits right up against the distal line.
 
 Risk per share is just entry minus stop: 108 - 105.92 = 2.08.
 
@@ -73,10 +73,12 @@ reward against risk = 12 / 2.08 = about 5.8 to 1
 
 Well above the 3 to 1 minimum the strategy asks for.
 
+If it had instead scored a confirmation entry (7 to just under 8.5), you would buy 10 cents higher at 108.10. That makes risk 2.18, reward 11.90, and reward against risk about 5.5 to 1.
+
 ## Where the inputs come from
 
 The calculator does not work out the zone lines. You read them off the chart and type them in. How you draw the zone (which candles, body or wick) is part of the trading method, not the app.
 
 ## Still to cover
 
-This is the build the order half. The other half is the scorecard: six odds enhancers (curve, trend, profit zone, plus my own strength, time and freshness reads) that add up to the score out of 10. 8.5 and up is a proximal entry, 7 to 8.5 is a confirmation entry, below 7 is no trade.
+This is the build the order half. The other half is the scorecard: six odds enhancers (curve, trend, profit zone, plus my own strength, time and freshness reads) that add up to the score out of 10. 8.5 and up is a proximal entry, 7 to just under 8.5 is a confirmation entry, below 7 is no trade.
