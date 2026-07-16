@@ -356,6 +356,46 @@ describe("given buildTrade for a mirrored short trade", () => {
   });
 });
 
+describe("given buildTrade with a zone gap tighter than the confirmation offset", () => {
+  // Same zones throughout; only the judged score changes the entry type, which
+  // is what flips a valid proximal trade into an impossible confirmation one.
+  const tight: TradeInputs = {
+    accountBalance: 5000,
+    riskTolerancePct: 0.02,
+    targetBufferPct: 0.75,
+    direction: "long",
+    trend: "uptrend",
+    timeframe: "daily",
+    atr: 0.5,
+    curveLow: 100,
+    curveHigh: 130,
+    entryProximal: 100,
+    entryDistal: 99.99,
+    targetProximal: 100.1,
+    targetDistal: 101,
+    strength: 1,
+    time: 0.5,
+    freshness: 0.5, // judged 2 -> total 7, a confirmation entry
+  };
+
+  test("given a confirmation entry whose buffered target lands past the entry: should reject the order", () => {
+    const result = buildTrade(tight);
+    expect(result.entryType).toBe("confirmation");
+    // Entry 100.10, target 100.07: exit on the wrong side, so no order.
+    expect(result.order).toBeNull();
+    expect(result.checks).toBeNull();
+  });
+
+  test("given the same zones scoring a proximal entry: should still produce a valid order", () => {
+    // Bump the judged score to 8.5 so the entry sits on the proximal line.
+    const result = buildTrade({ ...tight, strength: 2, time: 1, freshness: 0.5 });
+    expect(result.entryType).toBe("proximal");
+    expect(result.order?.entry).toBe(100);
+    expect(result.order?.target).toBe(100.07);
+    expect(result.order && result.order.target > result.order.entry).toBe(true);
+  });
+});
+
 describe("given buildTrade and the 6% multiple-trade rule", () => {
   test("given open risk that would exceed 6%: should flag the multi-trade check", () => {
     // $600 account -> $36 limit. This trade risks ~$11 on its own.

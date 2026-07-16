@@ -41,12 +41,16 @@ export function OrderTicket({
   direction: Direction;
 }) {
   if (!result.order) {
+    // Two ways to land here: the score didn't qualify, or it did but the zones
+    // are so tight the target ends up on the wrong side of the entry.
+    const scoredButInvalid = result.entryType !== "no-trade";
     return (
       <Alert>
         <AlertTitle>No trade</AlertTitle>
         <AlertDescription>
-          The score is below 7, so this setup doesn&apos;t qualify. If we did
-          not score the trade, we will not take the trade.
+          {scoredButInvalid
+            ? "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones."
+            : "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade."}
         </AlertDescription>
       </Alert>
     );

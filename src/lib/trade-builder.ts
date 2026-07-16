@@ -367,6 +367,17 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     inputs.targetBufferPct,
     inputs.direction,
   );
+
+  // A tight zone plus the confirmation offset can push the computed entry past
+  // the computed target, leaving an order whose exit sits on the wrong side of
+  // the entry. That is not a tradeable setup, so return no order even though the
+  // score qualified. entryType stays set so the results can explain why.
+  const targetClears =
+    inputs.direction === "long" ? target > entry : target < entry;
+  if (!targetClears) {
+    return { scorecard, entryType: type, order: null, checks: null };
+  }
+
   const rr = rewardRiskRatio(entry, stop, target);
   const capital = roundToCent(size * entry);
   const totalRisk = roundToCent(size * riskPerShare);
