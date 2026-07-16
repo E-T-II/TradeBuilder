@@ -159,16 +159,27 @@ export function Scorecard({ result }: { result: TradeResult }) {
     <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
   ];
 
+  // The score can qualify while the zones are too tight to make a real trade
+  // (buildTrade returns no order). Show that as its own neutral state instead of
+  // an entry-type badge that would contradict the "no trade" order panel.
+  const noValidTrade = result.order === null && result.entryType !== "no-trade";
+  const badgeLabel = noValidTrade
+    ? "No valid trade"
+    : entryTypeLabel[result.entryType];
+  const badgeClasses = noValidTrade
+    ? "bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+    : entryTypeClasses[result.entryType];
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Odds enhancers</CardTitle>
         <Badge
-          className={`${entryTypeClasses[result.entryType]} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${
+          className={`${badgeClasses} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${
             shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
           }`}
         >
-          {entryTypeLabel[result.entryType]}
+          {badgeLabel}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -189,11 +200,13 @@ export function Scorecard({ result }: { result: TradeResult }) {
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full ${
-                  result.entryType === "proximal"
-                    ? "bg-emerald-500"
-                    : result.entryType === "confirmation"
-                      ? "bg-amber-500"
-                      : "bg-red-500"
+                  noValidTrade
+                    ? "bg-neutral-400 dark:bg-neutral-500"
+                    : result.entryType === "proximal"
+                      ? "bg-emerald-500"
+                      : result.entryType === "confirmation"
+                        ? "bg-amber-500"
+                        : "bg-red-500"
                 }`}
                 style={{ width: `${barWidth}%` }}
               />
