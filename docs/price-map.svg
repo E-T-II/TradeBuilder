@@ -36,7 +36,7 @@
   <rect x="175" y="101" width="230" height="25" fill="rgba(34,197,94,0.14)" stroke="rgba(34,197,94,0.7)" stroke-width="1" stroke-dasharray="4 3"/>
   <text x="460" y="99" font-size="11.5" fill="currentColor">Target distal = 126</text>
   <text x="460" y="130" font-size="11.5" fill="currentColor">Target proximal = 124</text>
-  <text x="185" y="117" font-size="10.5" fill="currentColor" opacity="0.6">supply zone</text>
+  <text x="300" y="117" font-size="10.5" fill="currentColor" opacity="0.6">supply zone</text>
 
   <!-- target price line -->
   <line x1="120" y1="177" x2="405" y2="177" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4"/>
