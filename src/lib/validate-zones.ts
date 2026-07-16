@@ -1,4 +1,5 @@
 import type { FormState } from "@/components/trade-builder-app";
+import { entryPrice, targetPrice } from "./trade-builder";
 
 // Fields that can carry a geometry error.
 export type ZoneErrorField =
@@ -49,6 +50,24 @@ export function validateZones(form: FormState): ZoneErrors {
       errors.targetProximal = "For a long, the target should be above the entry.";
     } else if (!long && targetProximal >= entryProximal) {
       errors.targetProximal = "For a short, the target should be below the entry.";
+    } else {
+      // Direction is right, but a tight zone plus the confirmation offset can
+      // still flip the numbers the engine actually produces. Check the rounded
+      // entry and target for the worst case, a confirmation entry.
+      const b = toNumber(form.targetBuffer);
+      const bufferPct = (b !== null && b > 0 ? Math.min(b, 100) : 75) / 100;
+      const worstEntry = entryPrice(entryProximal, "confirmation", form.direction)!;
+      const target = targetPrice(
+        entryProximal,
+        targetProximal,
+        bufferPct,
+        form.direction,
+      );
+      const clears = long ? target > worstEntry : target < worstEntry;
+      if (!clears) {
+        errors.targetProximal =
+          "This target zone is too close; after the buffer the exit lands on the wrong side of the entry.";
+      }
     }
   }
 
