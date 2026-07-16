@@ -136,7 +136,8 @@ describe("entryType", () => {
   it("calls for a confirmation entry from 7 up to 8.5", () => {
     expect(entryType(7)).toBe("confirmation");
     expect(entryType(8)).toBe("confirmation");
-    // 8 to 8.5 is undefined in the README; treated as confirmation for now
+    // 8.4 can't come off a real scorecard (0.5 steps), but the function
+    // still maps anything in this range to confirmation
     expect(entryType(8.4)).toBe("confirmation");
   });
 

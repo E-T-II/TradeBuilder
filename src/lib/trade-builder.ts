@@ -101,13 +101,7 @@ export function profitZoneScore(ratio: number): number {
   return 0;
 }
 
-/**
- * The user-judged factors and their assumed maximums.
- * ASSUMPTION (open question for Eugene): the README never states the point
- * split for strength/time/freshness, only that the whole card is out of 10
- * and the computed factors cap at 5. We assume strength 2, time 1,
- * freshness 2 until he confirms.
- */
+/** The user-judged factors and their maximums. Confirmed by Eugene. */
 export const JUDGED_MAX = { strength: 2, time: 1, freshness: 2 } as const;
 
 /** Sum the six odds enhancers into the total score out of 10. */
@@ -130,10 +124,12 @@ export function totalScore(factors: {
 }
 
 /**
- * Score -> entry type.
- *   8.5 to 10 = proximal entry, 7 to 8 = confirmation entry, below 7 = no trade.
- * ASSUMPTION: the README leaves 8 to 8.5 undefined; we treat everything from
- * 7 up to (not including) 8.5 as a confirmation entry until Eugene confirms.
+ * Score -> entry type: 8.5 and up is a proximal entry, 7 up to 8.5 is a
+ * confirmation entry, below 7 is no trade. The README's 7-to-8 and 8.5-to-10
+ * labels look like they skip 8 to 8.5, but a real scorecard can't land there:
+ * every factor moves in 0.5 steps, so the total does too. (The function itself
+ * takes any number; that 0.5 spacing comes from the scored inputs.) Confirmed
+ * by Eugene.
  */
 export function entryType(score: number): EntryType {
   if (score >= 8.5) return "proximal";
@@ -271,7 +267,7 @@ export interface TradeInputs {
   entryDistal: number;
   targetProximal: number;
   targetDistal: number;
-  /** user-judged odds enhancers (see JUDGED_MAX for assumed ranges) */
+  /** user-judged odds enhancers (see JUDGED_MAX for the confirmed ranges) */
   strength: number;
   time: number;
   freshness: number;
