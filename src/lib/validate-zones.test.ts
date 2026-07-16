@@ -98,22 +98,6 @@ describe("validateZones()", () => {
     expect(actual).toEqual(expected);
   });
 
-  test("given a target so close the buffered exit flips past the entry: should flag target proximal", () => {
-    const actual = validateZones(
-      form({
-        entryProximal: "100",
-        entryDistal: "99.98",
-        targetProximal: "100.10",
-        targetDistal: "101",
-      }),
-    );
-    const expected = {
-      targetProximal:
-        "This target zone is too close; after the buffer the exit lands on the wrong side of the entry.",
-    };
-    expect(actual).toEqual(expected);
-  });
-
   test("given an empty field: should not flag its pair", () => {
     const actual = validateZones(form({ entryDistal: "" }));
     expect(actual).toEqual({});

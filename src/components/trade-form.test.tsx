@@ -68,19 +68,24 @@ describe("given the Zones step guard", () => {
       name: /check the highlighted values/i,
     });
     expect(blocked).toBeDisabled();
-    expect(
-      screen.getByText(/entry distal should be above the proximal/i),
-    ).toBeInTheDocument();
+
+    // The error is wired to the field, not just rendered somewhere: the input
+    // is marked invalid and exposes the message as its accessible description.
+    const entryDistal = screen.getByLabelText("Entry distal ($)");
+    expect(entryDistal).toHaveAttribute("aria-invalid", "true");
+    expect(entryDistal).toHaveAccessibleDescription(
+      /entry distal should be above the proximal/i,
+    );
 
     // Correct the entry distal so the geometry is valid for a short.
-    const entryDistal = screen.getByLabelText("Entry distal ($)");
     await user.clear(entryDistal);
     await user.type(entryDistal, "126");
 
-    // The error clears and Next both enables and advances the wizard.
+    // The error clears, and with it the invalid state and description.
     expect(
       screen.queryByText(/entry distal should be above the proximal/i),
     ).not.toBeInTheDocument();
+    expect(entryDistal).not.toHaveAttribute("aria-invalid");
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).toBeEnabled();
 
