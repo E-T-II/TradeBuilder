@@ -126,8 +126,10 @@ export function totalScore(factors: {
 /**
  * Score -> entry type: 8.5 and up is a proximal entry, 7 up to 8.5 is a
  * confirmation entry, below 7 is no trade. The README's 7-to-8 and 8.5-to-10
- * labels look like they skip 8 to 8.5, but every factor moves in 0.5 steps,
- * so a score there is impossible. Confirmed by Eugene.
+ * labels look like they skip 8 to 8.5, but a real scorecard can't land there:
+ * every factor moves in 0.5 steps, so the total does too. (The function itself
+ * takes any number; that 0.5 spacing comes from the scored inputs.) Confirmed
+ * by Eugene.
  */
 export function entryType(score: number): EntryType {
   if (score >= 8.5) return "proximal";
