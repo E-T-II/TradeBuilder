@@ -13,12 +13,10 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
   2) Check the Trend on the Intermediary Time Frame (ITF): the user identifies the trend; Uptrend, Sideways trend, or Downtrend.
   3) Identify Zones on the Low Time Frame (LTF) using the five-step zoning process: user inputs the proximal and distal lines of the supply and demand zones
      Steps 1, 2 & 3 combined, determine the trade objective based on a Decision Matrix. Buy Long or Sell Short?
+     ******
      	a) a supply zone high on the curve in a downtrend = Sell Short
-     *
      	b) a supply zone high on the curve in a sideways trend = Sell Short
-     *
      	c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is greater than or equal to 5:1
-     *
      ******
      	d) a demand zone high on the curve in a downtrend = No trade
      	e) a demand zone high on the curve in a sideways trend = No trade
