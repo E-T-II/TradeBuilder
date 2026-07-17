@@ -6,6 +6,7 @@ the user defines their income objective/trading purpose. will the High Time Fram
 
 pre-steps:
 input asset daily ATR
+
 input account balance
 
 Six-Step Process Flowchart: trade builder takes basic input the user identifies from the chart using trade methodology in six steps
