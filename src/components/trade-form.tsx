@@ -322,19 +322,27 @@ export function TradeForm({
 
             {showAdvanced ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field id="risk" label="Risk per trade (%)" hint="2% max">
+                <Field
+                  id="risk"
+                  label="Risk per trade (%)"
+                  hint="2% recommended; higher overrides the rule"
+                >
                   <Input
                     id="risk"
                     type="number"
                     min="0"
-                    max="2"
+                    max="100"
                     step="0.1"
                     inputMode="decimal"
                     value={form.riskTolerance}
                     onChange={(e) => onChange({ riskTolerance: e.target.value })}
                   />
                 </Field>
-                <Field id="buffer" label="Target buffer (%)" hint="75 to 80%">
+                <Field
+                  id="buffer"
+                  label="Target buffer (%)"
+                  hint="75 to 80% recommended"
+                >
                   <Input
                     id="buffer"
                     type="number"
@@ -533,6 +541,7 @@ export function TradeForm({
                 aria-labelledby="time-label"
                 value={Number(form.time)}
                 max={JUDGED_MAX.time}
+                step={0.5}
                 lowLabel="Lingered"
                 highLabel="In and out"
                 onChange={(v) => onChange({ time: String(v) })}

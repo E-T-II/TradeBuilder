@@ -5,6 +5,8 @@ import { useRef } from "react";
 interface RatingChipsProps {
   value: number;
   max: number;
+  /** Spacing between options. Strength/freshness step by 1 (0,1,2); time by 0.5. */
+  step?: number;
   onChange: (value: number) => void;
   lowLabel?: string;
   highLabel?: string;
@@ -15,6 +17,7 @@ interface RatingChipsProps {
 export function RatingChips({
   value,
   max,
+  step = 1,
   onChange,
   lowLabel,
   highLabel,
@@ -22,7 +25,7 @@ export function RatingChips({
   "aria-labelledby": ariaLabelledby,
 }: RatingChipsProps) {
   const steps: number[] = [];
-  for (let v = 0; v <= max; v += 0.5) steps.push(v);
+  for (let v = 0; v <= max; v += step) steps.push(v);
 
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = Math.max(0, steps.indexOf(value));
