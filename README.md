@@ -1,28 +1,71 @@
-# TradeBuilder
+# TradeBuilder - Engineered Risk Strategy
 
-users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
+Trade Plan Defaults:
+users defines their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
+the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.
 
-the trade builder then takes basic user input: 
-  1) high time frame supply and demand zone distal line price points and divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
-  2) the user defines their trade objective and income goals; greater than or equal to the weekly time frame or less than or equal to the daily time frame to establish a stop buffer of either 10 or 2%.
-  3) the user inputs the trend the asset is in; uptrend, sideways trend, or downtrend based on trade strategy
-  4) the user determines whether to buy long or sell short
-  5) the user inputs the proximal and distal line price points for the entry zone
-  6) the user inputs the proximal and distal line price points for the target zone
-  7) the users inputs their account balance with their broker, which is used to define risk and captial requirement limits
-  8) the user inputs the assets daily atr (may automate through api)
+pre-steps:
+input asset daily ATR
+input account balance
 
-the above data establishes three of the six odds enhancers; curve, trend, and profit zone.
-the odds enhancers scorecard evaluates where the entry price is located on the curve. if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short.
-the odds enhancers scorecard evaluates the users trade objective in contrast to the current trend. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
-the odds enhancers scorecard evaluates the height of the entry zone and measures how many times the entry zone divides into the distance betweent the entry zone proximal and the target zone proximal to establish the profit zone score.
-a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points.
-the user evaluates the entry zone strength, time, and freshness based on trade methodology and inputs this data into the trade builder.
-the trade builder finalizes all data and provides the entry price based on the odds enhancers total score out of 10 possible points. 
-a proximal entry is 8.5 to 10 points, a confirmation entry is 7 to 8 points, and no trade is less than 7 points.
+Six-Step Process Flowchart: trade builder takes basic input the user identifies from the chart using trade methodology in six steps
+  1) Set the Curve on the HTF: identify high time frame supply and demand zones using the five step zoning process and using the distal lines, divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
+  2) Check the Trend on the Intermediary Time Frame (ITF): the user identifies the trend; Uptrend, Sideways trend, or Downtrend.
+  3) Identify Zones on the Low Time Frame (LTF) using the five-step zoning process: user inputs the proximal and distal lines of the supply and demand zones
+     Steps 1, 2 & 3 combined, determine the trade objective based on a Decision Matrix. Buy Long or Sell Short?
+     	a) a supply zone high on the curve in a downtrend = Sell Short
+     	b) a supply zone high on the curve in a sideways trend = Sell Short
+     	c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is greater than or equal to 5:1
+     ******
+     	d) a demand zone high on the curve in a downtrend = No trade
+     	e) a demand zone high on the curve in a sideways trend = No trade
+     	f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1
+     ******
+     	g) a supply zone in the middle of the curve in a downtrend = Sell Short
+     	h) a supply zone in the middle of the curve in a sideways trend = Sell Short
+     	i) a supply zone in the middle of the curve in an uptrend = No trade
+     ******
+     	j) a demand zone in the middle of the curve in a downtrend = No trade
+     	k) a demand zone in the middle of the curve in a sideways trend = Buy Long
+     	l) a demand zone in the middle of the curve in an uptrend = Buy Long
+     ******
+     	m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1
+     	n) a supply zone low on the curve in a sideways trend = No trade
+     	o) a supply zone low on the curve in an uptrend = No trade
+     ******
+     	p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1
+     	q) a demand zone low on the curve in a sideways trend = Buy Long
+     	r) a demand zone low on the curve in an uptrend = Buy Long
+  4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
+     	a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart)
+     	b) Time			1, .5, or 0 points	(how much time did price spend at the zone? user must determine from chart)
+     	c) Freshness	2, 1, or 0	points	(has price returned to the zone? user must determine from chart)
+     	d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
+     	e) Curve		1, .5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short)     					
+     	f) Profit Zone	2, 1, or 0 points	(how far is the opposing fresh zone? evaluates the height of the entry zone and measures how many times the entry zone divides into the distance between the entry zone proximal and the target zone proximal to establish the profit zone score. a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points.)
+
+     trade builder totals the score of the odds enhancers and presents the entry type; Proximal Entry = 8.5 to 10 points (very strong), Confirmation Entry = 7 to 8 points (strong), less than 7 points = No trade (weak)
+     
+  5) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
+     Stop
+     	a) show daily ATR
+     	b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
+     	c) show stop buffer dollar amount (product of ATR and stop buffer %)
+     	d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
+     Entry
+     	a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
+     Target
+     	a) show position size, # of shares (according to trade risk and max risk per trade)
+     	b) show R:R ratio (based on trade risk, entry and preset target buffer %)
+     	c) show target buffer %
+     	d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
+     Size
+     	a) show total risk per trade
+     	b) show capital requirement
+  6) place the order with your broker
+ 
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
-if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above the entry zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back above the proximal line.
-the trade builder also calculates the stop loss based on the users income objective and multiplies either 2 or 10% of the assets daily atr, then subtracts that number from the a demand zone distal line or adds that number to a supply zone distal line to establish the stop loss price.
+if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
 the difference between the entry price and the stop loss establishes the risk on that trade.
 the trade builder takes the risk on the trade and determines how many shares/contracts the user may purchase based on the users pre-defined risk tolerance of up to 2% of their account balance before determining the capital requirement.
 if the captial requirement exceeds 50% of the users account balance the position size is automatically adjusted to meet this requirement.
