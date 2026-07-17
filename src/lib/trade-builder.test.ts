@@ -397,6 +397,17 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
   });
 });
 
+describe("given buildTrade and the configured risk limit", () => {
+  test("given the default 2%: should report riskLimitPct as 2", () => {
+    expect(buildTrade(longTrade).checks?.riskLimitPct).toBe(2);
+  });
+
+  test("given an advanced override to 5%: should report riskLimitPct as 5", () => {
+    const result = buildTrade({ ...longTrade, riskTolerancePct: 0.05 });
+    expect(result.checks?.riskLimitPct).toBe(5);
+  });
+});
+
 describe("given buildTrade and the 6% multiple-trade rule", () => {
   test("given open risk that would exceed 6%: should flag the multi-trade check", () => {
     // $600 account -> $36 limit. This trade risks ~$11 on its own.
