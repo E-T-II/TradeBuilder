@@ -99,7 +99,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 				
 			c) show capital requirement
      
-  6) place the order with your broker
+  6) place the order with your broker & log your trade
  
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
