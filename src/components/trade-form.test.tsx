@@ -17,10 +17,10 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   atr: "4",
   curveLow: "100",
   curveHigh: "130",
-  entryProximal: "108",
-  entryDistal: "106",
-  targetProximal: "124",
-  targetDistal: "126",
+  demandHigh: "108",
+  demandLow: "106",
+  supplyHigh: "126",
+  supplyLow: "124",
   strength: "1",
   time: "0.5",
   freshness: "1",
@@ -47,19 +47,9 @@ function ZonesStep({ initial }: { initial: FormState }) {
 }
 
 describe("given the Zones step guard", () => {
-  test("given backwards zone geometry: should disable Next and show the error, then recover after a fix", async () => {
+  test("given a demand zone with the low above the high: should disable Next and show the error, then recover after a fix", async () => {
     const user = userEvent.setup();
-    render(
-      <ZonesStep
-        initial={baseForm({
-          direction: "short",
-          entryProximal: "124",
-          entryDistal: "100",
-          targetProximal: "108",
-          targetDistal: "106",
-        })}
-      />,
-    );
+    render(<ZonesStep initial={baseForm({ demandLow: "110" })} />);
 
     // The guard is active: the action button is disabled and the field errors.
     const blocked = screen.getByRole("button", {
@@ -69,21 +59,21 @@ describe("given the Zones step guard", () => {
 
     // The error is wired to the field, not just rendered somewhere: the input
     // is marked invalid and exposes the message as its accessible description.
-    const entryDistal = screen.getByLabelText("Entry distal ($)");
-    expect(entryDistal).toHaveAttribute("aria-invalid", "true");
-    expect(entryDistal).toHaveAccessibleDescription(
-      /entry distal should be above the proximal/i,
+    const demandLow = screen.getByLabelText("Demand low ($)");
+    expect(demandLow).toHaveAttribute("aria-invalid", "true");
+    expect(demandLow).toHaveAccessibleDescription(
+      /demand low must be below demand high/i,
     );
 
-    // Correct the entry distal so the geometry is valid for a short.
-    await user.clear(entryDistal);
-    await user.type(entryDistal, "126");
+    // Correct the demand low so the zone has real height.
+    await user.clear(demandLow);
+    await user.type(demandLow, "106");
 
     // The error clears, and with it the invalid state and description.
     expect(
-      screen.queryByText(/entry distal should be above the proximal/i),
+      screen.queryByText(/demand low must be below demand high/i),
     ).not.toBeInTheDocument();
-    expect(entryDistal).not.toHaveAttribute("aria-invalid");
+    expect(demandLow).not.toHaveAttribute("aria-invalid");
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).toBeEnabled();
 

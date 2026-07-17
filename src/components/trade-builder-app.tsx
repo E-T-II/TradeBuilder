@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Blocks, RotateCcw } from "lucide-react";
 import {
   buildTrade,
+  deriveZoneLines,
   type Direction,
   type IncomeTimeframe,
   type TradeInputs,
@@ -33,10 +34,10 @@ export interface FormState {
   atr: string;
   curveLow: string;
   curveHigh: string;
-  entryProximal: string;
-  entryDistal: string;
-  targetProximal: string;
-  targetDistal: string;
+  demandHigh: string;
+  demandLow: string;
+  supplyHigh: string;
+  supplyLow: string;
   strength: string;
   time: string;
   freshness: string;
@@ -53,27 +54,28 @@ const initialState: FormState = {
   atr: "",
   curveLow: "",
   curveHigh: "",
-  entryProximal: "",
-  entryDistal: "",
-  targetProximal: "",
-  targetDistal: "",
+  demandHigh: "",
+  demandLow: "",
+  supplyHigh: "",
+  supplyLow: "",
   strength: "0",
   time: "0",
   freshness: "0",
   openTradeRisk: "0",
 };
 
-const STORAGE_KEY = "tradebuilder-form-v1";
+// v2: the Zones step moved from entry/target lines to demand/supply zones.
+const STORAGE_KEY = "tradebuilder-form-v2";
 
 const REQUIRED: (keyof FormState)[] = [
   "accountBalance",
   "atr",
   "curveLow",
   "curveHigh",
-  "entryProximal",
-  "entryDistal",
-  "targetProximal",
-  "targetDistal",
+  "demandHigh",
+  "demandLow",
+  "supplyHigh",
+  "supplyLow",
 ];
 
 function missingFields(form: FormState): number {
@@ -98,21 +100,29 @@ function toInputs(form: FormState): TradeInputs | null {
     atr: Number(form.atr),
     curveLow: Number(form.curveLow),
     curveHigh: Number(form.curveHigh),
-    entryProximal: Number(form.entryProximal),
-    entryDistal: Number(form.entryDistal),
-    targetProximal: Number(form.targetProximal),
-    targetDistal: Number(form.targetDistal),
     strength: Number(form.strength),
     time: Number(form.time),
     freshness: Number(form.freshness),
     openTradeRisk: Number(form.openTradeRisk || "0"),
   };
 
+  const zones = {
+    demandHigh: Number(form.demandHigh),
+    demandLow: Number(form.demandLow),
+    supplyHigh: Number(form.supplyHigh),
+    supplyLow: Number(form.supplyLow),
+  };
+
   if (Object.values(numbers).some((n) => !Number.isFinite(n))) return null;
+  if (Object.values(zones).some((n) => !Number.isFinite(n))) return null;
   if (numbers.accountBalance <= 0) return null;
+
+  // The engine works in entry/target lines; direction assigns them from the zones.
+  const lines = deriveZoneLines(zones, form.direction);
 
   return {
     ...numbers,
+    ...lines,
     direction: form.direction,
     trend: form.trend,
     timeframe: form.timeframe,
