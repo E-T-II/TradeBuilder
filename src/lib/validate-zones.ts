@@ -53,5 +53,16 @@ export function validateZones(form: FormState): ZoneErrors {
     errors.supplyLow = "The supply zone must sit above the demand zone.";
   }
 
+  // Both zones must sit inside the curve. Otherwise locateOnCurve clamps an
+  // out-of-range price to an extreme third and scores it as if it were valid.
+  if (curveLow !== null && curveHigh !== null && curveHigh > curveLow) {
+    if (demandLow !== null && !errors.demandLow && demandLow < curveLow) {
+      errors.demandLow = "The demand zone can't sit below the curve low.";
+    }
+    if (supplyHigh !== null && !errors.supplyHigh && supplyHigh > curveHigh) {
+      errors.supplyHigh = "The supply zone can't sit above the curve high.";
+    }
+  }
+
   return errors;
 }

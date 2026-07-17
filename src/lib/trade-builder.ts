@@ -141,6 +141,8 @@ export function decisionMatrix(
 ): TradeObjective {
   const verdict = DECISION_MATRIX[zoneType][curve][trend];
   if (verdict === "no-trade") return "no-trade";
+  // "5:1 or better" is the same threshold as a 2-point profit zone score
+  // (profitZoneScore returns 2 when the ratio is >= 5); we check the ratio here.
   if (verdict === "needs-5to1" && profitRatio < 5) return "no-trade";
   return zoneType === "demand" ? "long" : "short";
 }

@@ -65,6 +65,22 @@ describe("validateZones()", () => {
     expect(actual).toEqual(expected);
   });
 
+  test("given a demand zone below the curve low: should flag demand low", () => {
+    const actual = validateZones(form({ demandLow: "99" }));
+    const expected = {
+      demandLow: "The demand zone can't sit below the curve low.",
+    };
+    expect(actual).toEqual(expected);
+  });
+
+  test("given a supply zone above the curve high: should flag supply high", () => {
+    const actual = validateZones(form({ supplyHigh: "131" }));
+    const expected = {
+      supplyHigh: "The supply zone can't sit above the curve high.",
+    };
+    expect(actual).toEqual(expected);
+  });
+
   test("given an empty field: should not flag its zone", () => {
     const actual = validateZones(form({ demandLow: "" }));
     expect(actual).toEqual({});
