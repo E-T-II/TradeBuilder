@@ -441,6 +441,42 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
   });
 });
 
+describe("given buildTrade and the Decision Matrix", () => {
+  test("given a matrix no-trade cell with a qualifying score: should veto the order", () => {
+    // Supply zone in the middle of the curve during an uptrend (row i): no trade,
+    // even though the odds enhancers total 7.5, a confirmation entry.
+    const result = buildTrade({
+      accountBalance: 2500,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      direction: "short",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 4,
+      curveLow: 100,
+      curveHigh: 130,
+      entryProximal: 115,
+      entryDistal: 117,
+      targetProximal: 105,
+      targetDistal: 103,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.scorecard.total).toBe(7.5);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.objective).toBe("no-trade");
+    expect(result.order).toBeNull();
+    expect(result.checks).toBeNull();
+  });
+
+  test("given a matrix-approved setup: should set the objective and build the order", () => {
+    const result = buildTrade(longTrade);
+    expect(result.objective).toBe("long");
+    expect(result.order).not.toBeNull();
+  });
+});
+
 describe("given buildTrade and the 6% multiple-trade rule", () => {
   test("given open risk that would exceed 6%: should flag the multi-trade check", () => {
     // $600 account -> $36 limit. This trade risks ~$11 on its own.
