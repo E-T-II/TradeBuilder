@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Blocks, RotateCcw } from "lucide-react";
 import {
   buildTrade,
+  JUDGED_MAX,
   type Direction,
   type IncomeTimeframe,
   type TradeInputs,
@@ -63,9 +64,10 @@ const initialState: FormState = {
   openTradeRisk: "0",
 };
 
-// v2: strength/freshness dropped their half-point options, so older saves with a
-// 0.5 or 1.5 in those fields shouldn't be restored.
-const STORAGE_KEY = "tradebuilder-form-v2";
+// Kept at v1: the field shape is unchanged. Older saves may hold a half-point
+// strength/freshness (no longer an option), which we normalize on load rather
+// than discard the whole saved form.
+const STORAGE_KEY = "tradebuilder-form-v1";
 
 const REQUIRED: (keyof FormState)[] = [
   "accountBalance",
@@ -82,6 +84,31 @@ function missingFields(form: FormState): number {
   return REQUIRED.filter((key) => form[key].trim() === "").length;
 }
 
+// Snap a persisted judged value to a valid step; older saves may hold a
+// half-point strength/freshness that's no longer an option.
+export function snapStep(value: string, step: number, max: number): string {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "0";
+  return String(Math.min(max, Math.max(0, Math.round(n / step) * step)));
+}
+
+// Read the saved form, ignoring anything that isn't the shape we persist (every
+// field is a string). Malformed but valid JSON, e.g. a number where a string is
+// expected, would otherwise crash later on `.trim()`, so return null and let the
+// app fall back to initialState.
+export function loadStoredForm(): Partial<FormState> | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    if (Object.values(parsed).some((v) => typeof v !== "string")) return null;
+    return parsed as Partial<FormState>;
+  } catch {
+    return null;
+  }
+}
+
 // Empty or non-positive percents fall back to the default. Advanced settings
 // intentionally let the user exceed the recommended 2% risk / 80% buffer, so the
 // ceiling here is only a sanity cap (100%), not the strategy's rule.
@@ -91,7 +118,7 @@ function clampPercent(raw: string, fallback: number, max: number): number {
   return Math.min(n, max);
 }
 
-function toInputs(form: FormState): TradeInputs | null {
+export function toInputs(form: FormState): TradeInputs | null {
   if (missingFields(form) > 0) return null;
 
   const numbers = {
@@ -134,11 +161,14 @@ export function TradeBuilderApp() {
   // In an effect, not initial state: localStorage is client-only, so reading
   // it during render would desync server and client markup.
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
-      if (stored) setForm({ ...initialState, ...JSON.parse(stored) });
-    } catch {}
+    const stored = loadStoredForm();
+    if (!stored) return;
+    const merged = { ...initialState, ...stored };
+    merged.strength = snapStep(merged.strength, 1, JUDGED_MAX.strength);
+    merged.freshness = snapStep(merged.freshness, 1, JUDGED_MAX.freshness);
+    merged.time = snapStep(merged.time, 0.5, JUDGED_MAX.time);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+    setForm(merged);
   }, []);
 
   // Persist on change. Skip the first run so we don't overwrite the stored

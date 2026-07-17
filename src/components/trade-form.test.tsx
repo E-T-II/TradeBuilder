@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useState } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test } from "vitest";
 
@@ -91,5 +91,30 @@ describe("given the Zones step guard", () => {
     expect(
       screen.getByRole("heading", { name: "Your read" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("given the odds-enhancer chips on the Your read step", () => {
+  const optionsFor = (name: string) =>
+    within(screen.getByRole("radiogroup", { name }))
+      .getAllByRole("radio")
+      .map((r) => r.textContent);
+
+  test("should offer 0/1/2 for strength and freshness, and 0/0.5/1 for time", () => {
+    render(
+      <TradeForm
+        form={baseForm()}
+        onChange={() => {}}
+        step={3}
+        onBack={() => {}}
+        onNext={() => {}}
+        showAdvanced={false}
+        onToggleAdvanced={() => {}}
+      />,
+    );
+
+    expect(optionsFor("Strength")).toEqual(["0", "1", "2"]);
+    expect(optionsFor("Freshness")).toEqual(["0", "1", "2"]);
+    expect(optionsFor("Time")).toEqual(["0", "0.5", "1"]);
   });
 });

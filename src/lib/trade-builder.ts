@@ -189,7 +189,7 @@ export function tradeRiskPerShare(entry: number, stop: number): number {
   return roundToCent(Math.abs(entry - stop));
 }
 
-/** Max account risk: balance x risk tolerance (up to 2%). */
+/** Max account risk: balance x risk tolerance (2% by default; advanced settings can override). */
 export function maxAccountRisk(balance: number, riskPct: number): number {
   return roundToCent(balance * riskPct);
 }
@@ -250,9 +250,9 @@ export function rewardRiskRatio(
 /** Everything the user gives us. */
 export interface TradeInputs {
   accountBalance: number;
-  /** e.g. 0.02 for the max 2% risk per trade */
+  /** e.g. 0.02 for 2% risk per trade; advanced settings can override the 2% recommendation */
   riskTolerancePct: number;
-  /** 0.75 to 0.80 */
+  /** 0.75 to 0.80 recommended; advanced settings can go higher */
   targetBufferPct: number;
   direction: Direction;
   trend: Trend;
