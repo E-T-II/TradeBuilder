@@ -39,16 +39,22 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      	r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
   5) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
-     	a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart)
-     	b) Time			1, .5, or 0 points	(how much time did price spend at the zone? user must determine from chart)
-     	c) Freshness	2, 1, or 0	points	(has price returned to the zone? user must determine from chart)
-     	d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
-     	e) Curve		1, .5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short)     					
-     	f) Profit Zone	2, 1, or 0 points	(how far is the opposing fresh zone? evaluates the height of the entry zone and measures how many times the entry zone divides into the distance between the entry zone proximal and the target zone proximal to establish the profit zone score. a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points.)
+
+     a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart).
+
+     b) Time			1, .5, or 0 points	(how much time did price spend at the zone? user must determine from chart).
+
+     c) Freshness	2, 1, or 0	points	(has price returned to the zone? user must determine from chart).
+
+     d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
+
+     e) Curve		1, .5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short).
+
+     f) Profit Zone	2, 1, or 0 points	(how far is the opposing fresh zone? evaluates the height of the entry zone and measures how many times the entry zone divides into the distance between the entry zone proximal and the target zone proximal to establish the profit zone score. a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points).
 
      trade builder totals the score of the odds enhancers and presents the entry type; Proximal Entry = 8.5 to 10 points (very strong), Confirmation Entry = 7 to 8 points (strong), less than 7 points = No trade (weak)
      
-  6) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
+  7) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
      Stop
      	a) show daily ATR
      	b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
@@ -64,7 +70,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      Size
      	a) show total risk per trade
      	b) show capital requirement
-  7) place the order with your broker
+  8) place the order with your broker
  
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
