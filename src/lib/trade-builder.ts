@@ -94,10 +94,17 @@ export function profitZoneRatio(
   return Math.abs(targetProximal - entryProximal) / zoneHeight;
 }
 
+// Profit-zone ratios come from dividing decimal prices, so an exact 5:1 can
+// compute as 4.9999999999. Compare thresholds with a small epsilon so the score
+// and the Decision Matrix agree on the boundary. Shared by both.
+export function meetsProfitRatio(ratio: number, threshold: number): boolean {
+  return ratio >= threshold - 1e-9;
+}
+
 /** Profit zone points (max 2): >= 5:1 -> 2, >= 3:1 -> 1, below -> 0. */
 export function profitZoneScore(ratio: number): number {
-  if (ratio >= 5) return 2;
-  if (ratio >= 3) return 1;
+  if (meetsProfitRatio(ratio, 5)) return 2;
+  if (meetsProfitRatio(ratio, 3)) return 1;
   return 0;
 }
 
@@ -141,9 +148,11 @@ export function decisionMatrix(
 ): TradeObjective {
   const verdict = DECISION_MATRIX[zoneType][curve][trend];
   if (verdict === "no-trade") return "no-trade";
-  // "5:1 or better" is the same threshold as a 2-point profit zone score
-  // (profitZoneScore returns 2 when the ratio is >= 5); we check the ratio here.
-  if (verdict === "needs-5to1" && profitRatio < 5) return "no-trade";
+  // "5:1 or better" is the same threshold as a 2-point profit zone score, so use
+  // the shared epsilon-aware check to stay consistent with profitZoneScore.
+  if (verdict === "needs-5to1" && !meetsProfitRatio(profitRatio, 5)) {
+    return "no-trade";
+  }
   return zoneType === "demand" ? "long" : "short";
 }
 

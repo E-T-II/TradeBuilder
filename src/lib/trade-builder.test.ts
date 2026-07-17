@@ -102,6 +102,14 @@ describe("given profitZoneScore", () => {
     expect(profitZoneScore(2.99)).toBe(0);
     expect(profitZoneScore(0)).toBe(0);
   });
+
+  test("given an exact 5:1 from decimal prices: should still score 2 despite float error", () => {
+    const ratio = profitZoneRatio(1.0, 0.97, 1.15); // 4.999999999999993
+    expect(ratio).toBeLessThan(5); // the raw float dips just under 5
+    expect(profitZoneScore(ratio)).toBe(2);
+    // The Decision Matrix must agree: a needs-5to1 cell should trade, not veto.
+    expect(decisionMatrix("demand", "wholesale", "downtrend", ratio)).toBe("long");
+  });
 });
 
 describe("given totalScore", () => {
