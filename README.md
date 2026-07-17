@@ -6,7 +6,7 @@ the user defines their income objective/trading purpose. will the High Time Fram
 
 pre-steps:
 
-input asset daily ATR and input account balance
+input asset daily ATR and account balance
 
 Six-Step Process Flowchart: trade builder takes basic input the user identifies from the chart using trade methodology in six steps
   1) Set the Curve on the HTF: identify high time frame supply and demand zones using the five step zoning process and using the distal lines, divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
