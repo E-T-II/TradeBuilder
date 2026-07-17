@@ -55,13 +55,13 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart).
 
-     b) Time			1, .5, or 0 points	(how much time did price spend at the zone? user must determine from chart).
+     b) Time		1, 0.5, or 0 points	(how much time did price spend at the zone? user must determine from chart).
 
      c) Freshness	2, 1, or 0	points	(has price returned to the zone? user must determine from chart).
 
      d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
 
-     e) Curve		1, .5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short).
+     e) Curve		1, 0.5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short).
 
      f) Profit Zone	2, 1, or 0 points	(how far is the opposing fresh zone? evaluates the height of the entry zone and measures how many times the entry zone divides into the distance between the entry zone proximal and the target zone proximal to establish the profit zone score. a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points).
 
