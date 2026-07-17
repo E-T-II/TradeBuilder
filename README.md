@@ -1,7 +1,7 @@
 # TradeBuilder - Engineered Risk Strategy
 
 Trade Plan Defaults:
-users defines their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
+users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
 the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.
 
 pre-steps:
