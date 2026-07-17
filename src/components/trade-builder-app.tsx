@@ -64,8 +64,9 @@ const initialState: FormState = {
   openTradeRisk: "0",
 };
 
-// v2: the Zones step moved from entry/target lines to demand/supply zones.
-const STORAGE_KEY = "tradebuilder-form-v2";
+// v3: the Zones step moved from entry/target lines to demand/supply zones. (v2
+// was the entry/target form with the enhancer/advanced fixes; a different shape.)
+const STORAGE_KEY = "tradebuilder-form-v3";
 
 const REQUIRED: (keyof FormState)[] = [
   "accountBalance",
