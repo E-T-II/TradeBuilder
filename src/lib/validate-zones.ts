@@ -47,7 +47,7 @@ export function validateZones(form: FormState): ZoneErrors {
   // Only the direction of the target relative to the entry is checked here.
   // Whether the buffered exit actually clears the entry depends on the entry
   // type, which isn't known until the score is in, so buildTrade handles it:
-  // a too-close target lands well under the 3:1 reward-to-risk check.
+  // it returns no order when the computed target can't clear the computed entry.
   if (entryProximal !== null && targetProximal !== null) {
     if (long && targetProximal <= entryProximal) {
       errors.targetProximal = "For a long, the target should be above the entry.";
