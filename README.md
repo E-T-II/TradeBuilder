@@ -11,8 +11,9 @@ input account balance
 Six-Step Process Flowchart: trade builder takes basic input the user identifies from the chart using trade methodology in six steps
   1) Set the Curve on the HTF: identify high time frame supply and demand zones using the five step zoning process and using the distal lines, divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
   2) Check the Trend on the Intermediary Time Frame (ITF): the user identifies the trend; Uptrend, Sideways trend, or Downtrend.
-  3) Identify Zones on the Low Time Frame (LTF) using the five-step zoning process: user inputs the proximal and distal lines of the supply and demand zones
-     Steps 1, 2 & 3 combined, determine the trade objective based on a Decision Matrix. Buy Long or Sell Short?
+  3) Identify Zones on the Low Time Frame (LTF) using the five-step zoning process: user inputs the proximal and distal lines of the supply and demand zones.
+
+     Steps 1, 2 & 3 combined, determine the trade objective whether to buy long or sell short based on a Decision Matrix.
      ******
      a) a supply zone high on the curve in a downtrend = Sell Short. 
 
@@ -50,7 +51,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
-  4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
+  5) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 
      a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart).
 
@@ -66,7 +67,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      trade builder totals the score of the odds enhancers and presents the entry type; Proximal Entry = 8.5 to 10 points (very strong), Confirmation Entry = 7 to 8 points (strong), less than 7 points = No trade (weak)
      
-  5) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
+  6) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
 
      Stop Loss Price
 
@@ -98,7 +99,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 	
 	     b) show capital requirement
      
-  6) place the order with your broker
+  7) place the order with your broker
  
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
