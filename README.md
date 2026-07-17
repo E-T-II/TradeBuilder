@@ -76,7 +76,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 	
 	     c) show stop buffer dollar amount (product of ATR and stop buffer %)
 	
-	     d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
+	     d) show S.E.T.S. Stop Loss amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
 
      Entry Price
 
