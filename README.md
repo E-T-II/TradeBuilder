@@ -5,6 +5,7 @@ users define their risk tolerance of up to 2% of their account balance and their
 the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.
 
 pre-steps:
+
 input asset daily ATR
 
 input account balance
