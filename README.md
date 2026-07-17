@@ -50,7 +50,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
-  5) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
+  4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 
      a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart).
 
@@ -66,39 +66,39 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      trade builder totals the score of the odds enhancers and presents the entry type; Proximal Entry = 8.5 to 10 points (very strong), Confirmation Entry = 7 to 8 points (strong), less than 7 points = No trade (weak)
      
-  6) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
+  5) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
 
      Stop Loss Price
 
-     a) show daily ATR
-
-     b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
-
-     c) show stop buffer dollar amount (product of ATR and stop buffer %)
-
-     d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
+	     a) show daily ATR
+	
+	     b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
+	
+	     c) show stop buffer dollar amount (product of ATR and stop buffer %)
+	
+	     d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
 
      Entry Price
 
-     a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
+	     a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
 
      Target Price
 
-     a) show position size, # of shares (according to trade risk and max risk per trade)
-
-     b) show R:R ratio (based on trade risk, entry and preset target buffer %)
-
-     c) show target buffer %
-
-     d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
+	     a) show position size, # of shares (according to trade risk and max risk per trade)
+	
+	     b) show R:R ratio (based on trade risk, entry and preset target buffer %)
+	
+	     c) show target buffer %
+	
+	     d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
 
      Size of Position
 
-     a) show total risk per trade
-
-     b) show capital requirement
+	     a) show total risk per trade
+	
+	     b) show capital requirement
      
-  7) place the order with your broker
+  6) place the order with your broker
  
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
