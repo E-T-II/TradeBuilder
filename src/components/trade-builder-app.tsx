@@ -80,8 +80,9 @@ function missingFields(form: FormState): number {
   return REQUIRED.filter((key) => form[key].trim() === "").length;
 }
 
-// Empty or out-of-range percents fall back to the default and cap at max, so
-// a cleared or over-typed field can't silently size the trade at 0% or 5%.
+// Empty or non-positive percents fall back to the default. Advanced settings
+// intentionally let the user exceed the recommended 2% risk / 80% buffer, so the
+// ceiling here is only a sanity cap (100%), not the strategy's rule.
 function clampPercent(raw: string, fallback: number, max: number): number {
   const n = raw.trim() === "" ? fallback : Number(raw);
   if (!Number.isFinite(n) || n <= 0) return fallback;
@@ -93,7 +94,7 @@ function toInputs(form: FormState): TradeInputs | null {
 
   const numbers = {
     accountBalance: Number(form.accountBalance),
-    riskTolerancePct: clampPercent(form.riskTolerance, 2, 2) / 100,
+    riskTolerancePct: clampPercent(form.riskTolerance, 2, 100) / 100,
     targetBufferPct: clampPercent(form.targetBuffer, 75, 100) / 100,
     atr: Number(form.atr),
     curveLow: Number(form.curveLow),
