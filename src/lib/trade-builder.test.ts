@@ -18,6 +18,7 @@ import {
   rewardRiskRatio,
   buildTrade,
   decisionMatrix,
+  deriveZoneLines,
   type TradeInputs,
 } from "./trade-builder";
 
@@ -125,6 +126,28 @@ describe("given totalScore", () => {
         freshness: 1,
       }),
     ).toBe(7.5);
+  });
+});
+
+describe("given deriveZoneLines", () => {
+  const zones = { demandHigh: 108, demandLow: 106, supplyHigh: 126, supplyLow: 124 };
+
+  test("given a long: should enter at demand and target supply", () => {
+    expect(deriveZoneLines(zones, "long")).toEqual({
+      entryProximal: 108, // demand high
+      entryDistal: 106, // demand low
+      targetProximal: 124, // supply low
+      targetDistal: 126, // supply high
+    });
+  });
+
+  test("given a short: should mirror, entering at supply and targeting demand", () => {
+    expect(deriveZoneLines(zones, "short")).toEqual({
+      entryProximal: 124, // supply low
+      entryDistal: 126, // supply high
+      targetProximal: 108, // demand high
+      targetDistal: 106, // demand low
+    });
   });
 });
 
