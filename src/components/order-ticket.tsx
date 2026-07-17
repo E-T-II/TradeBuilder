@@ -47,7 +47,7 @@ export function OrderTicket({
     let reason: string;
     if (result.objective === "no-trade") {
       reason =
-        "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade.";
+        "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade. The opposite direction may qualify.";
     } else if (result.entryType === "no-trade") {
       reason =
         "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
