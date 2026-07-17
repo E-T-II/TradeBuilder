@@ -56,4 +56,26 @@ describe("given OrderTicket", () => {
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText(/no valid trade here/i)).toBeInTheDocument();
   });
+
+  test("given a Decision Matrix veto: should say the setup isn't valid for the trend and curve", () => {
+    // Supply zone mid-curve in an uptrend (row i): the matrix vetoes it.
+    const result = buildTrade({
+      ...longTrade,
+      direction: "short",
+      trend: "uptrend",
+      entryProximal: 115,
+      entryDistal: 117,
+      targetProximal: 105,
+      targetDistal: 103,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.objective).toBe("no-trade");
+    expect(result.order).toBeNull();
+    render(<OrderTicket result={result} direction="short" />);
+    expect(
+      screen.getByText(/isn't a valid setup for the current trend/i),
+    ).toBeInTheDocument();
+  });
 });

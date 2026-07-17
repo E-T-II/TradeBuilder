@@ -41,17 +41,24 @@ export function OrderTicket({
   direction: Direction;
 }) {
   if (!result.order) {
-    // Two ways to land here: the score didn't qualify, or it did but the zones
-    // are so tight the target ends up on the wrong side of the entry.
-    const scoredButInvalid = result.entryType !== "no-trade";
+    // Three ways to land here: the Decision Matrix vetoed the setup, the score
+    // didn't qualify, or the score qualified but the zones are so tight the
+    // target ends up on the wrong side of the entry.
+    let reason: string;
+    if (result.objective === "no-trade") {
+      reason =
+        "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade.";
+    } else if (result.entryType === "no-trade") {
+      reason =
+        "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
+    } else {
+      reason =
+        "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones.";
+    }
     return (
       <Alert>
         <AlertTitle>No trade</AlertTitle>
-        <AlertDescription>
-          {scoredButInvalid
-            ? "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones."
-            : "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade."}
-        </AlertDescription>
+        <AlertDescription>{reason}</AlertDescription>
       </Alert>
     );
   }

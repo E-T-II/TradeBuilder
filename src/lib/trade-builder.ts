@@ -372,7 +372,9 @@ export interface TradeResult {
     total: number;
   };
   entryType: EntryType;
-  /** null when the score says no trade */
+  /** The Decision Matrix verdict; "no-trade" means the matrix vetoed the setup. */
+  objective: TradeObjective;
+  /** null when there's no valid trade (low score, matrix veto, or tight zones) */
   order: {
     entry: number;
     stop: number;
@@ -412,6 +414,12 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     inputs.targetProximal,
   );
 
+  // Step 3 Decision Matrix: the entry zone (demand for a long, supply for a
+  // short), its curve position, and the trend decide whether this is a valid
+  // trade at all. It can veto even a high-scoring setup.
+  const zoneType: ZoneType = inputs.direction === "long" ? "demand" : "supply";
+  const objective = decisionMatrix(zoneType, curveZone, inputs.trend, ratio);
+
   const scorecard = {
     curveZone,
     curve: curveScore(curveZone, inputs.direction),
@@ -426,8 +434,9 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   scorecard.total = totalScore(scorecard);
 
   const type = entryType(scorecard.total);
-  if (type === "no-trade") {
-    return { scorecard, entryType: type, order: null, checks: null };
+  // No order if the matrix vetoed the setup or the score didn't qualify.
+  if (objective === "no-trade" || type === "no-trade") {
+    return { scorecard, entryType: type, objective, order: null, checks: null };
   }
 
   const entry = entryPrice(inputs.entryProximal, type, inputs.direction)!;
@@ -454,7 +463,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   const targetClears =
     inputs.direction === "long" ? target > entry : target < entry;
   if (!targetClears) {
-    return { scorecard, entryType: type, order: null, checks: null };
+    return { scorecard, entryType: type, objective, order: null, checks: null };
   }
 
   const rr = rewardRiskRatio(entry, stop, target);
@@ -465,6 +474,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   return {
     scorecard,
     entryType: type,
+    objective,
     order: {
       entry,
       stop,
