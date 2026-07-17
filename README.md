@@ -84,22 +84,22 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 	     a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
 
      Target Price
-
-	     a) show position size, # of shares (according to trade risk and max risk per trade)
 	
-	     b) show R:R ratio (based on trade risk, entry and preset target buffer %)
+	     a) show R:R ratio (based on trade risk, entry and preset target buffer %)
 	
-	     c) show target buffer %
+	     b) show target buffer %
 	
-	     d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
+	     c) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
 
      Size of Position
-
-	     a) show total risk per trade
-	
-	     b) show capital requirement
      
-  7) place the order with your broker
+			a) show position size, # of shares (according to trade risk and max risk per trade)
+						
+			b) show total risk per trade
+				
+			c) show capital requirement
+     
+  8) place the order with your broker
  
 if it is a proximal entry, a limit buy order is placed at the entry zone proximal line. 
 if it is a confirmation entry, a stop limit buy order is placed $0.10 cents above a demand zone proximal line or $0.10 cents below a supply zone proximal line, anticipating price to enter the zone beyond the proximal line and then cross back beyond the proximal line leaving the zone.
