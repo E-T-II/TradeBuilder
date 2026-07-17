@@ -33,10 +33,10 @@ const STEP_FIELDS: (keyof FormState)[][] = [
   [
     "curveLow",
     "curveHigh",
-    "entryProximal",
-    "entryDistal",
-    "targetProximal",
-    "targetDistal",
+    "demandHigh",
+    "demandLow",
+    "supplyHigh",
+    "supplyLow",
   ],
   [],
 ];
@@ -458,39 +458,45 @@ export function TradeForm({
                 error={zoneErrors.curveHigh}
               />
             </div>
+            <p className="text-xs text-muted-foreground">
+              {long
+                ? "You enter at the demand zone and target the supply zone."
+                : "You enter at the supply zone and target the demand zone."}
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
-                id="entryProximal"
-                label="Entry proximal ($)"
-                hint="The line you enter at"
-                value={form.entryProximal}
-                onChange={(entryProximal) => onChange({ entryProximal })}
+                id="demandHigh"
+                label="Demand high ($)"
+                hint={`Top of the demand zone${long ? " (your entry)" : " (your target)"}`}
+                value={form.demandHigh}
+                onChange={(demandHigh) => onChange({ demandHigh })}
+                error={zoneErrors.demandHigh}
               />
               <PriceField
-                id="entryDistal"
-                label="Entry distal ($)"
-                hint={`Far edge, ${long ? "below" : "above"} the proximal (stop goes here)`}
-                value={form.entryDistal}
-                onChange={(entryDistal) => onChange({ entryDistal })}
-                error={zoneErrors.entryDistal}
+                id="demandLow"
+                label="Demand low ($)"
+                hint="Bottom of the demand zone"
+                value={form.demandLow}
+                onChange={(demandLow) => onChange({ demandLow })}
+                error={zoneErrors.demandLow}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
-                id="targetProximal"
-                label="Target proximal ($)"
-                hint={`Near edge of the target zone, ${long ? "above" : "below"} your entry`}
-                value={form.targetProximal}
-                onChange={(targetProximal) => onChange({ targetProximal })}
-                error={zoneErrors.targetProximal}
+                id="supplyHigh"
+                label="Supply high ($)"
+                hint="Top of the supply zone"
+                value={form.supplyHigh}
+                onChange={(supplyHigh) => onChange({ supplyHigh })}
+                error={zoneErrors.supplyHigh}
               />
               <PriceField
-                id="targetDistal"
-                label="Target distal ($)"
-                hint="Far edge of the target zone"
-                value={form.targetDistal}
-                onChange={(targetDistal) => onChange({ targetDistal })}
-                error={zoneErrors.targetDistal}
+                id="supplyLow"
+                label="Supply low ($)"
+                hint={`Bottom of the supply zone${long ? " (your target)" : " (your entry)"}`}
+                value={form.supplyLow}
+                onChange={(supplyLow) => onChange({ supplyLow })}
+                error={zoneErrors.supplyLow}
               />
             </div>
           </>

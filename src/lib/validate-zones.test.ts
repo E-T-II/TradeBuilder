@@ -3,7 +3,8 @@ import { describe, expect, test } from "vitest";
 import type { FormState } from "@/components/trade-builder-app";
 import { validateZones } from "./validate-zones";
 
-// A valid long setup; override fields per test.
+// A valid setup: demand below, supply above. Works for either direction, since
+// direction only decides which zone is the entry. Override fields per test.
 const form = (overrides: Partial<FormState> = {}): FormState => ({
   accountBalance: "600",
   riskTolerance: "2",
@@ -14,10 +15,10 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   atr: "4",
   curveLow: "100",
   curveHigh: "130",
-  entryProximal: "108",
-  entryDistal: "106",
-  targetProximal: "124",
-  targetDistal: "126",
+  demandHigh: "108",
+  demandLow: "106",
+  supplyHigh: "126",
+  supplyLow: "124",
   strength: "1",
   time: "0.5",
   freshness: "1",
@@ -31,47 +32,29 @@ describe("validateZones()", () => {
     expect(actual).toEqual({});
   });
 
-  test("given a valid short setup: should report no errors", () => {
-    const actual = validateZones(
-      form({
-        direction: "short",
-        entryProximal: "124",
-        entryDistal: "126",
-        targetProximal: "108",
-        targetDistal: "106",
-      }),
-    );
+  test("given the same zones read as a short: should report no errors", () => {
+    const actual = validateZones(form({ direction: "short" }));
     expect(actual).toEqual({});
   });
 
-  test("given a long with entry distal above the proximal: should flag entry distal", () => {
-    const actual = validateZones(form({ entryDistal: "110" }));
-    const expected = {
-      entryDistal: "For a long, entry distal should be below the proximal (108).",
-    };
+  test("given demand low not below demand high: should flag demand low", () => {
+    const actual = validateZones(form({ demandLow: "108" }));
+    const expected = { demandLow: "Demand low must be below demand high." };
     expect(actual).toEqual(expected);
   });
 
-  test("given a short with entry distal below the proximal: should flag entry distal", () => {
+  test("given supply low not below supply high: should flag supply low", () => {
+    const actual = validateZones(form({ supplyLow: "126" }));
+    const expected = { supplyLow: "Supply low must be below supply high." };
+    expect(actual).toEqual(expected);
+  });
+
+  test("given supply overlapping the demand zone: should flag supply low", () => {
     const actual = validateZones(
-      form({
-        direction: "short",
-        entryProximal: "124",
-        entryDistal: "100",
-        targetProximal: "108",
-        targetDistal: "106",
-      }),
+      form({ supplyLow: "107", supplyHigh: "126" }),
     );
     const expected = {
-      entryDistal: "For a short, entry distal should be above the proximal (124).",
-    };
-    expect(actual).toEqual(expected);
-  });
-
-  test("given entry distal equal to the proximal: should flag it (zero-height zone)", () => {
-    const actual = validateZones(form({ entryDistal: "108" }));
-    const expected = {
-      entryDistal: "For a long, entry distal should be below the proximal (108).",
+      supplyLow: "The supply zone must sit above the demand zone.",
     };
     expect(actual).toEqual(expected);
   });
@@ -82,24 +65,8 @@ describe("validateZones()", () => {
     expect(actual).toEqual(expected);
   });
 
-  test("given a long target below the entry: should flag target proximal", () => {
-    const actual = validateZones(form({ targetProximal: "104" }));
-    const expected = {
-      targetProximal: "For a long, the target should be above the entry.",
-    };
-    expect(actual).toEqual(expected);
-  });
-
-  test("given a long target distal below the target proximal: should flag target distal", () => {
-    const actual = validateZones(form({ targetDistal: "120" }));
-    const expected = {
-      targetDistal: "For a long, target distal should be above the proximal.",
-    };
-    expect(actual).toEqual(expected);
-  });
-
-  test("given an empty field: should not flag its pair", () => {
-    const actual = validateZones(form({ entryDistal: "" }));
+  test("given an empty field: should not flag its zone", () => {
+    const actual = validateZones(form({ demandLow: "" }));
     expect(actual).toEqual({});
   });
 });

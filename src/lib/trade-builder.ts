@@ -247,6 +247,45 @@ export function rewardRiskRatio(
   return Math.abs(target - entry) / risk;
 }
 
+/** The two zones the user draws on the chart, each by its high and low. */
+export interface Zones {
+  demandHigh: number;
+  demandLow: number;
+  supplyHigh: number;
+  supplyLow: number;
+}
+
+/** The entry/target lines the engine works in, derived from the zones. */
+export interface ZoneLines {
+  entryProximal: number;
+  entryDistal: number;
+  targetProximal: number;
+  targetDistal: number;
+}
+
+/**
+ * Map the two physical zones to entry/target lines. Demand sits below, supply
+ * above; direction picks which zone is the entry. A long enters at demand and
+ * targets supply; a short is the mirror. Proximal is the edge price reaches
+ * first: a demand zone's high, a supply zone's low.
+ */
+export function deriveZoneLines(zones: Zones, direction: Direction): ZoneLines {
+  const { demandHigh, demandLow, supplyHigh, supplyLow } = zones;
+  return direction === "long"
+    ? {
+        entryProximal: demandHigh,
+        entryDistal: demandLow,
+        targetProximal: supplyLow,
+        targetDistal: supplyHigh,
+      }
+    : {
+        entryProximal: supplyLow,
+        entryDistal: supplyHigh,
+        targetProximal: demandHigh,
+        targetDistal: demandLow,
+      };
+}
+
 /** Everything the user gives us. */
 export interface TradeInputs {
   accountBalance: number;
