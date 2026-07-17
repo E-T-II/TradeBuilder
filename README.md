@@ -93,7 +93,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      Size of Position
      
-			a) show position size, # of shares (according to trade risk and max risk per trade)
+			a) show position size, # of shares (according to trade risk, max risk per trade, and account balance)
 						
 			b) show total risk per trade
 				
