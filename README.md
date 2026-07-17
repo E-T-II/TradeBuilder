@@ -14,29 +14,30 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
   3) Identify Zones on the Low Time Frame (LTF) using the five-step zoning process: user inputs the proximal and distal lines of the supply and demand zones
      Steps 1, 2 & 3 combined, determine the trade objective based on a Decision Matrix. Buy Long or Sell Short?
      ******
-     	a) a supply zone high on the curve in a downtrend = Sell Short
-     	b) a supply zone high on the curve in a sideways trend = Sell Short
-     	c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is greater than or equal to 5:1
+     	a) a supply zone high on the curve in a downtrend = Sell Short. 
+     	b) a supply zone high on the curve in a sideways trend = Sell Short. 
+     	c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is greater than or equal to 5:1. 
      ******
-     	d) a demand zone high on the curve in a downtrend = No trade
-     	e) a demand zone high on the curve in a sideways trend = No trade
-     	f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1
+     	d) a demand zone high on the curve in a downtrend = No trade. 
+     	e) a demand zone high on the curve in a sideways trend = No trade. 
+     	f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1. 
      ******
-     	g) a supply zone in the middle of the curve in a downtrend = Sell Short
-     	h) a supply zone in the middle of the curve in a sideways trend = Sell Short
-     	i) a supply zone in the middle of the curve in an uptrend = No trade
+     	g) a supply zone in the middle of the curve in a downtrend = Sell Short. 
+     	h) a supply zone in the middle of the curve in a sideways trend = Sell Short. 
+     	i) a supply zone in the middle of the curve in an uptrend = No trade. 
      ******
-     	j) a demand zone in the middle of the curve in a downtrend = No trade
-     	k) a demand zone in the middle of the curve in a sideways trend = Buy Long
-     	l) a demand zone in the middle of the curve in an uptrend = Buy Long
+     	j) a demand zone in the middle of the curve in a downtrend = No trade. 
+     	k) a demand zone in the middle of the curve in a sideways trend = Buy Long. 
+     	l) a demand zone in the middle of the curve in an uptrend = Buy Long. 
      ******
-     	m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1
-     	n) a supply zone low on the curve in a sideways trend = No trade
-     	o) a supply zone low on the curve in an uptrend = No trade
+     	m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1. 
+     	n) a supply zone low on the curve in a sideways trend = No trade. 
+     	o) a supply zone low on the curve in an uptrend = No trade. 
      ******
-     	p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1
-     	q) a demand zone low on the curve in a sideways trend = Buy Long
-     	r) a demand zone low on the curve in an uptrend = Buy Long
+     	p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1. 
+     	q) a demand zone low on the curve in a sideways trend = Buy Long. 
+     	r) a demand zone low on the curve in an uptrend = Buy Long.
+     ******
   5) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
      	a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart)
      	b) Time			1, .5, or 0 points	(how much time did price spend at the zone? user must determine from chart)
