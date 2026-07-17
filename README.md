@@ -57,23 +57,34 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
   5) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
 
      Stop
-     	a) show daily ATR
-     	b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
-     	c) show stop buffer dollar amount (product of ATR and stop buffer %)
-     	d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
+
+     a) show daily ATR
+
+     b) show stop buffer %, 2 or 10 (based on HTF trade purpose)
+
+     c) show stop buffer dollar amount (product of ATR and stop buffer %)
+
+     d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
 
      Entry
-     	a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
+
+     a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
 
      Target
-     	a) show position size, # of shares (according to trade risk and max risk per trade)
-     	b) show R:R ratio (based on trade risk, entry and preset target buffer %)
-     	c) show target buffer %
-     	d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
+
+     a) show position size, # of shares (according to trade risk and max risk per trade)
+
+     b) show R:R ratio (based on trade risk, entry and preset target buffer %)
+
+     c) show target buffer %
+
+     d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
 
      Size
-     	a) show total risk per trade
-     	b) show capital requirement
+
+     a) show total risk per trade
+
+     b) show capital requirement
      
   6) place the order with your broker
  
