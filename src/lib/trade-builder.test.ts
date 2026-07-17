@@ -17,6 +17,7 @@ import {
   targetPrice,
   rewardRiskRatio,
   buildTrade,
+  decisionMatrix,
   type TradeInputs,
 } from "./trade-builder";
 
@@ -124,6 +125,49 @@ describe("given totalScore", () => {
         freshness: 1,
       }),
     ).toBe(7.5);
+  });
+});
+
+describe("given decisionMatrix", () => {
+  // Every cell of the README Decision Matrix (rows a-r). The profit ratio only
+  // changes the outcome in the "needs-5to1" cells (c, f, m, p), so those appear
+  // twice: once clearing 5:1 and once below it.
+  const rows = [
+    // supply zone -> short
+    { row: "a", zone: "supply", curve: "retail", trend: "downtrend", ratio: 3, want: "short" },
+    { row: "b", zone: "supply", curve: "retail", trend: "sideways", ratio: 3, want: "short" },
+    { row: "c", zone: "supply", curve: "retail", trend: "uptrend", ratio: 5, want: "short" },
+    { row: "c<", zone: "supply", curve: "retail", trend: "uptrend", ratio: 4, want: "no-trade" },
+    { row: "g", zone: "supply", curve: "equilibrium", trend: "downtrend", ratio: 3, want: "short" },
+    { row: "h", zone: "supply", curve: "equilibrium", trend: "sideways", ratio: 3, want: "short" },
+    { row: "i", zone: "supply", curve: "equilibrium", trend: "uptrend", ratio: 8, want: "no-trade" },
+    { row: "m", zone: "supply", curve: "wholesale", trend: "downtrend", ratio: 5, want: "short" },
+    { row: "m<", zone: "supply", curve: "wholesale", trend: "downtrend", ratio: 4, want: "no-trade" },
+    { row: "n", zone: "supply", curve: "wholesale", trend: "sideways", ratio: 8, want: "no-trade" },
+    { row: "o", zone: "supply", curve: "wholesale", trend: "uptrend", ratio: 8, want: "no-trade" },
+    // demand zone -> long
+    { row: "d", zone: "demand", curve: "retail", trend: "downtrend", ratio: 8, want: "no-trade" },
+    { row: "e", zone: "demand", curve: "retail", trend: "sideways", ratio: 8, want: "no-trade" },
+    { row: "f", zone: "demand", curve: "retail", trend: "uptrend", ratio: 5, want: "long" },
+    { row: "f<", zone: "demand", curve: "retail", trend: "uptrend", ratio: 4, want: "no-trade" },
+    { row: "j", zone: "demand", curve: "equilibrium", trend: "downtrend", ratio: 8, want: "no-trade" },
+    { row: "k", zone: "demand", curve: "equilibrium", trend: "sideways", ratio: 3, want: "long" },
+    { row: "l", zone: "demand", curve: "equilibrium", trend: "uptrend", ratio: 3, want: "long" },
+    { row: "p", zone: "demand", curve: "wholesale", trend: "downtrend", ratio: 5, want: "long" },
+    { row: "p<", zone: "demand", curve: "wholesale", trend: "downtrend", ratio: 4, want: "no-trade" },
+    { row: "q", zone: "demand", curve: "wholesale", trend: "sideways", ratio: 3, want: "long" },
+    { row: "r", zone: "demand", curve: "wholesale", trend: "uptrend", ratio: 3, want: "long" },
+  ] as const;
+
+  test.each(rows)(
+    "given row $row ($zone $curve, $trend, ratio $ratio): should resolve to $want",
+    ({ zone, curve, trend, ratio, want }) => {
+      expect(decisionMatrix(zone, curve, trend, ratio)).toBe(want);
+    },
+  );
+
+  test("given a needs-5to1 cell exactly at 5:1: should take the trade", () => {
+    expect(decisionMatrix("demand", "retail", "uptrend", 5)).toBe("long");
   });
 });
 
