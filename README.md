@@ -68,7 +68,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      
   6) S.E.T.S. the Trade; trade builder presents the Stop, Entry, Target & Size of position
 
-     Stop
+     Stop Loss Price
 
      a) show daily ATR
 
@@ -78,11 +78,11 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      d) show S.E.T.S. Stop Loss dollar amount (result of stop buffer subtracted from LTF demand distal or added to LTF supply distal)
 
-     Entry
+     Entry Price
 
      a) show S.E.T.S. Entry dollar amount (determined by odds enhancer total score)
 
-     Target
+     Target Price
 
      a) show position size, # of shares (according to trade risk and max risk per trade)
 
@@ -92,7 +92,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      d) show S.E.T.S. Target dollar amount (based on entry type and target buffer %)
 
-     Size
+     Size of Position
 
      a) show total risk per trade
 
