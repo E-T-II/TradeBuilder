@@ -63,7 +63,9 @@ const initialState: FormState = {
   openTradeRisk: "0",
 };
 
-const STORAGE_KEY = "tradebuilder-form-v1";
+// v2: strength/freshness dropped their half-point options, so older saves with a
+// 0.5 or 1.5 in those fields shouldn't be restored.
+const STORAGE_KEY = "tradebuilder-form-v2";
 
 const REQUIRED: (keyof FormState)[] = [
   "accountBalance",

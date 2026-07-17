@@ -302,6 +302,8 @@ export interface TradeResult {
   } | null;
   checks: {
     maxAccountRisk: number;
+    /** The configured per-trade risk limit as a percent (2 by default). */
+    riskLimitPct: number;
     withinPerTradeRisk: boolean;
     withinCapitalCap: boolean;
     meetsRewardRisk: boolean;
@@ -394,6 +396,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     },
     checks: {
       maxAccountRisk: maxRisk,
+      riskLimitPct: Math.round(inputs.riskTolerancePct * 10000) / 100,
       withinPerTradeRisk: totalRisk <= maxRisk,
       withinCapitalCap: capital <= inputs.accountBalance * 0.5,
       meetsRewardRisk: rr >= 3,

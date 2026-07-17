@@ -46,7 +46,7 @@ export function RiskChecks({ result }: { result: TradeResult }) {
       <CardContent className="space-y-2">
         <RuleRow
           ok={c.withinPerTradeRisk}
-          label={`Risk within ${usd.format(c.maxAccountRisk)} (2% rule)`}
+          label={`Risk within ${usd.format(c.maxAccountRisk)} (${c.riskLimitPct}% rule)`}
         />
         <RuleRow ok={c.withinCapitalCap} label="Capital within 50% of balance" />
         <RuleRow ok={c.meetsRewardRisk} label="Reward : risk at least 3:1" />
