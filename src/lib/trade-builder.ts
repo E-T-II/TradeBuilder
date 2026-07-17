@@ -101,6 +101,50 @@ export function profitZoneScore(ratio: number): number {
   return 0;
 }
 
+/** Which physical zone the trade enters at. Demand aims long, supply short. */
+export type ZoneType = "demand" | "supply";
+
+/** What the Decision Matrix resolves the trade to. */
+export type TradeObjective = Direction | "no-trade";
+
+// Decision Matrix (README step 3, rows a-r): the entry zone's type, where it
+// sits on the curve, and the trend resolve the objective. "needs-5to1" cells
+// only trade when the profit zone ratio is 5:1 or better; the rest are fixed.
+type MatrixVerdict = "trade" | "needs-5to1" | "no-trade";
+
+const DECISION_MATRIX: Record<
+  ZoneType,
+  Record<CurveZone, Record<Trend, MatrixVerdict>>
+> = {
+  demand: {
+    retail: { downtrend: "no-trade", sideways: "no-trade", uptrend: "needs-5to1" }, // d, e, f
+    equilibrium: { downtrend: "no-trade", sideways: "trade", uptrend: "trade" }, // j, k, l
+    wholesale: { downtrend: "needs-5to1", sideways: "trade", uptrend: "trade" }, // p, q, r
+  },
+  supply: {
+    retail: { downtrend: "trade", sideways: "trade", uptrend: "needs-5to1" }, // a, b, c
+    equilibrium: { downtrend: "trade", sideways: "trade", uptrend: "no-trade" }, // g, h, i
+    wholesale: { downtrend: "needs-5to1", sideways: "no-trade", uptrend: "no-trade" }, // m, n, o
+  },
+};
+
+/**
+ * Resolve the trade objective from the entry zone. A demand entry aims long, a
+ * supply entry aims short, but the matrix can veto to no-trade, and the marginal
+ * (counter-trend or awkward-curve) cells only trade with a 5:1 profit zone.
+ */
+export function decisionMatrix(
+  zoneType: ZoneType,
+  curve: CurveZone,
+  trend: Trend,
+  profitRatio: number,
+): TradeObjective {
+  const verdict = DECISION_MATRIX[zoneType][curve][trend];
+  if (verdict === "no-trade") return "no-trade";
+  if (verdict === "needs-5to1" && profitRatio < 5) return "no-trade";
+  return zoneType === "demand" ? "long" : "short";
+}
+
 /** The user-judged factors and their maximums. Confirmed by Eugene. */
 export const JUDGED_MAX = { strength: 2, time: 1, freshness: 2 } as const;
 
