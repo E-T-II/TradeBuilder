@@ -46,6 +46,16 @@ describe("given toInputs and the advanced risk override", () => {
   });
 });
 
+describe("given toInputs and the advanced target buffer override", () => {
+  test("given the default 75%: should pass 0.75 through", () => {
+    expect(toInputs(form())?.targetBufferPct).toBe(0.75);
+  });
+
+  test("given an advanced 90%: should pass 0.9, not clamp back to 80%", () => {
+    expect(toInputs(form({ targetBuffer: "90" }))?.targetBufferPct).toBe(0.9);
+  });
+});
+
 describe("given snapStep", () => {
   test("given a half-point value on a whole-point factor: should snap to a valid step", () => {
     expect(snapStep("1.5", 1, 2)).toBe("2");
