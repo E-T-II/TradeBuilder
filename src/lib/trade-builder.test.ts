@@ -517,6 +517,12 @@ describe("given buildTrade and the configured risk limit", () => {
     const result = buildTrade({ ...longTrade, riskTolerancePct: 0.05 });
     expect(result.checks?.riskLimitPct).toBe(5);
   });
+
+  test("given a value just above 2%: should preserve it so the over-guideline warning fires", () => {
+    const result = buildTrade({ ...longTrade, riskTolerancePct: 0.02001 });
+    expect(result.checks?.riskLimitPct).toBe(2.001);
+    expect(result.checks!.riskLimitPct).toBeGreaterThan(2);
+  });
 });
 
 describe("given buildTrade and the 6% multiple-trade rule", () => {
