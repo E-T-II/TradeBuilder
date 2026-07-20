@@ -285,13 +285,18 @@ export function TradeForm({
       </div>
 
       <div className="mt-8">
-        <h2
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-semibold tracking-tight outline-none"
-        >
-          {STEPS[step].title}
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-2xl font-semibold tracking-tight outline-none"
+          >
+            {STEPS[step].title}
+          </h2>
+          {step === 2 ? (
+            <ChartTutorialButton direction={form.direction} />
+          ) : null}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {STEPS[step].blurb}
         </p>
@@ -450,9 +455,6 @@ export function TradeForm({
 
         {step === 2 ? (
           <>
-            <div className="-mt-1 flex justify-start">
-              <ChartTutorialButton direction={form.direction} />
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="curveLow"
