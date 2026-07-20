@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef } from "react";
 import {
   ArrowRight,
   Check,
@@ -112,6 +112,23 @@ function formatNumber(raw: string): string {
   return decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
 }
 
+// Commas are the only characters formatNumber inserts, so caret position can
+// be tracked as "how many non-comma characters sit before it" and reapplied
+// after reformatting shifts the commas around.
+function nonCommaCountBefore(display: string, index: number): number {
+  let count = 0;
+  for (let i = 0; i < index; i++) if (display[i] !== ",") count++;
+  return count;
+}
+function indexAtNonCommaCount(display: string, count: number): number {
+  let seen = 0;
+  for (let i = 0; i < display.length; i++) {
+    if (seen === count) return i;
+    if (display[i] !== ",") seen++;
+  }
+  return display.length;
+}
+
 // type="text" because type="number" refuses to render commas.
 function NumberInput({
   id,
@@ -126,17 +143,35 @@ function NumberInput({
   placeholder?: string;
   invalid?: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pendingCaret = useRef<number | null>(null);
+  const display = formatNumber(value);
+
+  // Re-apply the caret after React commits the reformatted value, since
+  // inserting/removing a comma otherwise shifts it to the end of the field.
+  useLayoutEffect(() => {
+    if (pendingCaret.current === null || !inputRef.current) return;
+    const index = indexAtNonCommaCount(display, pendingCaret.current);
+    inputRef.current.setSelectionRange(index, index);
+    pendingCaret.current = null;
+  }, [display]);
+
   return (
     <Input
       id={id}
+      ref={inputRef}
       type="text"
       inputMode="decimal"
       autoComplete="off"
       aria-invalid={invalid || undefined}
       aria-describedby={invalid ? `${id}-error` : undefined}
       placeholder={placeholder}
-      value={formatNumber(value)}
-      onChange={(e) => onChange(sanitizeNumber(e.target.value))}
+      value={display}
+      onChange={(e) => {
+        const caret = e.target.selectionStart ?? e.target.value.length;
+        pendingCaret.current = nonCommaCountBefore(e.target.value, caret);
+        onChange(sanitizeNumber(e.target.value));
+      }}
     />
   );
 }
@@ -530,7 +565,7 @@ export function TradeForm({
             >
               <RatingChips
                 aria-labelledby="strength-label"
-                value={Number(form.strength)}
+                value={form.strength === "" ? null : Number(form.strength)}
                 max={JUDGED_MAX.strength}
                 lowLabel="Weak move"
                 highLabel="Strong move"
@@ -545,7 +580,7 @@ export function TradeForm({
             >
               <RatingChips
                 aria-labelledby="time-label"
-                value={Number(form.time)}
+                value={form.time === "" ? null : Number(form.time)}
                 max={JUDGED_MAX.time}
                 step={0.5}
                 lowLabel="Lingered"
@@ -561,7 +596,7 @@ export function TradeForm({
             >
               <RatingChips
                 aria-labelledby="freshness-label"
-                value={Number(form.freshness)}
+                value={form.freshness === "" ? null : Number(form.freshness)}
                 max={JUDGED_MAX.freshness}
                 lowLabel="Retested"
                 highLabel="Untested"
