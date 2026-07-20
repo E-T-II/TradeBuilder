@@ -3,8 +3,17 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+// `clientOnly` callers are rendered only after mount (never in server HTML), so
+// they can read the media query synchronously on the first render and skip the
+// one animated frame that would otherwise show before the effect corrects. SSR
+// callers keep the `false` default to stay hydration-safe.
+export function usePrefersReducedMotion(clientOnly = false) {
+  const [reduced, setReduced] = useState(
+    () =>
+      clientOnly &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(mq.matches);
