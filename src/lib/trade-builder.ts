@@ -500,7 +500,10 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     },
     checks: {
       maxAccountRisk: maxRisk,
-      riskLimitPct: Math.round(inputs.riskTolerancePct * 10000) / 100,
+      // 4 decimals of a percent: cleans float noise (0.02 -> 2, not 2.0000004)
+      // while preserving a finely-typed override (2.001%) so the guideline
+      // comparison and label don't round it down to a flat 2%.
+      riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
       withinPerTradeRisk: totalRisk <= maxRisk,
       withinCapitalCap: capital <= inputs.accountBalance * 0.5,
       meetsRewardRisk: rr >= 3,
