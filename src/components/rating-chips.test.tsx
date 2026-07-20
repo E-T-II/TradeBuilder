@@ -26,4 +26,14 @@ describe("given RatingChips", () => {
     const options = screen.getAllByRole("radio").map((r) => r.textContent);
     expect(options).toEqual(["0", "0.5", "1"]);
   });
+
+  test("given value null (unanswered): should check no chip, unlike a deliberate 0", () => {
+    render(
+      <RatingChips value={null} max={2} onChange={() => {}} aria-label="Strength" />,
+    );
+    const options = screen.getAllByRole("radio");
+    expect(options.every((r) => r.getAttribute("aria-checked") === "false")).toBe(
+      true,
+    );
+  });
 });

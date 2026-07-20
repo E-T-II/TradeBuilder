@@ -59,9 +59,11 @@ const initialState: FormState = {
   demandLow: "",
   supplyHigh: "",
   supplyLow: "",
-  strength: "0",
-  time: "0",
-  freshness: "0",
+  // Empty, not "0": these are unanswered until the user picks a chip, and "0"
+  // is itself a valid deliberate score, so the two states can't share a value.
+  strength: "",
+  time: "",
+  freshness: "",
   openTradeRisk: "0",
 };
 
@@ -87,6 +89,7 @@ function missingFields(form: FormState): number {
 // Snap a persisted judged value to a valid step; older saves may hold a
 // half-point strength/freshness that's no longer an option.
 export function snapStep(value: string, step: number, max: number): string {
+  if (value === "") return "";
   const n = Number(value);
   if (!Number.isFinite(n)) return "0";
   return String(Math.min(max, Math.max(0, Math.round(n / step) * step)));
@@ -134,6 +137,13 @@ function clampPercent(raw: string, fallback: number, max: number): number {
   const n = raw.trim() === "" ? fallback : Number(raw);
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return Math.min(n, max);
+}
+
+// A balance of exactly 0 (or a typo like "-5") parses fine but can't size a
+// trade; the generic "not a number" fallback copy is wrong for it.
+export function hasNonPositiveBalance(form: FormState): boolean {
+  const n = Number(form.accountBalance);
+  return Number.isFinite(n) && n <= 0;
 }
 
 export function toInputs(form: FormState): TradeInputs | null {
@@ -290,8 +300,9 @@ export function TradeBuilderApp() {
               ) : (
                 <Card>
                   <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                    Some inputs don&apos;t look like numbers. Go back and check
-                    them.
+                    {hasNonPositiveBalance(form)
+                      ? "Your account balance needs to be greater than zero to size a trade."
+                      : "Some inputs don't look like numbers. Go back and check them."}
                   </CardContent>
                 </Card>
               )}

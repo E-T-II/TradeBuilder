@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 
 import {
+  hasNonPositiveBalance,
   loadStoredForm,
   snapStep,
   toInputs,
@@ -56,8 +57,32 @@ describe("given snapStep", () => {
     expect(snapStep("0.5", 0.5, 1)).toBe("0.5");
   });
 
-  test("given a non-numeric value: should fall back to 0", () => {
-    expect(snapStep("", 1, 2)).toBe("0");
+  test("given an unanswered (empty) value: should leave it unanswered", () => {
+    expect(snapStep("", 1, 2)).toBe("");
+  });
+
+  test("given a genuinely non-numeric value: should fall back to 0", () => {
+    expect(snapStep("abc", 1, 2)).toBe("0");
+  });
+});
+
+describe("given toInputs and a non-positive balance", () => {
+  test("given a balance of 0: should return null rather than a trade", () => {
+    expect(toInputs(form({ accountBalance: "0" }))).toBeNull();
+  });
+});
+
+describe("given hasNonPositiveBalance", () => {
+  test("given a balance of 0: should be true", () => {
+    expect(hasNonPositiveBalance(form({ accountBalance: "0" }))).toBe(true);
+  });
+
+  test("given a positive balance: should be false", () => {
+    expect(hasNonPositiveBalance(form())).toBe(false);
+  });
+
+  test("given a non-numeric balance: should be false (that's a different failure)", () => {
+    expect(hasNonPositiveBalance(form({ accountBalance: "abc" }))).toBe(false);
   });
 });
 
