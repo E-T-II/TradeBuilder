@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
+import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 
 export const STEPS = [
   { title: "Account", blurb: "How much you're working with" },
@@ -449,6 +450,9 @@ export function TradeForm({
 
         {step === 2 ? (
           <>
+            <div className="-mt-1 flex justify-start">
+              <ChartTutorialButton direction={form.direction} />
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="curveLow"
