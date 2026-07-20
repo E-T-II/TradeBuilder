@@ -92,18 +92,36 @@ export function snapStep(value: string, step: number, max: number): string {
   return String(Math.min(max, Math.max(0, Math.round(n / step) * step)));
 }
 
-// Read the saved form, ignoring anything that isn't the shape we persist (every
-// field is a string). Malformed but valid JSON, e.g. a number where a string is
-// expected, would otherwise crash later on `.trim()`, so return null and let the
-// app fall back to initialState.
+// Enum fields need their values checked, not just their type: `direction:
+// "banana"` is a string, so a shape-only check would pass it through and the
+// engine would silently treat it as the non-long branch.
+const ENUM_VALUES: { [K in keyof FormState]?: readonly string[] } = {
+  direction: ["long", "short"] satisfies Direction[],
+  trend: ["uptrend", "sideways", "downtrend"] satisfies Trend[],
+  timeframe: ["daily", "weekly"] satisfies IncomeTimeframe[],
+};
+
+// Read the saved form, keeping only the fields that match the shape we persist:
+// known keys with string values, and enum fields whose value is in range. A
+// number where a string is expected would otherwise crash later on `.trim()`,
+// and a bad enum would skew the results, so those fields are dropped and fall
+// back to their initialState default rather than discarding the whole save.
+// Returns null when nothing usable remains.
 export function loadStoredForm(): Partial<FormState> | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return null;
-    if (Object.values(parsed).some((v) => typeof v !== "string")) return null;
-    return parsed as Partial<FormState>;
+    const clean: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!Object.hasOwn(initialState, key)) continue;
+      if (typeof value !== "string") continue;
+      const allowed = ENUM_VALUES[key as keyof FormState];
+      if (allowed && !allowed.includes(value)) continue;
+      clean[key] = value;
+    }
+    return Object.keys(clean).length > 0 ? (clean as Partial<FormState>) : null;
   } catch {
     return null;
   }
@@ -118,7 +136,7 @@ function clampPercent(raw: string, fallback: number, max: number): number {
   return Math.min(n, max);
 }
 
-function toInputs(form: FormState): TradeInputs | null {
+export function toInputs(form: FormState): TradeInputs | null {
   if (missingFields(form) > 0) return null;
 
   const numbers = {
@@ -187,7 +205,7 @@ export function TradeBuilderApp() {
       return;
     }
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
     } catch {}
   }, [form]);
 

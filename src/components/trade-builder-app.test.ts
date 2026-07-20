@@ -1,11 +1,49 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test } from "vitest";
 
-import { loadStoredForm, snapStep } from "@/components/trade-builder-app";
+import {
+  loadStoredForm,
+  snapStep,
+  toInputs,
+  type FormState,
+} from "@/components/trade-builder-app";
 
 const KEY = "tradebuilder-form-v2";
 
-afterEach(() => localStorage.clear());
+// Go through window.localStorage: on Node 25 the bare `localStorage` global is
+// Node's own Web Storage, which isn't backed here and shadows the jsdom one.
+afterEach(() => window.localStorage.clear());
+
+const form = (overrides: Partial<FormState> = {}): FormState => ({
+  accountBalance: "600",
+  riskTolerance: "2",
+  targetBuffer: "75",
+  direction: "long",
+  trend: "uptrend",
+  timeframe: "daily",
+  atr: "4",
+  curveLow: "100",
+  curveHigh: "130",
+  demandHigh: "108",
+  demandLow: "106",
+  supplyHigh: "126",
+  supplyLow: "124",
+  strength: "1",
+  time: "0.5",
+  freshness: "1",
+  openTradeRisk: "0",
+  ...overrides,
+});
+
+describe("given toInputs and the advanced risk override", () => {
+  test("given the default 2%: should pass 0.02 through", () => {
+    expect(toInputs(form())?.riskTolerancePct).toBe(0.02);
+  });
+
+  test("given an advanced 5%: should pass 0.05, not clamp back to 2%", () => {
+    expect(toInputs(form({ riskTolerance: "5" }))?.riskTolerancePct).toBe(0.05);
+  });
+});
 
 describe("given snapStep", () => {
   test("given a half-point value on a whole-point factor: should snap to a valid step", () => {
@@ -25,17 +63,35 @@ describe("given snapStep", () => {
 
 describe("given loadStoredForm", () => {
   test("given a payload with a non-string field: should ignore it and return null", () => {
-    localStorage.setItem(KEY, JSON.stringify({ accountBalance: 1 }));
+    window.localStorage.setItem(KEY, JSON.stringify({ accountBalance: 1 }));
     expect(loadStoredForm()).toBeNull();
   });
 
   test("given invalid JSON: should return null", () => {
-    localStorage.setItem(KEY, "{ not json");
+    window.localStorage.setItem(KEY, "{ not json");
+    expect(loadStoredForm()).toBeNull();
+  });
+
+  test("given an unknown key: should return null", () => {
+    window.localStorage.setItem(KEY, JSON.stringify({ hacked: "1" }));
+    expect(loadStoredForm()).toBeNull();
+  });
+
+  test("given an out-of-range enum value: should return null", () => {
+    window.localStorage.setItem(KEY, JSON.stringify({ direction: "invalid" }));
     expect(loadStoredForm()).toBeNull();
   });
 
   test("given a well-formed string payload: should return it", () => {
-    localStorage.setItem(KEY, JSON.stringify({ accountBalance: "600" }));
+    window.localStorage.setItem(KEY, JSON.stringify({ accountBalance: "600" }));
+    expect(loadStoredForm()).toEqual({ accountBalance: "600" });
+  });
+
+  test("given a mix of valid and invalid fields: should keep only the valid ones", () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ accountBalance: "600", direction: "invalid", hacked: "x" }),
+    );
     expect(loadStoredForm()).toEqual({ accountBalance: "600" });
   });
 });
