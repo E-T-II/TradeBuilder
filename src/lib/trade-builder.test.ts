@@ -5,6 +5,7 @@ import {
   curveScore,
   profitZoneRatio,
   profitZoneScore,
+  meetsProfitRatio,
   totalScore,
   entryType,
   entryPrice,
@@ -109,6 +110,29 @@ describe("given profitZoneScore", () => {
     expect(profitZoneScore(ratio)).toBe(2);
     // The Decision Matrix must agree: a needs-5to1 cell should trade, not veto.
     expect(decisionMatrix("demand", "wholesale", "downtrend", ratio)).toBe("long");
+  });
+});
+
+describe("given meetsProfitRatio", () => {
+  test("given a ratio at or above the threshold: should be true", () => {
+    expect(meetsProfitRatio(5, 5)).toBe(true);
+    expect(meetsProfitRatio(6, 5)).toBe(true);
+  });
+
+  test("given a ratio clearly below the threshold: should be false", () => {
+    expect(meetsProfitRatio(4.9, 5)).toBe(false);
+  });
+
+  test("given a float that dips a hair under an exact threshold: should still be true", () => {
+    // The bug this epsilon guards: an exact 5:1 computed from decimal prices
+    // lands at 4.999999999999993, which a naive `>=` would reject.
+    expect(4.999999999999993 >= 5).toBe(false); // proves the naive check fails
+    expect(meetsProfitRatio(4.999999999999993, 5)).toBe(true);
+  });
+
+  test("given a value more than an epsilon below the threshold: should be false", () => {
+    // The tolerance is only 1e-9, so a real miss isn't rounded up to a pass.
+    expect(meetsProfitRatio(4.9999, 5)).toBe(false);
   });
 });
 
