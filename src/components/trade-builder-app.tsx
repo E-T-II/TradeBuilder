@@ -67,9 +67,11 @@ const initialState: FormState = {
   openTradeRisk: "0",
 };
 
-// v2: the demand/supply zone fields replace the v1 entry/target form, a
-// different shape, so old saves shouldn't be restored under this key.
-const STORAGE_KEY = "tradebuilder-form-v2";
+// v3: strength/time/freshness now default to "" (unanswered) instead of "0"
+// (a deliberate score), a semantic change. A v2 save's "0" would otherwise
+// load as a deliberate zero the user never chose, so bump the key and let
+// old saves fall back to the new defaults instead.
+const STORAGE_KEY = "tradebuilder-form-v3";
 
 const REQUIRED: (keyof FormState)[] = [
   "accountBalance",

@@ -9,7 +9,7 @@ import {
   type FormState,
 } from "@/components/trade-builder-app";
 
-const KEY = "tradebuilder-form-v2";
+const KEY = "tradebuilder-form-v3";
 
 // Go through window.localStorage: on Node 25 the bare `localStorage` global is
 // Node's own Web Storage, which isn't backed here and shadows the jsdom one.

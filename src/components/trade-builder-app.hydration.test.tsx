@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 import { TradeBuilderApp } from "@/components/trade-builder-app";
 
-const KEY = "tradebuilder-form-v2";
+const KEY = "tradebuilder-form-v3";
 
 // A complete, geometrically valid form so Next isn't blocked on the way to the
 // judged-factors step, plus a stale half-point strength that's no longer an option.
