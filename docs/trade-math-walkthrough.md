@@ -33,13 +33,13 @@ Easy thing to miss: the four price lines come from two different boxes. The dema
 
 ## The Decision Matrix
 
-Before any scoring happens, the Decision Matrix decides whether there's a trade to score at all. It looks at three things you've already given it — which zone you're entering (demand or supply), where that zone sits on the curve (wholesale, equilibrium, or retail), and the trend — and resolves one of three verdicts: trade, no-trade, or "trade, but only if the profit zone is 5:1 or better."
+Alongside the scorecard, the Decision Matrix decides whether there's an order to build at all. It looks at three things you've already given it — which zone you're entering (demand or supply), where that zone sits on the curve (wholesale, equilibrium, or retail), and the trend — and resolves one of three verdicts: trade, no-trade, or "trade, but only if the profit zone is 5:1 or better."
 
 A demand zone always aims long; a supply zone always aims short. The matrix's job is to veto that when the setup is fighting the trend from a bad spot on the curve.
 
-For this example: a demand zone, sitting in wholesale, in an uptrend. That's rule **r** from the README's eighteen-cell table — demand, low on the curve, uptrend — and it trades unconditionally, no profit-zone condition attached. Compare that to rule **f**, the same demand zone but in retail instead of wholesale: that one only trades if the profit zone is 5:1 or better, because buying expensive against an uptrend is a marginal setup that needs extra room to be worth it.
+For this example: a demand zone, sitting in wholesale, in an uptrend. That's rule **r** from the README's eighteen-cell table — demand, low on the curve, uptrend — and it trades unconditionally, no profit-zone condition attached. Compare that to rule **f**, the same demand zone but in retail instead of wholesale: that one only trades if the profit zone is 5:1 or better. Rule f is still trading with the trend (a long in an uptrend scores the full 2 trend points), but it's buying from the expensive third of the curve, and needs extra room to be worth it.
 
-If the matrix vetoes the setup, that's it — no score gets built, and the order ticket just says the zone isn't a valid setup for the current trend and curve position, with the opposite direction possibly qualifying instead. That's one of three ways to end up with "no trade": the matrix veto, a score under 7, or a score that qualifies but the zones are too tight for the target to clear the entry.
+If the matrix vetoes the setup, the scorecard still gets built and shown — the veto only blocks the order. The order ticket just says the zone isn't a valid setup for the current trend and curve position, with the opposite direction possibly qualifying instead. That's one of three ways to end up with "no trade": the matrix veto, a score under 7, or a score that qualifies but the zones are too tight for the target to clear the entry.
 
 ## The numbers on the diagram
 
@@ -100,11 +100,11 @@ Three are scored automatically from what you've already entered:
 - **Trend — 2 points.** This is a long in an uptrend, trading with the trend. Uptrend scores 2, sideways 1, downtrend 0 for a long (mirrored for a short).
 - **Profit zone — 2 points.** The demand zone's height (Demand high 108 - Demand low 106 = 2) divides into the distance from Demand high to Supply low (124 - 108 = 16) eight times over, well past the 5:1 needed for the full 2 points. This is the same ratio the Decision Matrix checks for the marginal cells above.
 
-The other three are your own read of the chart, typed in as the strength, time, and freshness ratings:
+The other three are your own read of the chart, typed in as the strength, time, and freshness ratings. The diagram has no candles to read these off, so for this worked example, assume the chart showed a strong rejection, a quick pass through the zone, and one prior retest:
 
-- **Strength — up to 2 points.** How sharply price left the zone. Scores 2, 1, or 0. Here, a strong rejection: 2.
-- **Time — up to 1 point.** How little time price spent at the zone. Scores 1, 0.5, or 0. Here, 0.5.
-- **Freshness — up to 2 points.** How untouched the zone is since it formed. Scores 2, 1, or 0. Here, 1.
+- **Strength — up to 2 points.** How sharply price left the zone. Scores 2, 1, or 0. Assumed here: a strong rejection, 2.
+- **Time — up to 1 point.** How little time price spent at the zone. Scores 1, 0.5, or 0. Assumed here: 0.5.
+- **Freshness — up to 2 points.** How untouched the zone is since it formed. Scores 2, 1, or 0. Assumed here: 1.
 
 ```
 total = curve + trend + profit zone + strength + time + freshness
