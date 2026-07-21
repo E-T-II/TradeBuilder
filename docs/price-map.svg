@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480" role="img" aria-labelledby="ttl desc" style="color:#1f2937;font-family:system-ui,-apple-system,sans-serif">
   <title id="ttl">Trade Builder price map with real numbers</title>
-  <desc id="desc">A vertical price chart from 100 to 130. Wholesale is 100 to 110, equilibrium 110 to 120, retail 120 to 130. A demand zone sits at 106 to 108 where you buy, stop at 105.92, and a target of 120 sits below the supply zone at 124 to 126.</desc>
+  <desc id="desc">A vertical price chart from 100 to 130. Wholesale is 100 to 110, equilibrium 110 to 120, retail 120 to 130. A demand zone (high 108, low 106) is where you buy, stop at 105.92, and a target of 120 sits below the supply zone (high 126, low 124).</desc>
 
   <rect x="0" y="0" width="800" height="480" fill="#ffffff"/>
 
@@ -32,30 +32,31 @@
   <text x="132" y="392" font-size="13" fill="currentColor" font-weight="600">Wholesale</text>
   <text x="132" y="409" font-size="11" fill="currentColor" opacity="0.7">100 to 110, cheap</text>
 
-  <!-- supply / target zone (retail) -->
+  <!-- supply zone (retail); this long's target -->
   <rect x="175" y="101" width="230" height="25" fill="rgba(34,197,94,0.14)" stroke="rgba(34,197,94,0.7)" stroke-width="1" stroke-dasharray="4 3"/>
-  <text x="460" y="99" font-size="11.5" fill="currentColor">Target distal = 126</text>
-  <text x="460" y="130" font-size="11.5" fill="currentColor">Target proximal = 124</text>
-  <text x="300" y="117" font-size="10.5" fill="currentColor" opacity="0.6">supply zone</text>
+  <text x="300" y="117" font-size="13" fill="currentColor" font-weight="600" text-anchor="middle">Supply zone</text>
+  <text x="460" y="99" font-size="12" fill="currentColor" font-weight="600">Supply high = 126</text>
+  <text x="460" y="130" font-size="12" fill="currentColor" font-weight="600">Supply low = 124</text>
+  <text x="460" y="144" font-size="10.5" fill="currentColor" opacity="0.7">you aim here (this long's target)</text>
 
   <!-- target price line -->
   <line x1="120" y1="177" x2="405" y2="177" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4"/>
   <text x="460" y="174" font-size="12.5" fill="#16a34a" font-weight="600">Target = 120</text>
   <text x="460" y="188" font-size="10.5" fill="currentColor" opacity="0.7">75% of the way up (below the zone)</text>
 
-  <!-- demand / entry zone (wholesale) -->
+  <!-- demand zone (wholesale); this long's entry -->
   <rect x="175" y="329" width="230" height="25" fill="rgba(59,130,246,0.22)" stroke="rgba(59,130,246,0.9)" stroke-width="1"/>
   <line x1="175" y1="329" x2="405" y2="329" stroke="rgba(59,130,246,1)" stroke-width="2"/>
   <circle cx="175" cy="329" r="4.5" fill="rgba(59,130,246,1)"/>
-  <text x="460" y="327" font-size="12.5" fill="currentColor" font-weight="600">Entry proximal = 108</text>
-  <text x="460" y="341" font-size="10.5" fill="currentColor" opacity="0.7">you buy here</text>
-  <text x="460" y="353" font-size="12" fill="currentColor">Entry distal = 106</text>
-  <text x="185" y="346" font-size="10.5" fill="currentColor" opacity="0.6">demand zone</text>
+  <text x="300" y="341" font-size="13" fill="currentColor" font-weight="600" text-anchor="middle">Demand zone</text>
+  <text x="460" y="327" font-size="12.5" fill="currentColor" font-weight="600">Demand high = 108</text>
+  <text x="460" y="341" font-size="10.5" fill="currentColor" opacity="0.7">you buy here (this long's entry)</text>
+  <text x="460" y="353" font-size="12" fill="currentColor" font-weight="600">Demand low = 106</text>
 
-  <!-- stop line: just below the distal, drawn to scale -->
+  <!-- stop line: just below Demand low, drawn to scale -->
   <line x1="175" y1="356" x2="405" y2="356" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 4"/>
   <text x="460" y="371" font-size="12" fill="#ef4444" font-weight="600">Stop = 105.92</text>
-  <text x="460" y="385" font-size="10.5" fill="currentColor" opacity="0.7">0.08 below the distal</text>
+  <text x="460" y="385" font-size="10.5" fill="currentColor" opacity="0.7">0.08 below Demand low</text>
 
   <!-- reward / risk brackets -->
   <line x1="103" y1="329" x2="103" y2="177" stroke="currentColor" stroke-width="1.5" opacity="0.55" marker-end="url(#up)"/>
