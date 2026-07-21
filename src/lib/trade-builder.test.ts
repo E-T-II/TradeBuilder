@@ -537,15 +537,11 @@ describe("given buildTrade and the configured risk limit", () => {
     expect(buildTrade(longTrade).checks?.riskLimitPct).toBe(2);
   });
 
-  test("given an advanced override to 5%: should report riskLimitPct as 5", () => {
-    const result = buildTrade({ ...longTrade, riskTolerancePct: 0.05 });
-    expect(result.checks?.riskLimitPct).toBe(5);
-  });
-
-  test("given a value just above 2%: should preserve it so the over-guideline warning fires", () => {
-    const result = buildTrade({ ...longTrade, riskTolerancePct: 0.02001 });
-    expect(result.checks?.riskLimitPct).toBe(2.001);
-    expect(result.checks!.riskLimitPct).toBeGreaterThan(2);
+  // The form caps risk at 2%, but a user can dial it lower; the reported
+  // percent keeps fine precision rather than rounding to a whole number.
+  test("given a sub-2% risk: should report it precisely, not rounded", () => {
+    const result = buildTrade({ ...longTrade, riskTolerancePct: 0.015 });
+    expect(result.checks?.riskLimitPct).toBe(1.5);
   });
 });
 

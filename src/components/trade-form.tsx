@@ -433,13 +433,13 @@ export function TradeForm({
                 <Field
                   id="risk"
                   label="Risk per trade (%)"
-                  hint="2% recommended; higher overrides the rule"
+                  hint="Up to 2%, to preserve the account"
                 >
                   <Input
                     id="risk"
                     type="number"
                     min="0"
-                    max="100"
+                    max="2"
                     step="0.1"
                     inputMode="decimal"
                     value={form.riskTolerance}
@@ -449,13 +449,13 @@ export function TradeForm({
                 <Field
                   id="buffer"
                   label="Target buffer (%)"
-                  hint="75 to 80% recommended"
+                  hint="Between 75% and 80%"
                 >
                   <Input
                     id="buffer"
                     type="number"
-                    min="0"
-                    max="100"
+                    min="75"
+                    max="80"
                     inputMode="decimal"
                     value={form.targetBuffer}
                     onChange={(e) => onChange({ targetBuffer: e.target.value })}
