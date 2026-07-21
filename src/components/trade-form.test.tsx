@@ -32,7 +32,7 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
 // edits flow through onChange the way they do in the app.
 function ZonesStep({ initial }: { initial: FormState }) {
   const [form, setForm] = useState<FormState>(initial);
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(3);
   return (
     <TradeForm
       form={form}
@@ -46,8 +46,8 @@ function ZonesStep({ initial }: { initial: FormState }) {
   );
 }
 
-// Renders the wizard parked on the Account step, holding real form state so
-// edits flow through onChange the way they do in the app.
+// Renders the wizard parked on the pre-steps screen (balance + ATR), holding
+// real form state so edits flow through onChange the way they do in the app.
 function AccountStep({ initial }: { initial: FormState }) {
   const [form, setForm] = useState<FormState>(initial);
   return (
@@ -141,7 +141,7 @@ describe("given the odds-enhancer chips on the Your read step", () => {
       <TradeForm
         form={baseForm()}
         onChange={() => {}}
-        step={3}
+        step={4}
         onBack={() => {}}
         onNext={() => {}}
         showAdvanced={false}
@@ -159,7 +159,7 @@ describe("given the odds-enhancer chips on the Your read step", () => {
       <TradeForm
         form={baseForm({ freshness: "" })}
         onChange={() => {}}
-        step={3}
+        step={4}
         onBack={() => {}}
         onNext={() => {}}
         showAdvanced={false}
@@ -178,7 +178,7 @@ describe("given the odds-enhancer chips on the Your read step", () => {
       <TradeForm
         form={baseForm()}
         onChange={() => {}}
-        step={3}
+        step={4}
         onBack={() => {}}
         onNext={() => {}}
         showAdvanced={false}

@@ -20,25 +20,28 @@ import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 
+// Order mirrors Eugene's Six Step Process Flowchart so the wizard walks the
+// trade methodology: pre-steps, then curve (HTF), trend (ITF), zones (LTF),
+// then score. Direction stays a user input on the Zones step (we collect both
+// zones up front, so the user has to say which one they're entering); the
+// Decision Matrix then verifies it.
 export const STEPS = [
-  { title: "Account", blurb: "How much you're working with" },
-  { title: "Trade", blurb: "What you're trading and which way" },
-  { title: "Zones", blurb: "The price lines from your chart" },
+  { title: "Pre-steps", blurb: "Your account and the stock's volatility" },
+  { title: "Curve", blurb: "Set the curve on your high time frame" },
+  { title: "Trend", blurb: "Check the trend on your intermediary time frame" },
+  {
+    title: "Zones",
+    blurb: "Mark the demand and supply zones on your low time frame",
+  },
   { title: "Your read", blurb: "Score the zone quality yourself" },
 ] as const;
 
 // Required fields per step; Next stays disabled until these are filled.
 const STEP_FIELDS: (keyof FormState)[][] = [
-  ["accountBalance"],
-  ["atr"],
-  [
-    "curveLow",
-    "curveHigh",
-    "demandHigh",
-    "demandLow",
-    "supplyHigh",
-    "supplyLow",
-  ],
+  ["accountBalance", "atr"],
+  ["curveLow", "curveHigh"],
+  [],
+  ["demandHigh", "demandLow", "supplyHigh", "supplyLow"],
   // Required, not optional: skipping any one of these still lets the other
   // two auto-scored factors (curve, trend, profit zone) push the total past
   // 7, qualifying a trade the user never actually scored. The README's rule
@@ -305,11 +308,22 @@ export function TradeForm({
   const isLast = step === STEPS.length - 1;
   const long = form.direction === "long";
 
-  // Zone geometry errors block advancing once the user is on the Zones step
-  // (index 2) or beyond, so a nonsensical setup can't reach the results.
+  // Geometry errors block advancing on the step that owns the offending field:
+  // a bad curve high on the Curve step (1), zone-geometry errors on the Zones
+  // step (3). Any lingering error also blocks the final submit, since the
+  // stepper lets a user jump ahead once the required fields are filled.
   const zoneErrors = validateZones(form);
   const hasZoneErrors = Object.keys(zoneErrors).length > 0;
-  const blockedByZones = hasZoneErrors && step >= 2;
+  const blockedByZones =
+    (step === 1 && !!zoneErrors.curveHigh) ||
+    (step === 3 &&
+      !!(
+        zoneErrors.demandHigh ||
+        zoneErrors.demandLow ||
+        zoneErrors.supplyHigh ||
+        zoneErrors.supplyLow
+      )) ||
+    (isLast && hasZoneErrors);
   const disableNext = remaining > 0 || blockedByZones;
 
   // Move focus to the new step's heading so keyboard and screen-reader users
@@ -350,7 +364,7 @@ export function TradeForm({
           >
             {STEPS[step].title}
           </h2>
-          {step === 2 ? (
+          {step === 3 ? (
             <ChartTutorialButton direction={form.direction} />
           ) : null}
         </div>
@@ -362,17 +376,47 @@ export function TradeForm({
       <div className="mt-8 flex-1 space-y-5">
         {step === 0 ? (
           <>
-            <Field
-              id="balance"
-              label="Account balance ($)"
-              hint="Your balance with your broker, used for all risk limits"
-            >
-              <NumberInput
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
                 id="balance"
-                placeholder="600"
-                value={form.accountBalance}
-                onChange={(accountBalance) => onChange({ accountBalance })}
-                allowNegative
+                label="Account balance ($)"
+                hint="Your balance with your broker, used for all risk limits"
+              >
+                <NumberInput
+                  id="balance"
+                  placeholder="600"
+                  value={form.accountBalance}
+                  onChange={(accountBalance) => onChange({ accountBalance })}
+                  allowNegative
+                />
+              </Field>
+              <Field
+                id="atr"
+                label="Daily ATR ($)"
+                hint="From finviz.com (14-day average true range)"
+              >
+                <NumberInput
+                  id="atr"
+                  placeholder="5.93"
+                  value={form.atr}
+                  onChange={(atr) => onChange({ atr })}
+                />
+              </Field>
+            </div>
+            <Field
+              id="timeframe"
+              label="Income objective"
+              hint="Sets the stop buffer: 2% or 10% of ATR"
+              group
+            >
+              <SegmentedControl
+                aria-labelledby="timeframe-label"
+                value={form.timeframe}
+                options={[
+                  { value: "daily", label: "Daily" },
+                  { value: "weekly", label: "Weekly +" },
+                ]}
+                onChange={(timeframe) => onChange({ timeframe })}
               />
             </Field>
 
@@ -434,102 +478,73 @@ export function TradeForm({
         ) : null}
 
         {step === 1 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PriceField
+              id="curveLow"
+              label="Curve low ($)"
+              hint="HTF demand zone distal line"
+              value={form.curveLow}
+              onChange={(curveLow) => onChange({ curveLow })}
+            />
+            <PriceField
+              id="curveHigh"
+              label="Curve high ($)"
+              hint="HTF supply zone distal line"
+              value={form.curveHigh}
+              onChange={(curveHigh) => onChange({ curveHigh })}
+              error={zoneErrors.curveHigh}
+            />
+          </div>
+        ) : null}
+
+        {step === 2 ? (
+          <Field id="trend" label="Trend" group>
+            <SegmentedControl
+              aria-labelledby="trend-label"
+              value={form.trend}
+              options={[
+                {
+                  value: "uptrend",
+                  label: "Uptrend",
+                  icon: TrendingUp,
+                  accent: "green",
+                },
+                { value: "sideways", label: "Sideways", icon: MoveRight },
+                {
+                  value: "downtrend",
+                  label: "Downtrend",
+                  icon: TrendingDown,
+                  accent: "red",
+                },
+              ]}
+              onChange={(trend) => onChange({ trend })}
+            />
+          </Field>
+        ) : null}
+
+        {step === 3 ? (
           <>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field id="direction" label="Direction" group>
-                <SegmentedControl
-                  aria-labelledby="direction-label"
-                  value={form.direction}
-                  options={[
-                    {
-                      value: "long",
-                      label: "Buy long",
-                      icon: TrendingUp,
-                      accent: "green",
-                    },
-                    {
-                      value: "short",
-                      label: "Sell short",
-                      icon: TrendingDown,
-                      accent: "red",
-                    },
-                  ]}
-                  onChange={(direction) => onChange({ direction })}
-                />
-              </Field>
-              <Field
-                id="timeframe"
-                label="Income objective"
-                hint="Sets the stop buffer: 2% or 10% of ATR"
-                group
-              >
-                <SegmentedControl
-                  aria-labelledby="timeframe-label"
-                  value={form.timeframe}
-                  options={[
-                    { value: "daily", label: "Daily" },
-                    { value: "weekly", label: "Weekly +" },
-                  ]}
-                  onChange={(timeframe) => onChange({ timeframe })}
-                />
-              </Field>
-            </div>
-            <Field id="trend" label="Trend" group>
+            <Field id="direction" label="Direction" group>
               <SegmentedControl
-                aria-labelledby="trend-label"
-                value={form.trend}
+                aria-labelledby="direction-label"
+                value={form.direction}
                 options={[
                   {
-                    value: "uptrend",
-                    label: "Uptrend",
+                    value: "long",
+                    label: "Buy long",
                     icon: TrendingUp,
                     accent: "green",
                   },
-                  { value: "sideways", label: "Sideways", icon: MoveRight },
                   {
-                    value: "downtrend",
-                    label: "Downtrend",
+                    value: "short",
+                    label: "Sell short",
                     icon: TrendingDown,
                     accent: "red",
                   },
                 ]}
-                onChange={(trend) => onChange({ trend })}
+                onChange={(direction) => onChange({ direction })}
               />
             </Field>
-            <Field
-              id="atr"
-              label="Daily ATR ($)"
-              hint="From finviz.com (14-day average true range)"
-            >
-              <NumberInput
-                id="atr"
-                placeholder="5.93"
-                value={form.atr}
-                onChange={(atr) => onChange({ atr })}
-              />
-            </Field>
-          </>
-        ) : null}
-
-        {step === 2 ? (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PriceField
-                id="curveLow"
-                label="Curve low ($)"
-                hint="HTF demand zone distal line"
-                value={form.curveLow}
-                onChange={(curveLow) => onChange({ curveLow })}
-              />
-              <PriceField
-                id="curveHigh"
-                label="Curve high ($)"
-                hint="HTF supply zone distal line"
-                value={form.curveHigh}
-                onChange={(curveHigh) => onChange({ curveHigh })}
-                error={zoneErrors.curveHigh}
-              />
-            </div>
             <p className="text-xs text-muted-foreground">
               {long
                 ? "You enter at the demand zone and target the supply zone."
@@ -574,7 +589,7 @@ export function TradeForm({
           </>
         ) : null}
 
-        {step === 3 ? (
+        {step === 4 ? (
           <>
             <p className="text-xs text-muted-foreground">
               Score the entry zone from your own analysis per the trade

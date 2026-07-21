@@ -36,8 +36,8 @@ test("hydrating a saved half-point strength: snaps the rendered selection onto a
   const user = userEvent.setup();
   render(<TradeBuilderApp />);
 
-  // Walk to the judged-factors step (Balance -> ATR -> Zones -> Judge).
-  for (let i = 0; i < 3; i++) {
+  // Walk to the judged-factors step (Pre-steps -> Curve -> Trend -> Zones -> Judge).
+  for (let i = 0; i < 4; i++) {
     await user.click(screen.getByRole("button", { name: /next/i }));
   }
 
