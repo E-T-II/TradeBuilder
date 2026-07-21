@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useState } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test } from "vitest";
 
@@ -45,6 +45,52 @@ function ZonesStep({ initial }: { initial: FormState }) {
     />
   );
 }
+
+// Renders the wizard parked on the Account step, holding real form state so
+// edits flow through onChange the way they do in the app.
+function AccountStep({ initial }: { initial: FormState }) {
+  const [form, setForm] = useState<FormState>(initial);
+  return (
+    <TradeForm
+      form={form}
+      onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+      step={0}
+      onBack={() => {}}
+      onNext={() => {}}
+      showAdvanced={false}
+      onToggleAdvanced={() => {}}
+    />
+  );
+}
+
+describe("given the comma-formatted account balance field", () => {
+  test("given deleting the comma directly: should keep the caret in place, not jump to the end", () => {
+    render(<AccountStep initial={baseForm({ accountBalance: "1234" })} />);
+    const input = screen.getByLabelText(
+      "Account balance ($)",
+    ) as HTMLInputElement;
+    expect(input.value).toBe("1,234");
+
+    // Backspace over the comma at index 1: browser deletes it and leaves the
+    // caret where the comma was, right after "1".
+    fireEvent.change(input, {
+      target: { value: "1234", selectionStart: 1, selectionEnd: 1 },
+    });
+
+    expect(input.value).toBe("1,234");
+    expect(input.selectionStart).toBe(1);
+  });
+
+  test("given a leading minus: should keep it instead of silently stripping it", async () => {
+    const user = userEvent.setup();
+    render(<AccountStep initial={baseForm({ accountBalance: "" })} />);
+    const input = screen.getByLabelText("Account balance ($)");
+
+    await user.type(input, "-5");
+
+    expect(input).toHaveValue("-5");
+  });
+});
 
 describe("given the Zones step guard", () => {
   test("given a demand zone with the low above the high: should disable Next and show the error, then recover after a fix", async () => {
@@ -106,5 +152,40 @@ describe("given the odds-enhancer chips on the Your read step", () => {
     expect(optionsFor("Strength")).toEqual(["0", "1", "2"]);
     expect(optionsFor("Freshness")).toEqual(["0", "1", "2"]);
     expect(optionsFor("Time")).toEqual(["0", "0.5", "1"]);
+  });
+
+  test("given any factor unanswered: should disable the final action, even with the other two answered", () => {
+    render(
+      <TradeForm
+        form={baseForm({ freshness: "" })}
+        onChange={() => {}}
+        step={3}
+        onBack={() => {}}
+        onNext={() => {}}
+        showAdvanced={false}
+        onToggleAdvanced={() => {}}
+      />,
+    );
+
+    // Otherwise the auto-scored factors alone (curve + trend + profit zone,
+    // up to 5) plus strength and time (up to 3) can clear 7 and qualify a
+    // trade the user never finished scoring.
+    expect(screen.getByRole("button", { name: /1 field left/i })).toBeDisabled();
+  });
+
+  test("given all three answered: should enable the final action", () => {
+    render(
+      <TradeForm
+        form={baseForm()}
+        onChange={() => {}}
+        step={3}
+        onBack={() => {}}
+        onNext={() => {}}
+        showAdvanced={false}
+        onToggleAdvanced={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
   });
 });

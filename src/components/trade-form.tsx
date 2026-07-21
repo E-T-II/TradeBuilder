@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useLayoutEffect, useRef } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -39,7 +39,11 @@ const STEP_FIELDS: (keyof FormState)[][] = [
     "supplyHigh",
     "supplyLow",
   ],
-  [],
+  // Required, not optional: skipping any one of these still lets the other
+  // two auto-scored factors (curve, trend, profit zone) push the total past
+  // 7, qualifying a trade the user never actually scored. The README's rule
+  // is "if we did not score the trade, we will not take the trade."
+  ["strength", "time", "freshness"],
 ];
 
 // First step with an empty required field (or STEPS.length if all filled).
@@ -94,22 +98,29 @@ function Field({
   );
 }
 
-// Digits and one decimal point only; this is what we store, so Number() stays clean.
-function sanitizeNumber(input: string): string {
+// Digits and one decimal point only (plus a single leading minus when
+// allowed); this is what we store, so Number() stays clean. Without
+// allowNegative, a leading "-" is silently dropped rather than preserved,
+// since prices/ATR/etc. can't be negative and shouldn't error either.
+function sanitizeNumber(input: string, allowNegative = false): string {
+  const negative = allowNegative && input.trimStart().startsWith("-");
   let cleaned = input.replace(/[^\d.]/g, "");
   const dot = cleaned.indexOf(".");
   if (dot !== -1) {
     cleaned = cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, "");
   }
-  return cleaned;
+  return negative ? `-${cleaned}` : cleaned;
 }
 
 // Thousands separators for display only.
 function formatNumber(raw: string): string {
   if (raw === "") return "";
-  const [intPart, decPart] = raw.split(".");
+  const negative = raw.startsWith("-");
+  const unsigned = negative ? raw.slice(1) : raw;
+  const [intPart, decPart] = unsigned.split(".");
   const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
+  const formatted = decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
+  return negative ? `-${formatted}` : formatted;
 }
 
 // Commas are the only characters formatNumber inserts, so caret position can
@@ -136,25 +147,35 @@ function NumberInput({
   onChange,
   placeholder,
   invalid,
+  allowNegative,
 }: {
   id: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   invalid?: boolean;
+  allowNegative?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingCaret = useRef<number | null>(null);
   const display = formatNumber(value);
 
-  // Re-apply the caret after React commits the reformatted value, since
-  // inserting/removing a comma otherwise shifts it to the end of the field.
+  // Keyed on an edit counter, not on `display`: deleting a comma sanitizes
+  // back to the value already stored (e.g. "1,234" -> delete "," -> "1234",
+  // which is what "1,234" already was), so `display` recomputes to the same
+  // string and a `[display]` dependency would skip the effect. React still
+  // force-restores the DOM value in that case (since the live DOM value
+  // briefly diverged), which resets the caret to the end. Running on every
+  // edit, regardless of whether the string actually changed, fixes that.
+  const [editCount, setEditCount] = useState(0);
   useLayoutEffect(() => {
     if (pendingCaret.current === null || !inputRef.current) return;
     const index = indexAtNonCommaCount(display, pendingCaret.current);
     inputRef.current.setSelectionRange(index, index);
     pendingCaret.current = null;
-  }, [display]);
+    // display is read fresh on each run; editCount alone drives re-running.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editCount]);
 
   return (
     <Input
@@ -170,7 +191,8 @@ function NumberInput({
       onChange={(e) => {
         const caret = e.target.selectionStart ?? e.target.value.length;
         pendingCaret.current = nonCommaCountBefore(e.target.value, caret);
-        onChange(sanitizeNumber(e.target.value));
+        setEditCount((n) => n + 1);
+        onChange(sanitizeNumber(e.target.value, allowNegative));
       }}
     />
   );
@@ -350,6 +372,7 @@ export function TradeForm({
                 placeholder="600"
                 value={form.accountBalance}
                 onChange={(accountBalance) => onChange({ accountBalance })}
+                allowNegative
               />
             </Field>
 
