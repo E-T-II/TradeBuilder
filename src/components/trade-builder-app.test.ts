@@ -36,23 +36,35 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   ...overrides,
 });
 
-describe("given toInputs and the advanced risk override", () => {
+describe("given toInputs and the risk cap", () => {
   test("given the default 2%: should pass 0.02 through", () => {
     expect(toInputs(form())?.riskTolerancePct).toBe(0.02);
   });
 
-  test("given an advanced 5%: should pass 0.05, not clamp back to 2%", () => {
-    expect(toInputs(form({ riskTolerance: "5" }))?.riskTolerancePct).toBe(0.05);
+  test("given a risk above 2%: should clamp down to 2%", () => {
+    expect(toInputs(form({ riskTolerance: "5" }))?.riskTolerancePct).toBe(0.02);
+  });
+
+  test("given a risk below 2%: should keep the lower value", () => {
+    expect(toInputs(form({ riskTolerance: "1" }))?.riskTolerancePct).toBe(0.01);
   });
 });
 
-describe("given toInputs and the advanced target buffer override", () => {
+describe("given toInputs and the target buffer band", () => {
   test("given the default 75%: should pass 0.75 through", () => {
     expect(toInputs(form())?.targetBufferPct).toBe(0.75);
   });
 
-  test("given an advanced 90%: should pass 0.9, not clamp back to 80%", () => {
-    expect(toInputs(form({ targetBuffer: "90" }))?.targetBufferPct).toBe(0.9);
+  test("given a buffer within 75-80%: should keep it", () => {
+    expect(toInputs(form({ targetBuffer: "78" }))?.targetBufferPct).toBe(0.78);
+  });
+
+  test("given a buffer above 80%: should clamp down to 80%", () => {
+    expect(toInputs(form({ targetBuffer: "90" }))?.targetBufferPct).toBe(0.8);
+  });
+
+  test("given a buffer below 75%: should clamp up to 75%", () => {
+    expect(toInputs(form({ targetBuffer: "50" }))?.targetBufferPct).toBe(0.75);
   });
 });
 

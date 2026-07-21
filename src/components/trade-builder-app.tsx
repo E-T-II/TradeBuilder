@@ -132,13 +132,20 @@ export function loadStoredForm(): Partial<FormState> | null {
   }
 }
 
-// Empty or non-positive percents fall back to the default. Advanced settings
-// intentionally let the user exceed the recommended 2% risk / 80% buffer, so the
-// ceiling here is only a sanity cap (100%), not the strategy's rule.
-function clampPercent(raw: string, fallback: number, max: number): number {
+// Empty or non-positive percents fall back to the default. The strategy's
+// rules are hard limits, not suggestions: risk can't exceed 2% (preserve the
+// account) and the target buffer must stay in 75-80% (so the take-profit order
+// fills before price turns at the opposing zone), so advanced settings clamp
+// to those bounds rather than letting the user go past them.
+function clampPercent(
+  raw: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const n = raw.trim() === "" ? fallback : Number(raw);
   if (!Number.isFinite(n) || n <= 0) return fallback;
-  return Math.min(n, max);
+  return Math.min(max, Math.max(min, n));
 }
 
 // A balance of exactly 0 (or a typo like "-5") parses fine but can't size a
@@ -153,8 +160,8 @@ export function toInputs(form: FormState): TradeInputs | null {
 
   const numbers = {
     accountBalance: Number(form.accountBalance),
-    riskTolerancePct: clampPercent(form.riskTolerance, 2, 100) / 100,
-    targetBufferPct: clampPercent(form.targetBuffer, 75, 100) / 100,
+    riskTolerancePct: clampPercent(form.riskTolerance, 2, 0, 2) / 100,
+    targetBufferPct: clampPercent(form.targetBuffer, 75, 75, 80) / 100,
     atr: Number(form.atr),
     curveLow: Number(form.curveLow),
     curveHigh: Number(form.curveHigh),
