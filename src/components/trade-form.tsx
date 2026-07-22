@@ -126,6 +126,18 @@ function formatNumber(raw: string): string {
   return negative ? `-${formatted}` : formatted;
 }
 
+// Snap an advanced-setting value into [min, max] when the field loses focus,
+// so what the user sees matches what the engine will use (it clamps to the
+// same bounds). Empty or non-numeric input is left alone; clamping on blur, not
+// on each keystroke, so typing "20" isn't fought mid-entry.
+function clampToRange(raw: string, min: number, max: number): string {
+  if (raw.trim() === "") return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  const clamped = Math.min(max, Math.max(min, n));
+  return clamped === n ? raw : String(clamped);
+}
+
 // Commas are the only characters formatNumber inserts, so caret position can
 // be tracked as "how many non-comma characters sit before it" and reapplied
 // after reformatting shifts the commas around.
@@ -444,6 +456,11 @@ export function TradeForm({
                     inputMode="decimal"
                     value={form.riskTolerance}
                     onChange={(e) => onChange({ riskTolerance: e.target.value })}
+                    onBlur={(e) =>
+                      onChange({
+                        riskTolerance: clampToRange(e.target.value, 0, 2),
+                      })
+                    }
                   />
                 </Field>
                 <Field
@@ -459,6 +476,11 @@ export function TradeForm({
                     inputMode="decimal"
                     value={form.targetBuffer}
                     onChange={(e) => onChange({ targetBuffer: e.target.value })}
+                    onBlur={(e) =>
+                      onChange({
+                        targetBuffer: clampToRange(e.target.value, 75, 80),
+                      })
+                    }
                   />
                 </Field>
                 <Field
