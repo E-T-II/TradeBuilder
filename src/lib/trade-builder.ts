@@ -244,7 +244,7 @@ export function tradeRiskPerShare(entry: number, stop: number): number {
   return roundToCent(Math.abs(entry - stop));
 }
 
-/** Max account risk: balance x risk tolerance (2% by default; advanced settings can override). */
+/** Max account risk: balance x risk tolerance (2% max; the form caps it there). */
 export function maxAccountRisk(balance: number, riskPct: number): number {
   return roundToCent(balance * riskPct);
 }
@@ -344,9 +344,9 @@ export function deriveZoneLines(zones: Zones, direction: Direction): ZoneLines {
 /** Everything the user gives us. */
 export interface TradeInputs {
   accountBalance: number;
-  /** e.g. 0.02 for 2% risk per trade; advanced settings can override the 2% recommendation */
+  /** e.g. 0.02 for 2% risk per trade; the form caps this at 2% (0.02) */
   riskTolerancePct: number;
-  /** 0.75 to 0.80 recommended; advanced settings can go higher */
+  /** the take-profit buffer; the form keeps this inside 0.75 to 0.80 */
   targetBufferPct: number;
   direction: Direction;
   trend: Trend;
@@ -501,8 +501,8 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     checks: {
       maxAccountRisk: maxRisk,
       // 4 decimals of a percent: cleans float noise (0.02 -> 2, not 2.0000004)
-      // while preserving a finely-typed override (2.001%) so the guideline
-      // comparison and label don't round it down to a flat 2%.
+      // while keeping a sub-2% value (e.g. 1.5%) precise rather than rounded
+      // to a flat whole percent for display.
       riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
       withinPerTradeRisk: totalRisk <= maxRisk,
       withinCapitalCap: capital <= inputs.accountBalance * 0.5,
