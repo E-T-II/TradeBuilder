@@ -54,7 +54,7 @@ export function OrderTicket({
         "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
     } else if (result.blockedReason === "too-small") {
       reason =
-        "The 2% risk limit is smaller than the risk on a single share here, so the position rounds down to zero. Try a larger balance or a tighter stop (a lower ATR or a smaller entry zone).";
+        "Your risk-per-trade limit is smaller than the risk on a single share here, so the position rounds down to zero. Try a larger balance or a tighter stop (a lower ATR or a smaller entry zone).";
     } else {
       reason =
         "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones.";
