@@ -193,12 +193,12 @@ describe("given the Zones step guard", () => {
 
     await user.click(next);
     expect(
-      screen.getByRole("heading", { name: "Your read" }),
+      screen.getByRole("heading", { name: "Score" }),
     ).toBeInTheDocument();
   });
 });
 
-describe("given the odds-enhancer chips on the Your read step", () => {
+describe("given the odds-enhancer chips on the Score step", () => {
   const optionsFor = (name: string) =>
     within(screen.getByRole("radiogroup", { name }))
       .getAllByRole("radio")
