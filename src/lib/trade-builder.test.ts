@@ -484,6 +484,7 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     // Entry 100.10, target 100.07: exit on the wrong side, so no order.
     expect(result.order).toBeNull();
     expect(result.checks).toBeNull();
+    expect(result.blockedReason).toBe("tight-zones");
   });
 
   test("given the same zones scoring a proximal entry: should still produce a valid order", () => {
@@ -493,6 +494,18 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     expect(result.order?.entry).toBe(100);
     expect(result.order?.target).toBe(100.07);
     expect(result.order && result.order.target > result.order.entry).toBe(true);
+  });
+});
+
+describe("given buildTrade where the position rounds to zero shares", () => {
+  test("given a balance too small for one share's risk: should reject the order as too small", () => {
+    // Same qualifying setup as longTrade, but a $100 balance gives a $2 risk
+    // budget while one share risks $2.18, so the size floors to 0.
+    const result = buildTrade({ ...longTrade, accountBalance: 100 });
+    expect(result.entryType).not.toBe("no-trade");
+    expect(result.objective).toBe("long");
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("too-small");
   });
 });
 
