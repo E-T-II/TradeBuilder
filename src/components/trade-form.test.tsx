@@ -198,6 +198,41 @@ describe("given the Zones step guard", () => {
   });
 });
 
+describe("given the direction control on the Zones step", () => {
+  test("switching direction should flip the entry/target labels, not the geometry", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm()} />); // long by default
+
+    // Long: enter demand, target supply.
+    expect(
+      screen.getByText(/you enter at the demand zone/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/top of the demand zone \(your entry\)/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/bottom of the supply zone \(your target\)/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Sell short" }));
+
+    // Short: the roles swap — demand becomes the target, supply the entry.
+    expect(
+      screen.getByText(/you enter at the supply zone/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/top of the demand zone \(your target\)/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/bottom of the supply zone \(your entry\)/i),
+    ).toBeInTheDocument();
+
+    // Geometry is unchanged: the valid demand-below-supply zones still pass, so
+    // no error surfaces and the step stays advanceable.
+    expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+  });
+});
+
 describe("given the odds-enhancer chips on the Score step", () => {
   const optionsFor = (name: string) =>
     within(screen.getByRole("radiogroup", { name }))
