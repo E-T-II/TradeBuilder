@@ -33,7 +33,7 @@ export const STEPS = [
     title: "Zones",
     blurb: "Mark the demand and supply zones on your low time frame",
   },
-  { title: "Your read", blurb: "Score the zone quality yourself" },
+  { title: "Score", blurb: "Score the zone quality yourself" },
 ] as const;
 
 // Required fields per step; Next stays disabled until these are filled.

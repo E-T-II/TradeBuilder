@@ -101,7 +101,7 @@ to no-trade even when the odds-enhancer score qualifies.
 - `trade-builder-app.tsx` — owns `FormState`, localStorage persistence
   (`STORAGE_KEY`, bump on breaking field changes), and the form↔results switch.
 - `trade-form.tsx` — the multi-step wizard, ordered to the six-step methodology
-  (Pre-steps · Curve · Trend · Zones · Your read), step gating, and focus
+  (Pre-steps · Curve · Trend · Zones · Score), step gating, and focus
   management. Advanced settings clamp risk to 2% max and the target buffer to
   75–80%.
 - Result cards: `scorecard.tsx`, `order-ticket.tsx`, `risk-checks.tsx`.
