@@ -42,9 +42,9 @@ const STEP_FIELDS: (keyof FormState)[][] = [
   ["curveLow", "curveHigh"],
   [],
   ["demandHigh", "demandLow", "supplyHigh", "supplyLow"],
-  // Required, not optional: skipping any one of these still lets the other
-  // two auto-scored factors (curve, trend, profit zone) push the total past
-  // 7, qualifying a trade the user never actually scored. The README's rule
+  // Required, not optional: the auto-scored factors (curve, trend, profit
+  // zone, up to 5) plus even two judged factors can clear 7, so skipping one
+  // would still qualify a trade the user never fully scored. The README's rule
   // is "if we did not score the trade, we will not take the trade."
   ["strength", "time", "freshness"],
 ];
