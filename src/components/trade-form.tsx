@@ -12,6 +12,7 @@ import {
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
+import { clampNumericString } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,18 +125,6 @@ function formatNumber(raw: string): string {
   const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const formatted = decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
   return negative ? `-${formatted}` : formatted;
-}
-
-// Snap an advanced-setting value into [min, max] when the field loses focus,
-// so what the user sees matches what the engine will use (it clamps to the
-// same bounds). Empty or non-numeric input is left alone; clamping on blur, not
-// on each keystroke, so typing "20" isn't fought mid-entry.
-function clampToRange(raw: string, min: number, max: number): string {
-  if (raw.trim() === "") return raw;
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return raw;
-  const clamped = Math.min(max, Math.max(min, n));
-  return clamped === n ? raw : String(clamped);
 }
 
 // Commas are the only characters formatNumber inserts, so caret position can
@@ -326,17 +315,26 @@ export function TradeForm({
   // stepper lets a user jump ahead once the required fields are filled.
   const zoneErrors = validateZones(form);
   const hasZoneErrors = Object.keys(zoneErrors).length > 0;
+  const curveStepError = !!zoneErrors.curveHigh;
+  const zoneStepError = !!(
+    zoneErrors.demandHigh ||
+    zoneErrors.demandLow ||
+    zoneErrors.supplyHigh ||
+    zoneErrors.supplyLow
+  );
   const blockedByZones =
-    (step === 1 && !!zoneErrors.curveHigh) ||
-    (step === 3 &&
-      !!(
-        zoneErrors.demandHigh ||
-        zoneErrors.demandLow ||
-        zoneErrors.supplyHigh ||
-        zoneErrors.supplyLow
-      )) ||
+    (step === 1 && curveStepError) ||
+    (step === 3 && zoneStepError) ||
     (isLast && hasZoneErrors);
   const disableNext = remaining > 0 || blockedByZones;
+  // Name the step(s) that actually hold the error, so the last-step notice
+  // points where the highlighted field really is.
+  const errorSteps = [
+    curveStepError ? "Curve" : null,
+    zoneStepError ? "Zones" : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
 
   // Move focus to the new step's heading so keyboard and screen-reader users
   // aren't stranded on the old Next button. Skip the initial mount.
@@ -458,7 +456,7 @@ export function TradeForm({
                     onChange={(e) => onChange({ riskTolerance: e.target.value })}
                     onBlur={(e) =>
                       onChange({
-                        riskTolerance: clampToRange(e.target.value, 0, 2),
+                        riskTolerance: clampNumericString(e.target.value, 0, 2),
                       })
                     }
                   />
@@ -478,7 +476,7 @@ export function TradeForm({
                     onChange={(e) => onChange({ targetBuffer: e.target.value })}
                     onBlur={(e) =>
                       onChange({
-                        targetBuffer: clampToRange(e.target.value, 75, 80),
+                        targetBuffer: clampNumericString(e.target.value, 75, 80),
                       })
                     }
                   />
@@ -671,7 +669,7 @@ export function TradeForm({
           the user back to fix them. */}
       {isLast && hasZoneErrors ? (
         <p className="mt-6 text-center text-xs text-destructive">
-          Some zone values are inconsistent. Go back to Zones to fix the
+          Some values are inconsistent. Go back to {errorSteps} to fix the
           highlighted fields.
         </p>
       ) : null}

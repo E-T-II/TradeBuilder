@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test } from "vitest";
 import {
   hasNonPositiveAtr,
   hasNonPositiveBalance,
+  hasNonPositiveRisk,
   loadStoredForm,
   snapStep,
   toInputs,
@@ -122,6 +123,25 @@ describe("given hasNonPositiveAtr", () => {
 
   test("given a positive ATR: should be false", () => {
     expect(hasNonPositiveAtr(form())).toBe(false);
+  });
+});
+
+describe("given a non-positive risk (field vs engine consistency)", () => {
+  test("given an explicit 0% risk: toInputs should return null, not fall back to 2%", () => {
+    expect(toInputs(form({ riskTolerance: "0" }))).toBeNull();
+  });
+
+  test("given an explicit 0%: hasNonPositiveRisk should be true", () => {
+    expect(hasNonPositiveRisk(form({ riskTolerance: "0" }))).toBe(true);
+  });
+
+  test("given an empty risk field: should NOT be flagged (it means use the default)", () => {
+    expect(hasNonPositiveRisk(form({ riskTolerance: "" }))).toBe(false);
+    expect(toInputs(form({ riskTolerance: "" }))?.riskTolerancePct).toBe(0.02);
+  });
+
+  test("given a positive risk: should be false", () => {
+    expect(hasNonPositiveRisk(form({ riskTolerance: "1" }))).toBe(false);
   });
 });
 

@@ -70,17 +70,19 @@ marginal (counter-trend or awkward-curve) cells only trade when the profit-zone
 ratio is 5:1 or better. `buildTrade` runs it as a **gate**: it can veto a setup
 to no-trade even when the odds-enhancer score qualifies.
 
-## No-trade has four distinct reasons
+## No-trade has five distinct reasons
 
-`buildTrade` returns `order: null` in four cases, and the UI tells them apart:
+`buildTrade` returns `order: null` in five cases, and the UI tells them apart:
 
 1. **Matrix veto** — `objective === "no-trade"` (setup invalid for this
    trend/curve).
 2. **Low score** — `entryType === "no-trade"` (total below 7).
 3. **Tight zones** — the buffered target lands on the wrong side of the entry
    (a tight zone plus the confirmation offset); `blockedReason: "tight-zones"`.
-4. **Too small** — the 2% risk budget can't afford one share's risk, so the
-   position rounds to zero; `blockedReason: "too-small"`.
+4. **Risk budget too small** — the risk-per-trade budget can't cover one
+   share's risk, so `rawSize` is 0; `blockedReason: "risk-too-small"`.
+5. **Capital cap too tight** — one share costs more than 50% of the balance, so
+   the capital cap knocks a positive size to 0; `blockedReason: "capital-too-large"`.
 
 `OrderTicket` shows a matching message for each; `Scorecard` shows a neutral
 "No valid trade" badge when the score qualified but no order resulted.

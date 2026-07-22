@@ -39,7 +39,7 @@ A demand zone always aims long; a supply zone always aims short. The matrix's jo
 
 For this example: a demand zone, sitting in wholesale, in an uptrend. That's rule **r** from the README's eighteen-cell table — demand, low on the curve, uptrend — and it trades unconditionally, no profit-zone condition attached. Compare that to rule **f**, the same demand zone but in retail instead of wholesale: that one only trades if the profit zone is 5:1 or better. Rule f is still trading with the trend (a long in an uptrend scores the full 2 trend points), but it's buying from the expensive third of the curve, and needs extra room to be worth it.
 
-If the matrix vetoes the setup, the scorecard still gets built and shown — the veto only blocks the order. The order ticket just says the zone isn't a valid setup for the current trend and curve position, with the opposite direction possibly qualifying instead. That's one of three ways to end up with "no trade": the matrix veto, a score under 7, or a score that qualifies but the zones are too tight for the target to clear the entry.
+If the matrix vetoes the setup, the scorecard still gets built and shown — the veto only blocks the order. The order ticket just says the zone isn't a valid setup for the current trend and curve position, with the opposite direction possibly qualifying instead. That's one of four ways to end up with "no trade": the matrix veto, a score under 7, a score that qualifies but the zones are too tight for the target to clear the entry, or a score that qualifies but the position rounds down to zero shares (the risk budget can't cover one share, or one share exceeds the 50% capital cap).
 
 ## The numbers on the diagram
 
