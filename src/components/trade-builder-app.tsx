@@ -155,6 +155,13 @@ export function hasNonPositiveBalance(form: FormState): boolean {
   return Number.isFinite(n) && n <= 0;
 }
 
+// An ATR of 0 parses fine but leaves no stop buffer (buffer = ATR x 2%/10%),
+// so the stop would sit right on the distal. Treat it as invalid input.
+export function hasNonPositiveAtr(form: FormState): boolean {
+  const n = Number(form.atr);
+  return Number.isFinite(n) && n <= 0;
+}
+
 export function toInputs(form: FormState): TradeInputs | null {
   if (missingFields(form) > 0) return null;
 
@@ -181,6 +188,7 @@ export function toInputs(form: FormState): TradeInputs | null {
   if (Object.values(numbers).some((n) => !Number.isFinite(n))) return null;
   if (Object.values(zones).some((n) => !Number.isFinite(n))) return null;
   if (numbers.accountBalance <= 0) return null;
+  if (numbers.atr <= 0) return null;
 
   // The engine works in entry/target lines; direction assigns them from the zones.
   const lines = deriveZoneLines(zones, form.direction);
@@ -311,7 +319,9 @@ export function TradeBuilderApp() {
                   <CardContent className="py-10 text-center text-sm text-muted-foreground">
                     {hasNonPositiveBalance(form)
                       ? "Your account balance needs to be greater than zero to size a trade."
-                      : "Some inputs don't look like numbers. Go back and check them."}
+                      : hasNonPositiveAtr(form)
+                        ? "The daily ATR needs to be greater than zero to set the stop buffer."
+                        : "Some inputs don't look like numbers. Go back and check them."}
                   </CardContent>
                 </Card>
               )}

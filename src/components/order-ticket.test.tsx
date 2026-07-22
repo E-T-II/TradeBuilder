@@ -57,6 +57,15 @@ describe("given OrderTicket", () => {
     expect(screen.getByText(/no valid trade here/i)).toBeInTheDocument();
   });
 
+  test("given a position that rounds to zero shares: should say the balance is too small", () => {
+    // Qualifying setup, but a $100 balance can't afford one share's risk.
+    const result = buildTrade({ ...longTrade, accountBalance: 100 });
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("too-small");
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText(/rounds down to zero/i)).toBeInTheDocument();
+  });
+
   test("given a Decision Matrix veto: should say the setup isn't valid for the trend and curve", () => {
     // Supply zone mid-curve in an uptrend (row i): the matrix vetoes it.
     const result = buildTrade({

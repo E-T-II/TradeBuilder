@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 
 import {
+  hasNonPositiveAtr,
   hasNonPositiveBalance,
   loadStoredForm,
   snapStep,
@@ -105,6 +106,22 @@ describe("given hasNonPositiveBalance", () => {
 
   test("given a non-numeric balance: should be false (that's a different failure)", () => {
     expect(hasNonPositiveBalance(form({ accountBalance: "abc" }))).toBe(false);
+  });
+});
+
+describe("given toInputs and a non-positive ATR", () => {
+  test("given an ATR of 0: should return null (no stop buffer)", () => {
+    expect(toInputs(form({ atr: "0" }))).toBeNull();
+  });
+});
+
+describe("given hasNonPositiveAtr", () => {
+  test("given an ATR of 0: should be true", () => {
+    expect(hasNonPositiveAtr(form({ atr: "0" }))).toBe(true);
+  });
+
+  test("given a positive ATR: should be false", () => {
+    expect(hasNonPositiveAtr(form())).toBe(false);
   });
 });
 

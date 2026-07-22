@@ -385,7 +385,14 @@ export interface TradeResult {
   entryType: EntryType;
   /** The Decision Matrix verdict; "no-trade" means the matrix vetoed the setup. */
   objective: TradeObjective;
-  /** null when there's no valid trade (low score, matrix veto, or tight zones) */
+  /**
+   * Why a qualifying setup still produced no order, so the results can explain
+   * it: the zones are too tight for the target to clear the entry, or the
+   * position rounds down to zero shares. Undefined when there is an order, or
+   * when the no-trade reason is already clear from objective/entryType.
+   */
+  blockedReason?: "tight-zones" | "too-small";
+  /** null when there's no valid trade (low score, matrix veto, tight zones, or too small) */
   order: {
     entry: number;
     stop: number;
@@ -476,7 +483,29 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   const targetClears =
     inputs.direction === "long" ? target > entry : target < entry;
   if (!targetClears) {
-    return { scorecard, entryType: type, objective, order: null, checks: null };
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "tight-zones",
+      order: null,
+      checks: null,
+    };
+  }
+
+  // The 2% risk budget can be smaller than a single share's risk (small
+  // balance, wide stop, or a pricey stock), rounding the position down to
+  // zero. A zero-share order can't be placed, so return no trade with a reason
+  // rather than an order for 0 shares.
+  if (size <= 0) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "too-small",
+      order: null,
+      checks: null,
+    };
   }
 
   const rr = rewardRiskRatio(entry, stop, target);
