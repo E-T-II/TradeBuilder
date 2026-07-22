@@ -63,6 +63,74 @@ function AccountStep({ initial }: { initial: FormState }) {
   );
 }
 
+// Renders the pre-steps screen with advanced settings open, holding real form
+// state so the blur clamp flows through onChange the way it does in the app.
+function AdvancedSettings({ initial }: { initial: FormState }) {
+  const [form, setForm] = useState<FormState>(initial);
+  return (
+    <TradeForm
+      form={form}
+      onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+      step={0}
+      onBack={() => {}}
+      onNext={() => {}}
+      showAdvanced={true}
+      onToggleAdvanced={() => {}}
+    />
+  );
+}
+
+describe("given the advanced settings caps", () => {
+  test("given a risk above 2%: should snap the field down to 2 on blur", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm({ riskTolerance: "2" })} />);
+    const risk = screen.getByLabelText("Risk per trade (%)");
+
+    await user.clear(risk);
+    await user.type(risk, "5");
+    expect(risk).toHaveValue(5); // shown as typed until it loses focus
+    await user.tab();
+
+    expect(risk).toHaveValue(2);
+  });
+
+  test("given a buffer above 80%: should snap the field down to 80 on blur", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm()} />);
+    const buffer = screen.getByLabelText("Target buffer (%)");
+
+    await user.clear(buffer);
+    await user.type(buffer, "90");
+    await user.tab();
+
+    expect(buffer).toHaveValue(80);
+  });
+
+  test("given a buffer below 75%: should snap the field up to 75 on blur", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm()} />);
+    const buffer = screen.getByLabelText("Target buffer (%)");
+
+    await user.clear(buffer);
+    await user.type(buffer, "50");
+    await user.tab();
+
+    expect(buffer).toHaveValue(75);
+  });
+
+  test("given a value already in range: should leave it untouched on blur", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm()} />);
+    const risk = screen.getByLabelText("Risk per trade (%)");
+
+    await user.clear(risk);
+    await user.type(risk, "1.5");
+    await user.tab();
+
+    expect(risk).toHaveValue(1.5);
+  });
+});
+
 describe("given the comma-formatted account balance field", () => {
   test("given deleting the comma directly: should keep the caret in place, not jump to the end", () => {
     render(<AccountStep initial={baseForm({ accountBalance: "1234" })} />);
