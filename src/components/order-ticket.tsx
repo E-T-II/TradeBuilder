@@ -41,9 +41,10 @@ export function OrderTicket({
   direction: Direction;
 }) {
   if (!result.order) {
-    // Three ways to land here: the Decision Matrix vetoed the setup, the score
-    // didn't qualify, or the score qualified but the zones are so tight the
-    // target ends up on the wrong side of the entry.
+    // Four ways to land here: the Decision Matrix vetoed the setup, the score
+    // didn't qualify, the score qualified but the position rounds to zero
+    // shares, or the zones are so tight the target ends up on the wrong side of
+    // the entry.
     let reason: string;
     if (result.objective === "no-trade") {
       reason =

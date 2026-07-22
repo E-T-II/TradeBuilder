@@ -159,9 +159,10 @@ export function Scorecard({ result }: { result: TradeResult }) {
     <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
   ];
 
-  // The score can qualify while the zones are too tight to make a real trade
-  // (buildTrade returns no order). Show that as its own neutral state instead of
-  // an entry-type badge that would contradict the "no trade" order panel.
+  // The score can qualify yet still produce no order (a matrix veto, zones too
+  // tight, or a position that rounds to zero shares). Show that as its own
+  // neutral state instead of an entry-type badge that would contradict the
+  // "no trade" order panel.
   const noValidTrade = result.order === null && result.entryType !== "no-trade";
   const badgeLabel = noValidTrade
     ? "No valid trade"
