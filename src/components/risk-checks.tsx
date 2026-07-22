@@ -12,7 +12,18 @@ const usd = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-function RuleRow({ ok, label }: { ok: boolean; label: string }) {
+// Most rules are ceilings, so a failure reads as "Over the limit". The
+// reward:risk rule is a floor (at least 3:1), where a failure is being *below*
+// the minimum, so it passes its own failLabel instead.
+function RuleRow({
+  ok,
+  label,
+  failLabel = "Over the limit",
+}: {
+  ok: boolean;
+  label: string;
+  failLabel?: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
       <span className="text-muted-foreground">{label}</span>
@@ -28,7 +39,7 @@ function RuleRow({ ok, label }: { ok: boolean; label: string }) {
         ) : (
           <X className="size-3.5" aria-hidden />
         )}
-        {ok ? "OK" : "Over the limit"}
+        {ok ? "OK" : failLabel}
       </span>
     </div>
   );
@@ -49,7 +60,11 @@ export function RiskChecks({ result }: { result: TradeResult }) {
           label={`Risk within ${usd.format(c.maxAccountRisk)} (${c.riskLimitPct}% per trade)`}
         />
         <RuleRow ok={c.withinCapitalCap} label="Capital within 50% of balance" />
-        <RuleRow ok={c.meetsRewardRisk} label="Reward : risk at least 3:1" />
+        <RuleRow
+          ok={c.meetsRewardRisk}
+          label="Reward : risk at least 3:1"
+          failLabel="Below 3:1"
+        />
         <RuleRow
           ok={c.withinMultiTradeRisk}
           label={`Open risk within ${usd.format(c.multiTradeLimit)} (6% rule)`}
