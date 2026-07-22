@@ -57,13 +57,39 @@ describe("given OrderTicket", () => {
     expect(screen.getByText(/no valid trade here/i)).toBeInTheDocument();
   });
 
-  test("given a position that rounds to zero shares: should say the balance is too small", () => {
+  test("given the risk budget can't cover one share: should say the position rounds to zero", () => {
     // Qualifying setup, but a $100 balance can't afford one share's risk.
     const result = buildTrade({ ...longTrade, accountBalance: 100 });
     expect(result.order).toBeNull();
-    expect(result.blockedReason).toBe("too-small");
+    expect(result.blockedReason).toBe("risk-too-small");
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText(/rounds down to zero/i)).toBeInTheDocument();
+  });
+
+  test("given one share over the capital cap: should say it exceeds 50% of balance", () => {
+    // One share ($60) is more than 50% of a $100 balance, so the capital cap
+    // forces zero shares even though the risk budget could afford one.
+    const result = buildTrade({
+      accountBalance: 100,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      direction: "long",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 5,
+      curveLow: 50,
+      curveHigh: 80,
+      entryProximal: 60,
+      entryDistal: 59,
+      targetProximal: 65,
+      targetDistal: 66,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.blockedReason).toBe("capital-too-large");
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText(/more than 50% of your balance/i)).toBeInTheDocument();
   });
 
   test("given a Decision Matrix veto: should say the setup isn't valid for the trend and curve", () => {

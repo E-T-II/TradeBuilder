@@ -17,6 +17,7 @@ import {
   TopStepper,
   TradeForm,
 } from "@/components/trade-form";
+import { clampNumericString } from "@/lib/utils";
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
 import { RiskChecks } from "@/components/risk-checks";
@@ -162,6 +163,16 @@ export function hasNonPositiveAtr(form: FormState): boolean {
   return Number.isFinite(n) && n <= 0;
 }
 
+// A blank risk field means "use the 2% default", but an explicit 0 (or a
+// negative) means zero risk budget — no position can be sized. Flag only the
+// explicit case so the field and the engine agree instead of the field showing
+// 0 while clampPercent falls back to 2%.
+export function hasNonPositiveRisk(form: FormState): boolean {
+  if (form.riskTolerance.trim() === "") return false;
+  const n = Number(form.riskTolerance);
+  return Number.isFinite(n) && n <= 0;
+}
+
 export function toInputs(form: FormState): TradeInputs | null {
   if (missingFields(form) > 0) return null;
 
@@ -189,6 +200,7 @@ export function toInputs(form: FormState): TradeInputs | null {
   if (Object.values(zones).some((n) => !Number.isFinite(n))) return null;
   if (numbers.accountBalance <= 0) return null;
   if (numbers.atr <= 0) return null;
+  if (hasNonPositiveRisk(form)) return null;
 
   // The engine works in entry/target lines; direction assigns them from the zones.
   const lines = deriveZoneLines(zones, form.direction);
@@ -220,6 +232,12 @@ export function TradeBuilderApp() {
     merged.strength = snapStep(merged.strength, 1, JUDGED_MAX.strength);
     merged.freshness = snapStep(merged.freshness, 1, JUDGED_MAX.freshness);
     merged.time = snapStep(merged.time, 0.5, JUDGED_MAX.time);
+    // Older saves may hold a risk/buffer outside the caps introduced with the
+    // advanced-settings limits; normalize on load so the field can't render out
+    // of sync with the clamped order math (the blur handler only runs if the
+    // user opens advanced settings and edits the field).
+    merged.riskTolerance = clampNumericString(merged.riskTolerance, 0, 2);
+    merged.targetBuffer = clampNumericString(merged.targetBuffer, 75, 80);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
     setForm(merged);
   }, []);
@@ -323,7 +341,9 @@ export function TradeBuilderApp() {
                       ? "Your account balance needs to be greater than zero to size a trade."
                       : hasNonPositiveAtr(form)
                         ? "The daily ATR needs to be greater than zero to set the stop buffer."
-                        : "Some inputs don't look like numbers. Go back and check them."}
+                        : hasNonPositiveRisk(form)
+                          ? "Your risk per trade needs to be greater than zero to size a trade."
+                          : "Some inputs don't look like numbers. Go back and check them."}
                   </CardContent>
                 </Card>
               )}

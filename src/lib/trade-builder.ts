@@ -387,12 +387,14 @@ export interface TradeResult {
   objective: TradeObjective;
   /**
    * Why a qualifying setup still produced no order, so the results can explain
-   * it: the zones are too tight for the target to clear the entry, or the
-   * position rounds down to zero shares. Undefined when there is an order, or
-   * when the no-trade reason is already clear from objective/entryType.
+   * it. Undefined when there is an order, or when the no-trade reason is already
+   * clear from objective/entryType. The two zero-share cases are distinct:
+   * - "tight-zones": the buffered target lands on the wrong side of the entry.
+   * - "risk-too-small": the risk budget can't cover even one share's risk.
+   * - "capital-too-large": one share costs more than the 50% capital cap allows.
    */
-  blockedReason?: "tight-zones" | "too-small";
-  /** null when there's no valid trade (low score, matrix veto, tight zones, or too small) */
+  blockedReason?: "tight-zones" | "risk-too-small" | "capital-too-large";
+  /** null when there's no valid trade (low score, matrix veto, tight zones, or zero shares) */
   order: {
     entry: number;
     stop: number;
@@ -493,16 +495,16 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
-  // The 2% risk budget can be smaller than a single share's risk (small
-  // balance, wide stop, or a pricey stock), rounding the position down to
-  // zero. A zero-share order can't be placed, so return no trade with a reason
-  // rather than an order for 0 shares.
+  // Zero shares has two distinct causes, and the remedies differ, so tell them
+  // apart: rawSize 0 means the risk budget couldn't cover one share's risk;
+  // otherwise the 50% capital cap knocked a positive size down to zero because
+  // one share costs more than half the balance.
   if (size <= 0) {
     return {
       scorecard,
       entryType: type,
       objective,
-      blockedReason: "too-small",
+      blockedReason: rawSize <= 0 ? "risk-too-small" : "capital-too-large",
       order: null,
       checks: null,
     };

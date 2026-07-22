@@ -52,9 +52,12 @@ export function OrderTicket({
     } else if (result.entryType === "no-trade") {
       reason =
         "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
-    } else if (result.blockedReason === "too-small") {
+    } else if (result.blockedReason === "risk-too-small") {
       reason =
         "Your risk-per-trade limit is smaller than the risk on a single share here, so the position rounds down to zero. Try a larger balance or a tighter stop (a lower ATR or a smaller entry zone).";
+    } else if (result.blockedReason === "capital-too-large") {
+      reason =
+        "One share costs more than 50% of your balance, so no position fits within the capital cap. You'd need a larger balance (or a lower-priced stock).";
     } else {
       reason =
         "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones.";

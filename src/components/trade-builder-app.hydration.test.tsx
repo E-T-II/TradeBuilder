@@ -46,3 +46,19 @@ test("hydrating a saved half-point strength: snaps the rendered selection onto a
   expect(within(strength).getByRole("radio", { name: "2" })).toBeChecked();
   expect(within(strength).queryByRole("radio", { name: "1.5" })).toBeNull();
 });
+
+test("hydrating saved risk/buffer beyond the caps: normalizes the fields to the limits", async () => {
+  // A pre-cap save could hold 5% risk / 90% buffer; on load the fields must
+  // show the clamped values so they can't disagree with the order math.
+  window.localStorage.setItem(
+    KEY,
+    JSON.stringify({ ...savedForm, riskTolerance: "5", targetBuffer: "90" }),
+  );
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+
+  await user.click(screen.getByRole("button", { name: /advanced settings/i }));
+
+  expect(screen.getByLabelText("Risk per trade (%)")).toHaveValue(2);
+  expect(screen.getByLabelText("Target buffer (%)")).toHaveValue(80);
+});

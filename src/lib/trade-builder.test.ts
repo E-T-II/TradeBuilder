@@ -498,14 +498,41 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
 });
 
 describe("given buildTrade where the position rounds to zero shares", () => {
-  test("given a balance too small for one share's risk: should reject the order as too small", () => {
+  test("given a risk budget too small for one share's risk: should block as risk-too-small", () => {
     // Same qualifying setup as longTrade, but a $100 balance gives a $2 risk
-    // budget while one share risks $2.18, so the size floors to 0.
+    // budget while one share risks $2.18, so rawSize floors to 0.
     const result = buildTrade({ ...longTrade, accountBalance: 100 });
     expect(result.entryType).not.toBe("no-trade");
     expect(result.objective).toBe("long");
     expect(result.order).toBeNull();
-    expect(result.blockedReason).toBe("too-small");
+    expect(result.blockedReason).toBe("risk-too-small");
+  });
+
+  test("given one share costing over 50% of balance: should block as capital-too-large", () => {
+    // Qualifying long: entry $60, tiny risk/share so the risk budget affords a
+    // share (rawSize > 0), but one share ($60) exceeds 50% of a $100 balance,
+    // so the capital cap knocks the size to 0.
+    const result = buildTrade({
+      accountBalance: 100,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      direction: "long",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 5, // buffer 0.10
+      curveLow: 50,
+      curveHigh: 80,
+      entryProximal: 60,
+      entryDistal: 59,
+      targetProximal: 65,
+      targetDistal: 66,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.entryType).not.toBe("no-trade");
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("capital-too-large");
   });
 });
 
