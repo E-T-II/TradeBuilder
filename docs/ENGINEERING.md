@@ -70,16 +70,17 @@ marginal (counter-trend or awkward-curve) cells only trade when the profit-zone
 ratio is 5:1 or better. `buildTrade` runs it as a **gate**: it can veto a setup
 to no-trade even when the odds-enhancer score qualifies.
 
-## No-trade has three distinct reasons
+## No-trade has four distinct reasons
 
-`buildTrade` returns `order: null` in three cases, and the UI tells them apart:
+`buildTrade` returns `order: null` in four cases, and the UI tells them apart:
 
 1. **Matrix veto** — `objective === "no-trade"` (setup invalid for this
    trend/curve).
 2. **Low score** — `entryType === "no-trade"` (total below 7).
 3. **Tight zones** — the buffered target lands on the wrong side of the entry
-   (a tight zone plus the confirmation offset); caught right before the order is
-   built.
+   (a tight zone plus the confirmation offset); `blockedReason: "tight-zones"`.
+4. **Too small** — the 2% risk budget can't afford one share's risk, so the
+   position rounds to zero; `blockedReason: "too-small"`.
 
 `OrderTicket` shows a matching message for each; `Scorecard` shows a neutral
 "No valid trade" badge when the score qualified but no order resulted.
@@ -88,8 +89,12 @@ to no-trade even when the odds-enhancer score qualifies.
 
 - **Geometry** (`src/lib/validate-zones.ts`) — direction-independent checks on
   the zone prices (each zone has height, supply sits above demand, curve high >
-  low). Runs on every render; blocks advancing past the Zones step so a
-  nonsensical setup can't reach the results.
+  low, and each zone edge sits inside the curve). Runs on every render; blocks
+  advancing past the Curve/Zones steps so a nonsensical setup can't reach the
+  results.
+- **Positive inputs** (`toInputs`) — account balance and ATR must be greater
+  than zero (a zero balance can't size a trade; a zero ATR leaves no stop
+  buffer). Surfaced as a specific message on the results card.
 - **Decision Matrix** and the **tight-zone guard** live in `buildTrade`, because
   they depend on the entry type / computed prices, which aren't known until the
   score is in.
