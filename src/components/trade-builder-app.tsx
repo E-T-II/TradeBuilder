@@ -253,8 +253,10 @@ export function TradeBuilderApp() {
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Brand left, step rail center (desktop only), actions right. */}
-      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 px-5 py-4 lg:gap-10 lg:px-8">
+      {/* Mobile: brand left, actions right (the center stepper is hidden, so a
+          two-end flex keeps the icons flush right). Desktop: 3-column grid with
+          the stepper centered. */}
+      <header className="flex items-center justify-between gap-6 px-5 py-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-10 lg:px-8">
         <span className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight">
           <Blocks className="size-5 shrink-0 text-primary" aria-hidden />
           Trade Builder
