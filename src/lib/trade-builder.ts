@@ -388,13 +388,20 @@ export interface TradeResult {
   /**
    * Why a qualifying setup still produced no order, so the results can explain
    * it. Undefined when there is an order, or when the no-trade reason is already
-   * clear from objective/entryType. The two zero-share cases are distinct:
+   * clear from objective/entryType:
    * - "tight-zones": the buffered target lands on the wrong side of the entry.
    * - "risk-too-small": the risk budget can't cover even one share's risk.
    * - "capital-too-large": one share costs more than the 50% capital cap allows.
+   * - "reward-risk": the best achievable reward:risk is below the 3:1 minimum.
+   * - "over-6pct": this trade's risk plus open risk exceeds 6% of the balance.
    */
-  blockedReason?: "tight-zones" | "risk-too-small" | "capital-too-large";
-  /** null when there's no valid trade (low score, matrix veto, tight zones, or zero shares) */
+  blockedReason?:
+    | "tight-zones"
+    | "risk-too-small"
+    | "capital-too-large"
+    | "reward-risk"
+    | "over-6pct";
+  /** null when there's no valid trade — see blockedReason, plus low score / matrix veto */
   order: {
     entry: number;
     stop: number;
@@ -514,6 +521,32 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   const capital = roundToCent(size * entry);
   const totalRisk = roundToCent(size * riskPerShare);
   const multiTradeLimit = roundToCent(inputs.accountBalance * 0.06);
+  const openRisk = inputs.openTradeRisk ?? 0;
+
+  // Hard rules (per Eugene): the trade must make at least 3:1, and total open
+  // risk must stay within 6% of the balance. Failing either rejects the trade
+  // outright rather than showing a flagged order. The 3:1 check uses the shared
+  // epsilon so a mechanical 3:1 target isn't tripped by float noise.
+  if (!meetsProfitRatio(rr, 3)) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "reward-risk",
+      order: null,
+      checks: null,
+    };
+  }
+  if (totalRisk + openRisk > multiTradeLimit) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "over-6pct",
+      order: null,
+      checks: null,
+    };
+  }
 
   return {
     scorecard,
@@ -535,11 +568,12 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       // while keeping a sub-2% value (e.g. 1.5%) precise rather than rounded
       // to a flat whole percent for display.
       riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
+      // With the hard rules above, an order only reaches this point when it
+      // already passes all four; these stay so the results card can confirm them.
       withinPerTradeRisk: totalRisk <= maxRisk,
       withinCapitalCap: capital <= inputs.accountBalance * 0.5,
       meetsRewardRisk: rr >= 3,
-      withinMultiTradeRisk:
-        totalRisk + (inputs.openTradeRisk ?? 0) <= multiTradeLimit,
+      withinMultiTradeRisk: totalRisk + openRisk <= multiTradeLimit,
       multiTradeLimit,
     },
   };

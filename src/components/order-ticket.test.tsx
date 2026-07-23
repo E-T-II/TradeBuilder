@@ -40,6 +40,40 @@ describe("given OrderTicket", () => {
     expect(screen.getByText(/the score is below 7/i)).toBeInTheDocument();
   });
 
+  test("given a reward:risk below 3:1: should say the strategy rejects it", () => {
+    const result = buildTrade({
+      ...longTrade,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      entryProximal: 108,
+      entryDistal: 106,
+      targetProximal: 114,
+      targetDistal: 116,
+    });
+    expect(result.blockedReason).toBe("reward-risk");
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText(/3:1 reward-to-risk/i)).toBeInTheDocument();
+  });
+
+  test("given open risk over 6%: should say it pushes past 6% of balance", () => {
+    const result = buildTrade({
+      ...longTrade,
+      accountBalance: 600,
+      atr: 1,
+      entryProximal: 13.24,
+      entryDistal: 13,
+      targetProximal: 15,
+      targetDistal: 15.5,
+      curveLow: 12,
+      curveHigh: 18,
+      openTradeRisk: 30,
+    });
+    expect(result.blockedReason).toBe("over-6pct");
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText(/past your total open risk|6% of your balance/i)).toBeInTheDocument();
+  });
+
   test("given a qualifying score but zones too tight: should say there's no valid trade", () => {
     // Score qualifies (confirmation), but the buffered target can't clear the
     // entry, so buildTrade returns no order.

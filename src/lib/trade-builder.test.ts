@@ -585,24 +585,57 @@ describe("given buildTrade and the configured risk limit", () => {
   });
 });
 
-describe("given buildTrade and the 6% multiple-trade rule", () => {
-  test("given open risk that would exceed 6%: should flag the multi-trade check", () => {
-    // $600 account -> $36 limit. This trade risks ~$11 on its own.
-    const base: TradeInputs = {
+describe("given buildTrade and the 3:1 reward-risk rule", () => {
+  test("given a qualifying setup whose reward:risk is below 3:1: should reject outright", () => {
+    // Long, proximal, matrix-approved, sizes fine — but a nearby target zone
+    // gives only ~2.16:1 after the 75% buffer, under the 3:1 minimum.
+    const result = buildTrade({
       ...longTrade,
-      accountBalance: 600,
-      atr: 1,
-      entryProximal: 13.24,
-      entryDistal: 13,
-      targetProximal: 15,
-      targetDistal: 15.5,
-      curveLow: 12,
-      curveHigh: 18,
-    };
+      strength: 2,
+      time: 1,
+      freshness: 2, // total 9 -> proximal
+      entryProximal: 108,
+      entryDistal: 106,
+      targetProximal: 114,
+      targetDistal: 116,
+    });
+    expect(result.entryType).not.toBe("no-trade");
+    expect(result.objective).toBe("long");
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("reward-risk");
+  });
+
+  test("given a setup that clears 3:1: should build the order", () => {
+    const result = buildTrade({ ...longTrade, strength: 2, time: 1, freshness: 2 });
+    expect(result.order).not.toBeNull();
+    expect(result.order!.rewardRisk).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("given buildTrade and the 6% multiple-trade rule", () => {
+  // $600 account -> $36 limit; this trade risks well under that on its own.
+  const base: TradeInputs = {
+    ...longTrade,
+    accountBalance: 600,
+    atr: 1,
+    entryProximal: 13.24,
+    entryDistal: 13,
+    targetProximal: 15,
+    targetDistal: 15.5,
+    curveLow: 12,
+    curveHigh: 18,
+  };
+
+  test("given open risk within 6%: should build the order and confirm the check", () => {
     const fine = buildTrade({ ...base, openTradeRisk: 20 });
-    const over = buildTrade({ ...base, openTradeRisk: 30 });
+    expect(fine.order).not.toBeNull();
     expect(fine.checks?.withinMultiTradeRisk).toBe(true);
-    expect(over.checks?.withinMultiTradeRisk).toBe(false);
-    expect(over.checks?.multiTradeLimit).toBe(36);
+    expect(fine.checks?.multiTradeLimit).toBe(36);
+  });
+
+  test("given open risk that would exceed 6%: should reject the trade outright", () => {
+    const over = buildTrade({ ...base, openTradeRisk: 30 });
+    expect(over.order).toBeNull();
+    expect(over.blockedReason).toBe("over-6pct");
   });
 });
