@@ -61,14 +61,14 @@ describe("given ChartTutorial", () => {
 
   test("exposes the four edge fields in the SVG's accessible name", () => {
     // role="img" means assistive tech reads only the label, not the inner text,
-    // so the high/low edge mapping has to live in the aria-label.
+    // so the distal/proximal edge mapping has to live in the aria-label.
     const { getByRole } = render(<ChartTutorial direction="long" />);
     const label = getByRole("img").getAttribute("aria-label") ?? "";
     for (const field of [
-      "Demand high",
-      "Demand low",
-      "Supply high",
-      "Supply low",
+      "Demand proximal",
+      "Demand distal",
+      "Supply distal",
+      "Supply proximal",
     ]) {
       expect(label).toContain(field);
     }
