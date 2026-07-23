@@ -365,6 +365,7 @@ const longTrade: TradeInputs = {
   accountBalance: 2500,
   riskTolerancePct: 0.02,
   targetBufferPct: 0.75,
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",
@@ -463,6 +464,7 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     accountBalance: 5000,
     riskTolerancePct: 0.02,
     targetBufferPct: 0.75,
+    targetMode: "percent",
     direction: "long",
     trend: "uptrend",
     timeframe: "daily",
@@ -516,6 +518,7 @@ describe("given buildTrade where the position rounds to zero shares", () => {
       accountBalance: 100,
       riskTolerancePct: 0.02,
       targetBufferPct: 0.75,
+      targetMode: "percent",
       direction: "long",
       trend: "uptrend",
       timeframe: "daily",
@@ -544,6 +547,7 @@ describe("given buildTrade and the Decision Matrix", () => {
       accountBalance: 2500,
       riskTolerancePct: 0.02,
       targetBufferPct: 0.75,
+      targetMode: "percent",
       direction: "short",
       trend: "uptrend",
       timeframe: "daily",
@@ -582,6 +586,54 @@ describe("given buildTrade and the configured risk limit", () => {
   test("given a sub-2% risk: should report it precisely, not rounded", () => {
     const result = buildTrade({ ...longTrade, riskTolerancePct: 0.015 });
     expect(result.checks?.riskLimitPct).toBe(1.5);
+  });
+});
+
+describe("given buildTrade and the target modes", () => {
+  // Proximal long: entry 108, stop 105.92, risk 2.08. Percentage (75%) target
+  // is 120 (~5.8:1); the mechanical 3:1 target is 114.24.
+  const proximal: TradeInputs = {
+    ...longTrade,
+    strength: 2,
+    time: 1,
+    freshness: 2, // total 9 -> proximal
+  };
+
+  test('given "ratio" mode: should exit at the mechanical 3:1 target', () => {
+    const result = buildTrade({ ...proximal, targetMode: "ratio" });
+    expect(result.order?.target).toBe(114.24);
+    expect(result.order?.rewardRisk).toBe(3);
+  });
+
+  test('given "auto" with a percentage that beats 3:1: should keep the percentage target', () => {
+    const result = buildTrade({ ...proximal, targetMode: "auto" });
+    expect(result.order?.target).toBe(120);
+    expect(result.order?.rewardRisk).toBeGreaterThan(3);
+  });
+
+  test('given "auto" where the percentage misses 3:1 but the mechanical fits: should switch to 3:1', () => {
+    // Target zone at 115 -> 75% buffer is only ~2.5:1, but the 3:1 target (114.24)
+    // still sits below the zone, so auto rescues it.
+    const near = { ...proximal, targetProximal: 115, targetDistal: 117 };
+    expect(buildTrade({ ...near, targetMode: "percent" }).blockedReason).toBe(
+      "reward-risk",
+    );
+    const auto = buildTrade({ ...near, targetMode: "auto" });
+    expect(auto.order?.target).toBe(114.24);
+    expect(auto.order?.rewardRisk).toBe(3);
+  });
+
+  test('given "ratio" mode where 3:1 overshoots the zone: should reject', () => {
+    // Zone at 112 is closer than the 3:1 target (114.24), so 3:1 can't be
+    // reached before the opposing zone.
+    const result = buildTrade({
+      ...proximal,
+      targetProximal: 112,
+      targetDistal: 114,
+      targetMode: "ratio",
+    });
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("reward-risk");
   });
 });
 

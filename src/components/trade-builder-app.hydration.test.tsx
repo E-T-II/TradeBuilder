@@ -13,6 +13,7 @@ const savedForm = {
   accountBalance: "2500",
   riskTolerance: "2",
   targetBuffer: "75",
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",

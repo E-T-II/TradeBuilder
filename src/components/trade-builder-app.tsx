@@ -8,6 +8,7 @@ import {
   JUDGED_MAX,
   type Direction,
   type IncomeTimeframe,
+  type TargetMode,
   type TradeInputs,
   type Trend,
 } from "@/lib/trade-builder";
@@ -30,6 +31,7 @@ export interface FormState {
   accountBalance: string;
   riskTolerance: string; // percent, e.g. "2"
   targetBuffer: string; // percent, e.g. "75"
+  targetMode: TargetMode; // how the target is derived
   direction: Direction;
   trend: Trend;
   timeframe: IncomeTimeframe;
@@ -50,6 +52,7 @@ const initialState: FormState = {
   accountBalance: "",
   riskTolerance: "2",
   targetBuffer: "75",
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",
@@ -105,6 +108,7 @@ const ENUM_VALUES: { [K in keyof FormState]?: readonly string[] } = {
   direction: ["long", "short"] satisfies Direction[],
   trend: ["uptrend", "sideways", "downtrend"] satisfies Trend[],
   timeframe: ["daily", "weekly"] satisfies IncomeTimeframe[],
+  targetMode: ["percent", "ratio", "auto"] satisfies TargetMode[],
 };
 
 // Read the saved form, keeping only the fields that match the shape we persist:
@@ -211,6 +215,7 @@ export function toInputs(form: FormState): TradeInputs | null {
     direction: form.direction,
     trend: form.trend,
     timeframe: form.timeframe,
+    targetMode: form.targetMode,
   };
 }
 

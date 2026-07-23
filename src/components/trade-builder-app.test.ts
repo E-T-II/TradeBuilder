@@ -21,6 +21,7 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   accountBalance: "600",
   riskTolerance: "2",
   targetBuffer: "75",
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",

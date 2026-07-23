@@ -70,9 +70,9 @@ marginal (counter-trend or awkward-curve) cells only trade when the profit-zone
 ratio is 5:1 or better. `buildTrade` runs it as a **gate**: it can veto a setup
 to no-trade even when the odds-enhancer score qualifies.
 
-## No-trade has five distinct reasons
+## No-trade has seven distinct reasons
 
-`buildTrade` returns `order: null` in five cases, and the UI tells them apart:
+`buildTrade` returns `order: null` in seven cases, and the UI tells them apart:
 
 1. **Matrix veto** — `objective === "no-trade"` (setup invalid for this
    trend/curve).
@@ -83,9 +83,29 @@ to no-trade even when the odds-enhancer score qualifies.
    share's risk, so `rawSize` is 0; `blockedReason: "risk-too-small"`.
 5. **Capital cap too tight** — one share costs more than 50% of the balance, so
    the capital cap knocks a positive size to 0; `blockedReason: "capital-too-large"`.
+6. **Reward:risk below 3:1** — the best achievable target still can't reach 3:1
+   (or a mechanical 3:1 target overshoots the opposing zone);
+   `blockedReason: "reward-risk"`.
+7. **Over 6%** — this trade's risk plus open risk exceeds 6% of the balance;
+   `blockedReason: "over-6pct"`.
+
+Reasons 6 and 7 are hard rules (per Eugene): a failing reward:risk or 6% check
+rejects the trade outright rather than showing a flagged, placeable order.
 
 `OrderTicket` shows a matching message for each; `Scorecard` shows a neutral
 "No valid trade" badge when the score qualified but no order resulted.
+
+## Target modes
+
+The take-profit target is set one of three ways (`TargetMode`, chosen in
+advanced settings):
+
+- **percent** — a % of the profit zone (`targetBufferPct`, kept in 0.75–0.80).
+- **ratio** — a mechanical 3:1 target: exactly 3× the per-share risk out from
+  the entry. Its reward:risk is 3 by construction, so `buildTrade` reports it as
+  3 rather than recomputing from the cent-rounded price.
+- **auto** — whichever of the two yields the higher reward:risk, provided the
+  target still sits before the opposing zone.
 
 ## Validation layers
 

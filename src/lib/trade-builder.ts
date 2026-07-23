@@ -341,13 +341,23 @@ export function deriveZoneLines(zones: Zones, direction: Direction): ZoneLines {
       };
 }
 
+/**
+ * How the target is set:
+ * - "percent": a % of the profit zone (targetBufferPct, kept in 0.75–0.80).
+ * - "ratio": a mechanical 3:1 target (3x the per-share risk out from entry).
+ * - "auto": whichever of the two gives the higher reward:risk within the zone.
+ */
+export type TargetMode = "percent" | "ratio" | "auto";
+
 /** Everything the user gives us. */
 export interface TradeInputs {
   accountBalance: number;
   /** e.g. 0.02 for 2% risk per trade; the form caps this at 2% (0.02) */
   riskTolerancePct: number;
-  /** the take-profit buffer; the form keeps this inside 0.75 to 0.80 */
+  /** the take-profit buffer used in "percent"/"auto" mode; kept in 0.75–0.80 */
   targetBufferPct: number;
+  /** how the target price is derived */
+  targetMode: TargetMode;
   direction: Direction;
   trend: Trend;
   timeframe: IncomeTimeframe;
@@ -478,12 +488,50 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   );
   const rawSize = positionSize(maxRisk, riskPerShare);
   const size = applyCapitalCap(rawSize, entry, inputs.accountBalance);
-  const target = targetPrice(
+
+  // Target selection by mode. The percentage buffer is a % of the way to the
+  // opposing zone (always inside it); the mechanical 3:1 is exactly 3x the
+  // per-share risk out from the entry, so its reward:risk is 3 by construction.
+  const percentTarget = targetPrice(
     inputs.entryProximal,
     inputs.targetProximal,
     inputs.targetBufferPct,
     inputs.direction,
   );
+  const percentRr = rewardRiskRatio(entry, stop, percentTarget);
+  const ratioTarget = roundToCent(
+    inputs.direction === "long"
+      ? entry + riskPerShare * 3
+      : entry - riskPerShare * 3,
+  );
+  // The exit must sit before the opposing zone's near edge (targetProximal).
+  const fitsZone = (t: number) =>
+    inputs.direction === "long"
+      ? t <= inputs.targetProximal
+      : t >= inputs.targetProximal;
+
+  let target: number;
+  let usedRatio: boolean;
+  if (inputs.targetMode === "ratio") {
+    target = ratioTarget;
+    usedRatio = true;
+  } else if (inputs.targetMode === "auto") {
+    // Higher reward:risk wins; the mechanical 3:1 only counts if it fits before
+    // the opposing zone. (A percentage over 3 already beats the mechanical 3.)
+    if (fitsZone(ratioTarget) && 3 > percentRr) {
+      target = ratioTarget;
+      usedRatio = true;
+    } else {
+      target = percentTarget;
+      usedRatio = false;
+    }
+  } else {
+    target = percentTarget;
+    usedRatio = false;
+  }
+  // Mechanical targets are 3:1 by construction; recomputing from the
+  // cent-rounded price could dip just under 3 and falsely trip the rule.
+  const rr = usedRatio ? 3 : percentRr;
 
   // A tight zone plus the confirmation offset can push the computed entry past
   // the computed target, leaving an order whose exit sits on the wrong side of
@@ -517,7 +565,20 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
-  const rr = rewardRiskRatio(entry, stop, target);
+  // A mechanical 3:1 target can land past the opposing zone's near edge, which
+  // means the setup can't reach 3:1 before that zone — treat it as a reward:risk
+  // failure. (Percentage targets always sit inside the zone.)
+  if (!fitsZone(target)) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "reward-risk",
+      order: null,
+      checks: null,
+    };
+  }
+
   const capital = roundToCent(size * entry);
   const totalRisk = roundToCent(size * riskPerShare);
   const multiTradeLimit = roundToCent(inputs.accountBalance * 0.06);

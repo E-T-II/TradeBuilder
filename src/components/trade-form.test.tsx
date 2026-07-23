@@ -11,6 +11,7 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   accountBalance: "600",
   riskTolerance: "2",
   targetBuffer: "75",
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",
@@ -128,6 +129,21 @@ describe("given the advanced settings caps", () => {
     await user.tab();
 
     expect(risk).toHaveValue(1.5);
+  });
+
+  test("given the target mode control: should offer percentage / 3:1 / auto and switch", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm()} />);
+    const group = screen.getByRole("radiogroup", { name: "Target mode" });
+    const options = within(group)
+      .getAllByRole("radio")
+      .map((r) => r.textContent);
+    expect(options).toEqual(["Percentage", "3:1 R:R", "Auto"]);
+
+    // Percentage is selected by default; switching to 3:1 checks it.
+    expect(within(group).getByRole("radio", { name: "Percentage" })).toBeChecked();
+    await user.click(within(group).getByRole("radio", { name: "3:1 R:R" }));
+    expect(within(group).getByRole("radio", { name: "3:1 R:R" })).toBeChecked();
   });
 });
 
