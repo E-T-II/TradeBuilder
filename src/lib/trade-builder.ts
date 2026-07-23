@@ -415,13 +415,13 @@ export interface TradeResult {
    * The numbers behind a hard-rule rejection, so the copy can quantify the miss
    * instead of just naming the rule. Set alongside blockedReason, never on the
    * order path (the order carries its own figures).
-   * - rewardRisk: the ratio this setup actually reaches, on "reward-risk".
+   * - reachedRewardRisk: the ratio this setup actually reaches, on "reward-risk".
    *   Absent when the mechanical target overshot the opposing zone, where the
    *   rejected ratio isn't what the setup could have made.
    * - totalTradeRisk / openRisk: the two halves of the sum, on "over-6pct".
    *   Pair them with checks.multiTradeLimit for the size of the overage.
    */
-  rewardRisk?: number;
+  reachedRewardRisk?: number;
   totalTradeRisk?: number;
   openRisk?: number;
   /** null when there's no valid trade — see blockedReason, plus low score / matrix veto */
@@ -593,7 +593,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       entryType: type,
       objective,
       blockedReason: "reward-risk",
-      rewardRisk: rr,
+      reachedRewardRisk: rr,
       order: null,
       checks: null,
     };

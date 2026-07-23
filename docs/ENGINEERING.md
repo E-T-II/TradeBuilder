@@ -124,6 +124,15 @@ advanced settings):
   resting on the zone's near edge is the fill risk the 75–80% buffer exists to
   avoid, so a mechanical target that lands exactly there doesn't qualify.
 
+  Note on the percentage side of auto: it compares the mechanical 3:1 against
+  the user's **currently entered** `targetBufferPct` (a single value), not the
+  best of the whole 75–80% range. Eugene's spreadsheet drives the buffer from a
+  discrete dropdown, but we kept it a free-typed field (his call), so there is
+  only one percentage to compare. Consequence: if the entered buffer isn't the
+  best of 75–80%, auto can pick the 3:1 when a higher buffer would have won. This
+  is the accepted behavior, not a follow-up — sweeping the full range was
+  considered and deliberately not built.
+
 ## Validation layers
 
 - **Geometry** (`src/lib/validate-zones.ts`) — direction-independent checks on

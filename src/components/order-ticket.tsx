@@ -58,9 +58,9 @@ export function OrderTicket({
       // The ratio is absent when the mechanical target overshot the opposing
       // zone — there the setup's own reward:risk isn't what was rejected.
       const reached =
-        result.rewardRisk === undefined
+        result.reachedRewardRisk === undefined
           ? "This setup can't reach a 3:1 reward-to-risk before the opposing zone"
-          : `This setup only reaches ${ratio.format(result.rewardRisk)}:1, short of the 3:1 minimum`;
+          : `This setup only reaches ${ratio.format(result.reachedRewardRisk)}:1, short of the 3:1 minimum`;
       reason = `${reached}, so the strategy rejects it. You'd need a farther target zone or a tighter stop.`;
     } else if (result.blockedReason === "over-6pct") {
       // Naming the rule without the numbers leaves "reduce the size" unanswerable,
