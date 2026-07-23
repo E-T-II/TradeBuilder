@@ -662,6 +662,61 @@ describe("given buildTrade and the 3:1 reward-risk rule", () => {
     expect(result.order).not.toBeNull();
     expect(result.order!.rewardRisk).toBeGreaterThanOrEqual(3);
   });
+
+  test("given a rejection: should report the ratio the setup actually reaches", () => {
+    // "Needs a farther target" is unactionable on its own — 2.9 and 1.2 call
+    // for very different fixes — so the miss travels with the rejection.
+    const result = buildTrade({
+      ...longTrade,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      targetProximal: 114,
+      targetDistal: 116,
+    });
+    expect(result.blockedReason).toBe("reward-risk");
+    expect(result.rewardRisk).toBeCloseTo(2.16, 2);
+  });
+
+  test("given a reward:risk a float hair under 3: should agree with the check it reports", () => {
+    // rewardRisk computes as 2.9999999999999956 here. The gate clears it via
+    // meetsProfitRatio's epsilon, so the risk card must not then call it a
+    // failure on the very order the gate let through.
+    const result = buildTrade({
+      ...longTrade,
+      entryProximal: 1,
+      entryDistal: 0.96,
+      targetProximal: 1.2,
+      targetDistal: 1.3,
+      atr: 0.5,
+      curveLow: 0.9,
+      curveHigh: 1.5,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.order?.rewardRisk).toBeLessThan(3);
+    expect(result.order?.rewardRisk).toBeCloseTo(3, 9);
+    expect(result.checks?.meetsRewardRisk).toBe(true);
+  });
+
+  test("given a setup that can never reach 3:1: should say so rather than blame the balance", () => {
+    // Reward:risk is a property of entry/stop/target alone, so a $20 account
+    // and a $2500 one must get the same verdict — otherwise the user funds the
+    // account and only then learns the setup was never tradeable.
+    const unreachable = {
+      ...longTrade,
+      entryDistal: 107.5,
+      targetProximal: 110.5,
+      targetDistal: 111,
+    };
+    expect(buildTrade({ ...unreachable, accountBalance: 2500 }).blockedReason).toBe(
+      "reward-risk",
+    );
+    expect(buildTrade({ ...unreachable, accountBalance: 20 }).blockedReason).toBe(
+      "reward-risk",
+    );
+  });
 });
 
 describe("given buildTrade and the 6% multiple-trade rule", () => {
@@ -689,5 +744,40 @@ describe("given buildTrade and the 6% multiple-trade rule", () => {
     const over = buildTrade({ ...base, openTradeRisk: 30 });
     expect(over.order).toBeNull();
     expect(over.blockedReason).toBe("over-6pct");
+  });
+
+  test("given a rejection: should carry the numbers behind the overage", () => {
+    // The user has to resolve this themselves, which they can't do without the
+    // limit, their open risk, and this trade's risk.
+    const over = buildTrade({ ...base, openTradeRisk: 30 });
+    expect(over.checks?.multiTradeLimit).toBe(36);
+    expect(over.checks?.withinMultiTradeRisk).toBe(false);
+    expect(over.openRisk).toBe(30);
+    expect(over.totalTradeRisk).toBeGreaterThan(0);
+    expect(over.openRisk! + over.totalTradeRisk!).toBeGreaterThan(36);
+  });
+
+  test("given risk landing exactly on the 6% limit: should allow the trade", () => {
+    // "Should not exceed $36" allows $36. Summed as raw floats these land on
+    // 6.010000000000001-style values and a bare `>` rejects a legal trade.
+    const exact = buildTrade({
+      ...base,
+      accountBalance: 100.25, // -> $6.02 limit, $1.08 trade risk
+      openTradeRisk: 4.94, // 1.08 + 4.94 === 6.0200000000000005 as floats
+    });
+    expect(exact.checks?.multiTradeLimit).toBe(6.02);
+    expect(exact.order?.totalTradeRisk).toBe(1.08);
+    expect(exact.blockedReason).toBeUndefined();
+    expect(exact.order).not.toBeNull();
+    expect(exact.checks?.withinMultiTradeRisk).toBe(true);
+  });
+
+  test("given a sub-cent open risk: should quantise it before comparing", () => {
+    // openTradeRisk arrives straight from a free-typed field, so it can carry
+    // fractions of a cent into a cent-quantised comparison.
+    const typed = buildTrade({ ...base, openTradeRisk: 30.005 });
+    const rounded = buildTrade({ ...base, openTradeRisk: 30.01 });
+    expect(typed.blockedReason).toBe(rounded.blockedReason);
+    expect(typed.openRisk).toBe(30.01);
   });
 });

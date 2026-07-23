@@ -54,7 +54,31 @@ describe("given OrderTicket", () => {
     });
     expect(result.blockedReason).toBe("reward-risk");
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText(/3:1 reward-to-risk/i)).toBeInTheDocument();
+    // "You need a farther target" is unactionable without the shortfall: 2.9
+    // and 1.2 are very different problems, so the copy states what it reaches.
+    expect(screen.getByText(/only reaches 2.16:1/i)).toBeInTheDocument();
+    expect(screen.getByText(/3:1 minimum/i)).toBeInTheDocument();
+  });
+
+  test("given a mechanical target past the opposing zone: should say 3:1 isn't reachable before it", () => {
+    // Nothing is short of 3:1 here — the ratio target simply lands outside the
+    // profit zone — so the copy must not quote a ratio it never computed.
+    const result = buildTrade({
+      ...longTrade,
+      targetMode: "ratio",
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      entryDistal: 107.5,
+      targetProximal: 109.74,
+      targetDistal: 111,
+    });
+    expect(result.blockedReason).toBe("reward-risk");
+    expect(result.rewardRisk).toBeUndefined();
+    render(<OrderTicket result={result} direction="long" />);
+    expect(
+      screen.getByText(/can't reach a 3:1 reward-to-risk before the opposing zone/i),
+    ).toBeInTheDocument();
   });
 
   test("given open risk over 6%: should say it pushes past 6% of balance", () => {
@@ -72,7 +96,11 @@ describe("given OrderTicket", () => {
     });
     expect(result.blockedReason).toBe("over-6pct");
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText(/past your total open risk|6% of your balance/i)).toBeInTheDocument();
+    expect(screen.getByText(/6% of your balance/i)).toBeInTheDocument();
+    // "Reduce the size" is unanswerable without the limit and the overage.
+    expect(screen.getByText(/6% limit is \$36.00/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$30.00 already at risk/i)).toBeInTheDocument();
+    expect(screen.getByText(/over\./i)).toBeInTheDocument();
   });
 
   test("given a qualifying score but zones too tight: should say there's no valid trade", () => {
