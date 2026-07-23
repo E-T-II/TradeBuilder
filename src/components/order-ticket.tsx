@@ -41,10 +41,8 @@ export function OrderTicket({
   direction: Direction;
 }) {
   if (!result.order) {
-    // Four ways to land here: the Decision Matrix vetoed the setup, the score
-    // didn't qualify, the score qualified but the position rounds to zero
-    // shares, or the zones are so tight the target ends up on the wrong side of
-    // the entry.
+    // The score/matrix already passed; these are the ways a qualifying setup
+    // still produces no order — the reward:risk and 6% rules reject outright.
     let reason: string;
     if (result.objective === "no-trade") {
       reason =
@@ -52,6 +50,12 @@ export function OrderTicket({
     } else if (result.entryType === "no-trade") {
       reason =
         "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
+    } else if (result.blockedReason === "reward-risk") {
+      reason =
+        "This setup can't reach a 3:1 reward-to-risk even at the best target, so the strategy rejects it. You'd need a farther target zone or a tighter stop.";
+    } else if (result.blockedReason === "over-6pct") {
+      reason =
+        "Taking this trade would push your total open risk past 6% of your balance, so the strategy rejects it. Close some open risk or reduce the size before adding this one.";
     } else if (result.blockedReason === "risk-too-small") {
       reason =
         "Your risk-per-trade limit is smaller than the risk on a single share here, so the position rounds down to zero. Try a larger balance or a tighter stop (a lower ATR or a smaller entry zone).";
