@@ -452,11 +452,14 @@ export function TradeForm({
                     options={[
                       { value: "percent", label: "Percentage" },
                       // Read aloud, "3:1 R:R" becomes "three colon one R colon
-                      // R", so the spoken name spells the intent out instead.
+                      // R", so the spoken name spells the intent out — but keeps
+                      // the visible string first (WCAG 2.5.3: the accessible
+                      // name must contain the visible label so speech input can
+                      // match what the user sees).
                       {
                         value: "ratio",
                         label: "3:1 R:R",
-                        ariaLabel: "3 to 1 reward to risk",
+                        ariaLabel: "3:1 R:R, 3 to 1 reward to risk",
                       },
                       { value: "auto", label: "Auto" },
                     ]}

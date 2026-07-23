@@ -74,7 +74,7 @@ export type EntryType = "proximal" | "confirmation" | "no-trade";
 
 // Money helpers, prices round to the cent, and the stop buffer always
 // rounds UP ("always round up when applicable").
-const roundToCent = (n: number) => Math.round(n * 100) / 100;
+export const roundToCent = (n: number) => Math.round(n * 100) / 100;
 const roundUpToCent = (n: number) => Math.ceil(n * 100 - 1e-9) / 100;
 
 /**
