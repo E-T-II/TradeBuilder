@@ -73,8 +73,12 @@ export type IncomeTimeframe = "daily" | "weekly";
 export type EntryType = "proximal" | "confirmation" | "no-trade";
 
 // Money helpers, prices round to the cent, and the stop buffer always
-// rounds UP ("always round up when applicable").
-export const roundToCent = (n: number) => Math.round(n * 100) / 100;
+// rounds UP ("always round up when applicable"). `n * 100` alone can land a
+// hair under a .5 boundary (4.015 * 100 === 401.49999999999994), which
+// Math.round then rounds down instead of up; snapping to 15 significant
+// digits first clears that float noise while keeping every other value exact.
+export const roundToCent = (n: number) =>
+  Math.round(Number((n * 100).toPrecision(15))) / 100;
 const roundUpToCent = (n: number) => Math.ceil(n * 100 - 1e-9) / 100;
 
 /**

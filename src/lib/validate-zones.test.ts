@@ -54,12 +54,13 @@ describe("validateZones()", () => {
     expect(actual).toEqual(expected);
   });
 
-  test("given supply overlapping the demand zone: should flag supply low", () => {
-    const actual = validateZones(
-      form({ supplyLow: "107", supplyHigh: "126" }),
-    );
+  test("given supply overlapping the demand zone: should flag demand proximal", () => {
+    // Supply is entered first now, so a valid supply zone left as-is and a
+    // demand proximal typed high enough to overlap it should flag the field
+    // being edited (demand proximal), not the supply line already left behind.
+    const actual = validateZones(form({ demandHigh: "125" }));
     const expected = {
-      supplyLow: "The supply zone must sit above the demand zone.",
+      demandHigh: "The supply zone must sit above the demand zone.",
     };
     expect(actual).toEqual(expected);
   });
@@ -89,7 +90,11 @@ describe("validateZones()", () => {
   });
 
   test("given a demand high above the curve high: should flag demand high directly, not just the supply", () => {
-    const actual = validateZones(form({ demandHigh: "131" }));
+    // Supply pushed above demand too, so the overlap check (also on demand
+    // high now) doesn't pre-empt this curve-height check on the same field.
+    const actual = validateZones(
+      form({ demandHigh: "131", supplyLow: "135", supplyHigh: "137" }),
+    );
     expect(actual.demandHigh).toBe(
       "The demand zone can't sit above the curve high.",
     );

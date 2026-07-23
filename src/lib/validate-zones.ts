@@ -54,8 +54,12 @@ export function validateZones(form: FormState): ZoneErrors {
   // clears the entry depends on the entry type, which isn't known until the
   // score is in, so buildTrade handles it: it returns no order when the
   // computed target can't clear the computed entry.
+  //
+  // Supply is entered first now, so the error lands on demand proximal — the
+  // field being edited when the pair goes invalid — rather than on the supply
+  // line already left behind.
   if (demandHigh !== null && supplyLow !== null && supplyLow <= demandHigh) {
-    errors.supplyLow = "The supply zone must sit above the demand zone.";
+    errors.demandHigh = "The supply zone must sit above the demand zone.";
   }
 
   // Both zones must sit inside the curve. Otherwise locateOnCurve clamps an
