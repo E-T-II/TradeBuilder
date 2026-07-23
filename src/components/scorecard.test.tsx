@@ -29,6 +29,7 @@ const longTrade: TradeInputs = {
   accountBalance: 2500,
   riskTolerancePct: 0.02,
   targetBufferPct: 0.75,
+  targetMode: "percent",
   direction: "long",
   trend: "uptrend",
   timeframe: "daily",

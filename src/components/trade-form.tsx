@@ -439,7 +439,25 @@ export function TradeForm({
             </button>
 
             {showAdvanced ? (
-              <div className="grid gap-5 sm:grid-cols-2">
+              <>
+                <Field
+                  id="targetMode"
+                  label="Target mode"
+                  hint="Percentage buffer, a mechanical 3:1, or Auto (the better of the two)"
+                  group
+                >
+                  <SegmentedControl
+                    aria-labelledby="targetMode-label"
+                    value={form.targetMode}
+                    options={[
+                      { value: "percent", label: "Percentage" },
+                      { value: "ratio", label: "3:1 R:R" },
+                      { value: "auto", label: "Auto" },
+                    ]}
+                    onChange={(targetMode) => onChange({ targetMode })}
+                  />
+                </Field>
+                <div className="grid gap-5 sm:grid-cols-2">
                 <Field
                   id="risk"
                   label="Risk per trade (%)"
@@ -464,7 +482,7 @@ export function TradeForm({
                 <Field
                   id="buffer"
                   label="Target buffer (%)"
-                  hint="Between 75% and 80%"
+                  hint="Between 75% and 80% (used in Percentage and Auto modes)"
                 >
                   <Input
                     id="buffer"
@@ -492,7 +510,8 @@ export function TradeForm({
                     onChange={(openTradeRisk) => onChange({ openTradeRisk })}
                   />
                 </Field>
-              </div>
+                </div>
+              </>
             ) : null}
           </>
         ) : null}
