@@ -64,9 +64,11 @@ describe("validateZones()", () => {
     expect(actual).toEqual(expected);
   });
 
-  test("given curve high not above curve low: should flag curve high", () => {
+  test("given curve high not above curve low: should flag curve low", () => {
+    // Curve high is the first field of the pair, so the error belongs on the
+    // second one — the field still being edited, not the one already left.
     const actual = validateZones(form({ curveHigh: "100" }));
-    const expected = { curveHigh: "Curve high must be above curve low." };
+    const expected = { curveLow: "Curve low must be below curve high." };
     expect(actual).toEqual(expected);
   });
 

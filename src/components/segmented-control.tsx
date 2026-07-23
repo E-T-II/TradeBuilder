@@ -6,6 +6,11 @@ import type { LucideIcon } from "lucide-react";
 interface SegmentOption<T extends string> {
   value: T;
   label: string;
+  /**
+   * Spoken name, when the visible label reads badly aloud — "3:1 R:R" comes out
+   * as "three colon one R colon R". The visible label is unaffected.
+   */
+  ariaLabel?: string;
   icon?: LucideIcon;
   accent?: "green" | "red";
 }
@@ -78,6 +83,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={selected}
+            aria-label={option.ariaLabel}
             tabIndex={index === selectedIndex ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm transition-colors ${

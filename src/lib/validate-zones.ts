@@ -2,7 +2,7 @@ import type { FormState } from "@/components/trade-builder-app";
 
 // Fields that can carry a geometry error.
 export type ZoneErrorField =
-  | "curveHigh"
+  | "curveLow"
   | "demandHigh"
   | "demandLow"
   | "supplyHigh"
@@ -33,8 +33,11 @@ export function validateZones(form: FormState): ZoneErrors {
   const supplyHigh = toNumber(form.supplyHigh);
   const supplyLow = toNumber(form.supplyLow);
 
+  // Curve high is entered first, so the error lands on curve low — the field
+  // being edited when the pair goes invalid — the same way the zone errors flag
+  // the second edge rather than the one the user already left.
   if (curveLow !== null && curveHigh !== null && curveHigh <= curveLow) {
-    errors.curveHigh = "Curve high must be above curve low.";
+    errors.curveLow = "Curve low must be below curve high.";
   }
 
   // Each zone needs real height. (Demand distal is the low edge, demand
