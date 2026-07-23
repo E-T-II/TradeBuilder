@@ -140,10 +140,9 @@ describe("given the advanced settings caps", () => {
       .map((r) => r.textContent);
     expect(options).toEqual(["Percentage", "3:1 R:R", "Auto"]);
 
-    // The visible label reads "3:1 R:R"; the accessible name spells it out, so
-    // a screen reader says "3 to 1 reward to risk", not "three colon one R
-    // colon R".
-    const ratio = { name: "3 to 1 reward to risk" };
+    // The visible label reads "3:1 R:R"; the accessible name keeps that and
+    // spells it out (WCAG 2.5.3), so it reads "3:1 R:R, 3 to 1 reward to risk".
+    const ratio = { name: "3:1 R:R, 3 to 1 reward to risk" };
     // Percentage is selected by default; switching to 3:1 checks it.
     expect(within(group).getByRole("radio", { name: "Percentage" })).toBeChecked();
     await user.click(within(group).getByRole("radio", ratio));

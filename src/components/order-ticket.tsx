@@ -1,4 +1,4 @@
-import type { Direction, TradeResult } from "@/lib/trade-builder";
+import { roundToCent, type Direction, type TradeResult } from "@/lib/trade-builder";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -72,7 +72,7 @@ export function OrderTicket({
         limit === undefined || open === undefined || trade === undefined
           ? ""
           : ` Your 6% limit is ${usd.format(limit)}: ${usd.format(open)} already at risk plus ${usd.format(trade)} on this trade is ${usd.format(
-              Math.round((open + trade - limit) * 100) / 100,
+              roundToCent(open + trade - limit),
             )} over.`;
       reason = `Taking this trade would push your total open risk past 6% of your balance, so the strategy rejects it.${detail} Close some open risk or reduce the size before adding this one.`;
     } else if (result.blockedReason === "risk-too-small") {

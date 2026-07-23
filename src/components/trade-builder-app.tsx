@@ -38,6 +38,9 @@ export interface FormState {
   atr: string;
   curveLow: string;
   curveHigh: string;
+  // high/low are the storage names; the UI labels them distal/proximal, and the
+  // mapping inverts between zones: supply high = distal, demand high = proximal
+  // (near edge). Don't "fix" one side to match the labels without the other.
   demandHigh: string;
   demandLow: string;
   supplyHigh: string;
