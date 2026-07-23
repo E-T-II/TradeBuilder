@@ -210,3 +210,18 @@ npm test            # vitest run
   — so scope it to percent mode first if it's ever picked up. Gated on whether
   Eugene actually wants this level of detail visible; not started because that
   hasn't been confirmed.
+
+- **Move money math off floats and onto integer cents.** `roundToCent` has
+  already needed two fixes (a bare-float 6% comparison, then the helper's own
+  half-cent rounding) because JS numbers can't represent most decimals
+  exactly. Both were symptoms of the same root cause, patched where they
+  surfaced rather than eliminated — there's no guarantee another one isn't
+  sitting somewhere else. The standard fix is to store and compute every
+  dollar amount as an integer number of cents (e.g. `10592`, not `105.92`),
+  only dividing by 100 at render time; that makes this whole class of bug
+  structurally impossible instead of something to keep hunting for. It's a
+  real refactor — touches `entryPrice`, `stopLoss`, `positionSize`, and every
+  test fixture — so not something to do mid-PR, but worth doing before the
+  hard-rejection rules (which turned previously-cosmetic rounding noise into
+  wrongly-accepted or wrongly-rejected trades) get any more threshold logic
+  layered on top.
