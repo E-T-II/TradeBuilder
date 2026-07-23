@@ -652,6 +652,22 @@ describe("given buildTrade and the target modes", () => {
     expect(result.checks?.meetsRewardRisk).toBe(true);
   });
 
+  test('given "ratio" mode whose target lands exactly on the zone edge: should reject', () => {
+    // fitsZone is strict: a target resting on targetProximal is the fill risk
+    // the buffer exists to avoid. entryDistal 106.08 -> stop 106, risk exactly
+    // 2, so the mechanical 3:1 target is 108 + 2 x 3 = 114 === targetProximal.
+    // A `<` drifting to `<=` here would silently start building this order.
+    const result = buildTrade({
+      ...proximal,
+      entryDistal: 106.08,
+      targetProximal: 114,
+      targetDistal: 116,
+      targetMode: "ratio",
+    });
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("reward-risk");
+  });
+
   // Both target modes branch on direction, so a flipped sign in either ternary
   // would ship green against long-only coverage.
   describe("given a short setup", () => {
@@ -695,6 +711,20 @@ describe("given buildTrade and the target modes", () => {
         targetProximal: 120,
         targetDistal: 118,
         targetMode: "ratio",
+      });
+      expect(result.order).toBeNull();
+      expect(result.blockedReason).toBe("reward-risk");
+    });
+
+    test('given "auto" where neither candidate reaches 3:1: should reject', () => {
+      // Mirror of the long case: zone at 120 leaves the percentage short of 3:1
+      // and puts the mechanical target (117.76) above it, so auto has nothing to
+      // fall back on.
+      const result = buildTrade({
+        ...short,
+        targetProximal: 120,
+        targetDistal: 118,
+        targetMode: "auto",
       });
       expect(result.order).toBeNull();
       expect(result.blockedReason).toBe("reward-risk");
@@ -753,7 +783,7 @@ describe("given buildTrade and the 3:1 reward-risk rule", () => {
       targetDistal: 116,
     });
     expect(result.blockedReason).toBe("reward-risk");
-    expect(result.rewardRisk).toBeCloseTo(2.16, 2);
+    expect(result.reachedRewardRisk).toBeCloseTo(2.16, 2);
   });
 
   test("given a reward:risk a float hair under 3: should agree with the check it reports", () => {

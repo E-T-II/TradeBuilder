@@ -74,7 +74,7 @@ describe("given OrderTicket", () => {
       targetDistal: 111,
     });
     expect(result.blockedReason).toBe("reward-risk");
-    expect(result.rewardRisk).toBeUndefined();
+    expect(result.reachedRewardRisk).toBeUndefined();
     render(<OrderTicket result={result} direction="long" />);
     expect(
       screen.getByText(/can't reach a 3:1 reward-to-risk before the opposing zone/i),
