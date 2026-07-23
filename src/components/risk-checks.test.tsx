@@ -35,6 +35,9 @@ function withChecks(
 }
 
 describe("given RiskChecks", () => {
+  // The 3:1 rule is a hard gate, so the engine can't emit a failing
+  // meetsRewardRisk on an order — this pins the copy contract for the row,
+  // which is still the only place a floor rule's failure is worded.
   test("given a reward:risk below the minimum: should read 'Below 3:1', not 'Over the limit'", () => {
     render(<RiskChecks result={withChecks({ meetsRewardRisk: false })} />);
     // The floor rule fails downward, so it must not borrow the ceilings' copy.
@@ -42,8 +45,24 @@ describe("given RiskChecks", () => {
     expect(screen.queryByText("Over the limit")).toBeNull();
   });
 
-  test("given open risk over the 6% ceiling: should read 'Over the limit'", () => {
-    render(<RiskChecks result={withChecks({ withinMultiTradeRisk: false })} />);
+  test("given a real over-6pct rejection: should still show the card with the failing row", () => {
+    // The 6% rejection carries its checks precisely so this card can quantify
+    // the miss the order ticket names; it is the one engine-emitted failure.
+    const rejected = buildTrade({
+      ...longTrade,
+      accountBalance: 600,
+      atr: 1,
+      curveLow: 12,
+      curveHigh: 18,
+      entryProximal: 13.24,
+      entryDistal: 13,
+      targetProximal: 15,
+      targetDistal: 15.5,
+      openTradeRisk: 30,
+    });
+    expect(rejected.blockedReason).toBe("over-6pct");
+    render(<RiskChecks result={rejected} />);
+    expect(screen.getByText(/Open risk within \$36.00/)).toBeInTheDocument();
     expect(screen.getByText("Over the limit")).toBeInTheDocument();
   });
 });

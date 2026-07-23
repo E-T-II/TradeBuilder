@@ -411,6 +411,19 @@ export interface TradeResult {
     | "capital-too-large"
     | "reward-risk"
     | "over-6pct";
+  /**
+   * The numbers behind a hard-rule rejection, so the copy can quantify the miss
+   * instead of just naming the rule. Set alongside blockedReason, never on the
+   * order path (the order carries its own figures).
+   * - rewardRisk: the ratio this setup actually reaches, on "reward-risk".
+   *   Absent when the mechanical target overshot the opposing zone, where the
+   *   rejected ratio isn't what the setup could have made.
+   * - totalTradeRisk / openRisk: the two halves of the sum, on "over-6pct".
+   *   Pair them with checks.multiTradeLimit for the size of the overage.
+   */
+  rewardRisk?: number;
+  totalTradeRisk?: number;
+  openRisk?: number;
   /** null when there's no valid trade — see blockedReason, plus low score / matrix veto */
   order: {
     entry: number;
@@ -504,11 +517,13 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       ? entry + riskPerShare * 3
       : entry - riskPerShare * 3,
   );
-  // The exit must sit before the opposing zone's near edge (targetProximal).
+  // The exit must sit strictly before the opposing zone's near edge: resting
+  // the limit on the edge itself is the fill risk the 75-80% buffer exists to
+  // avoid, so a mechanical target that lands exactly there doesn't count.
   const fitsZone = (t: number) =>
     inputs.direction === "long"
-      ? t <= inputs.targetProximal
-      : t >= inputs.targetProximal;
+      ? t < inputs.targetProximal
+      : t > inputs.targetProximal;
 
   let target: number;
   let usedRatio: boolean;
@@ -518,7 +533,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   } else if (inputs.targetMode === "auto") {
     // Higher reward:risk wins; the mechanical 3:1 only counts if it fits before
     // the opposing zone. (A percentage over 3 already beats the mechanical 3.)
-    if (fitsZone(ratioTarget) && 3 > percentRr) {
+    if (fitsZone(ratioTarget) && !meetsProfitRatio(percentRr, 3)) {
       target = ratioTarget;
       usedRatio = true;
     } else {
@@ -550,6 +565,40 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
+  // Hard rule (per Eugene): the trade must make at least 3:1, or there is no
+  // order at all. Reward:risk is a property of entry/stop/target alone — it
+  // doesn't depend on the balance — so it is settled before the sizing guards
+  // below, otherwise a small account is told to add funds for a setup that was
+  // never tradeable at any size.
+  //
+  // A mechanical 3:1 target can land on or past the opposing zone's near edge,
+  // which means 3:1 isn't reachable before that zone. Same rejection, but the
+  // achievable ratio isn't this order's rr, so it stays unreported.
+  // (Percentage targets always sit inside the zone.)
+  if (!fitsZone(target)) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "reward-risk",
+      order: null,
+      checks: null,
+    };
+  }
+  // The shared epsilon, so a mechanical 3:1 target isn't tripped by float noise
+  // and this gate can't disagree with the check reported on the built order.
+  if (!meetsProfitRatio(rr, 3)) {
+    return {
+      scorecard,
+      entryType: type,
+      objective,
+      blockedReason: "reward-risk",
+      rewardRisk: rr,
+      order: null,
+      checks: null,
+    };
+  }
+
   // Zero shares has two distinct causes, and the remedies differ, so tell them
   // apart: rawSize 0 means the risk budget couldn't cover one share's risk;
   // otherwise the 50% capital cap knocked a positive size down to zero because
@@ -565,50 +614,51 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
-  // A mechanical 3:1 target can land past the opposing zone's near edge, which
-  // means the setup can't reach 3:1 before that zone — treat it as a reward:risk
-  // failure. (Percentage targets always sit inside the zone.)
-  if (!fitsZone(target)) {
-    return {
-      scorecard,
-      entryType: type,
-      objective,
-      blockedReason: "reward-risk",
-      order: null,
-      checks: null,
-    };
-  }
-
   const capital = roundToCent(size * entry);
   const totalRisk = roundToCent(size * riskPerShare);
   const multiTradeLimit = roundToCent(inputs.accountBalance * 0.06);
-  const openRisk = inputs.openTradeRisk ?? 0;
+  const openRisk = roundToCent(inputs.openTradeRisk ?? 0);
+  // Every dollar figure here is cent-quantised, so quantise the sum too: added
+  // as raw floats, a trade landing exactly on the 6% budget can come out a
+  // fraction of a cent over and be rejected by a rule that allows it.
+  const combinedRisk = roundToCent(totalRisk + openRisk);
 
-  // Hard rules (per Eugene): the trade must make at least 3:1, and total open
-  // risk must stay within 6% of the balance. Failing either rejects the trade
-  // outright rather than showing a flagged order. The 3:1 check uses the shared
-  // epsilon so a mechanical 3:1 target isn't tripped by float noise.
-  if (!meetsProfitRatio(rr, 3)) {
-    return {
-      scorecard,
-      entryType: type,
-      objective,
-      blockedReason: "reward-risk",
-      order: null,
-      checks: null,
-    };
-  }
-  if (totalRisk + openRisk > multiTradeLimit) {
+  // Built once and shared by both exits below, so the card can't describe the
+  // trade differently depending on which way the 6% rule went. Each line is
+  // spelled exactly as its gate above, so it can never contradict the decision
+  // that let an order through.
+  const checks = {
+    maxAccountRisk: maxRisk,
+    // 4 decimals of a percent: cleans float noise (0.02 -> 2, not 2.0000004)
+    // while keeping a sub-2% value (e.g. 1.5%) precise rather than rounded
+    // to a flat whole percent for display.
+    riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
+    withinPerTradeRisk: totalRisk <= maxRisk,
+    withinCapitalCap: capital <= inputs.accountBalance * 0.5,
+    meetsRewardRisk: meetsProfitRatio(rr, 3),
+    withinMultiTradeRisk: combinedRisk <= multiTradeLimit,
+    multiTradeLimit,
+  };
+
+  // Hard rule (per Eugene): total open risk must stay within 6% of the balance.
+  // Rejects outright rather than showing a flagged order — and carries its
+  // numbers out, since the user has to resolve the overage themselves and can't
+  // do that without seeing its size.
+  if (!checks.withinMultiTradeRisk) {
     return {
       scorecard,
       entryType: type,
       objective,
       blockedReason: "over-6pct",
+      openRisk,
+      totalTradeRisk: totalRisk,
       order: null,
-      checks: null,
+      checks,
     };
   }
 
+  // Past every gate: the remaining checks are all satisfied by construction and
+  // stay on so the results card can confirm what the trade cleared.
   return {
     scorecard,
     entryType: type,
@@ -623,19 +673,6 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       capitalRequirement: capital,
       totalTradeRisk: totalRisk,
     },
-    checks: {
-      maxAccountRisk: maxRisk,
-      // 4 decimals of a percent: cleans float noise (0.02 -> 2, not 2.0000004)
-      // while keeping a sub-2% value (e.g. 1.5%) precise rather than rounded
-      // to a flat whole percent for display.
-      riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
-      // With the hard rules above, an order only reaches this point when it
-      // already passes all four; these stay so the results card can confirm them.
-      withinPerTradeRisk: totalRisk <= maxRisk,
-      withinCapitalCap: capital <= inputs.accountBalance * 0.5,
-      meetsRewardRisk: rr >= 3,
-      withinMultiTradeRisk: totalRisk + openRisk <= multiTradeLimit,
-      multiTradeLimit,
-    },
+    checks,
   };
 }

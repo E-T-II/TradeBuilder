@@ -79,18 +79,33 @@ to no-trade even when the odds-enhancer score qualifies.
 2. **Low score** — `entryType === "no-trade"` (total below 7).
 3. **Tight zones** — the buffered target lands on the wrong side of the entry
    (a tight zone plus the confirmation offset); `blockedReason: "tight-zones"`.
-4. **Risk budget too small** — the risk-per-trade budget can't cover one
-   share's risk, so `rawSize` is 0; `blockedReason: "risk-too-small"`.
-5. **Capital cap too tight** — one share costs more than 50% of the balance, so
-   the capital cap knocks a positive size to 0; `blockedReason: "capital-too-large"`.
-6. **Reward:risk below 3:1** — the best achievable target still can't reach 3:1
-   (or a mechanical 3:1 target overshoots the opposing zone);
+4. **Reward:risk below 3:1** — the best achievable target still can't reach 3:1
+   (or a mechanical 3:1 target lands on or past the opposing zone);
    `blockedReason: "reward-risk"`.
+5. **Risk budget too small** — the risk-per-trade budget can't cover one
+   share's risk, so `rawSize` is 0; `blockedReason: "risk-too-small"`.
+6. **Capital cap too tight** — one share costs more than 50% of the balance, so
+   the capital cap knocks a positive size to 0; `blockedReason: "capital-too-large"`.
 7. **Over 6%** — this trade's risk plus open risk exceeds 6% of the balance;
    `blockedReason: "over-6pct"`.
 
-Reasons 6 and 7 are hard rules (per Eugene): a failing reward:risk or 6% check
-rejects the trade outright rather than showing a flagged, placeable order.
+The order matters. Reasons 3 and 4 depend only on entry/stop/target, so they are
+settled before the balance-dependent ones — otherwise a small account is told to
+add funds for a setup that was never tradeable at any size.
+
+Reasons 4 and 7 are hard rules (per Eugene): a failing reward:risk or 6% check
+rejects the trade outright rather than showing a flagged, placeable order. The
+user has to resolve those themselves, so the rejection carries the numbers: a
+reward:risk rejection reports the ratio the setup reaches (`result.rewardRisk`),
+and a 6% rejection reports both halves of the sum (`result.totalTradeRisk`,
+`result.openRisk`) plus the full `checks`, so the Risk-rules card still renders
+with the failing row.
+
+Threshold comparisons round the same way on both sides of a rule: reward:risk
+goes through `meetsProfitRatio`'s epsilon everywhere, and the 6% sum is
+`roundToCent`-quantised like the dollar figures it is compared against, so a
+trade landing exactly on either limit is allowed rather than lost to float
+noise.
 
 `OrderTicket` shows a matching message for each; `Scorecard` shows a neutral
 "No valid trade" badge when the score qualified but no order resulted.
@@ -105,7 +120,9 @@ advanced settings):
   the entry. Its reward:risk is 3 by construction, so `buildTrade` reports it as
   3 rather than recomputing from the cent-rounded price.
 - **auto** — whichever of the two yields the higher reward:risk, provided the
-  target still sits before the opposing zone.
+  target still sits before the opposing zone. "Before" is strict: a target
+  resting on the zone's near edge is the fill risk the 75–80% buffer exists to
+  avoid, so a mechanical target that lands exactly there doesn't qualify.
 
 ## Validation layers
 

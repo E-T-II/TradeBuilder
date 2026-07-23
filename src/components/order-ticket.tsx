@@ -12,6 +12,9 @@ const usd = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+// Reward:risk reads as "2.6", not "2.5999999999" or a flat "3".
+const ratio = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+
 function Line({
   label,
   value,
@@ -51,11 +54,26 @@ export function OrderTicket({
       reason =
         "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
     } else if (result.blockedReason === "reward-risk") {
-      reason =
-        "This setup can't reach a 3:1 reward-to-risk even at the best target, so the strategy rejects it. You'd need a farther target zone or a tighter stop.";
+      // The ratio is absent when the mechanical target overshot the opposing
+      // zone — there the setup's own reward:risk isn't what was rejected.
+      const reached =
+        result.rewardRisk === undefined
+          ? "This setup can't reach a 3:1 reward-to-risk before the opposing zone"
+          : `This setup only reaches ${ratio.format(result.rewardRisk)}:1, short of the 3:1 minimum`;
+      reason = `${reached}, so the strategy rejects it. You'd need a farther target zone or a tighter stop.`;
     } else if (result.blockedReason === "over-6pct") {
-      reason =
-        "Taking this trade would push your total open risk past 6% of your balance, so the strategy rejects it. Close some open risk or reduce the size before adding this one.";
+      // Naming the rule without the numbers leaves "reduce the size" unanswerable,
+      // so spell out the limit, the two halves of the sum, and the overage.
+      const limit = result.checks?.multiTradeLimit;
+      const open = result.openRisk;
+      const trade = result.totalTradeRisk;
+      const detail =
+        limit === undefined || open === undefined || trade === undefined
+          ? ""
+          : ` Your 6% limit is ${usd.format(limit)}: ${usd.format(open)} already at risk plus ${usd.format(trade)} on this trade is ${usd.format(
+              Math.round((open + trade - limit) * 100) / 100,
+            )} over.`;
+      reason = `Taking this trade would push your total open risk past 6% of your balance, so the strategy rejects it.${detail} Close some open risk or reduce the size before adding this one.`;
     } else if (result.blockedReason === "risk-too-small") {
       reason =
         "Your risk-per-trade limit is smaller than the risk on a single share here, so the position rounds down to zero. Try a larger balance or a tighter stop (a lower ATR or a smaller entry zone).";
@@ -102,7 +120,7 @@ export function OrderTicket({
         />
         <Line
           label="Reward : risk (needs 3:1)"
-          value={`${Math.round(o.rewardRisk * 100) / 100} : 1`}
+          value={`${ratio.format(o.rewardRisk)} : 1`}
         />
       </CardContent>
     </Card>
