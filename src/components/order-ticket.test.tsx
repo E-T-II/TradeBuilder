@@ -96,7 +96,9 @@ describe("given OrderTicket", () => {
     });
     expect(result.blockedReason).toBe("over-6pct");
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText(/6% of your balance/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/would push your total open risk past 6%/i),
+    ).toBeInTheDocument();
     // "Reduce the size" is unanswerable without the limit and the overage.
     expect(screen.getByText(/6% limit is \$36.00/i)).toBeInTheDocument();
     expect(screen.getByText(/\$30.00 already at risk/i)).toBeInTheDocument();

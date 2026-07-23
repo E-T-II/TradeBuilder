@@ -44,8 +44,9 @@ export function OrderTicket({
   direction: Direction;
 }) {
   if (!result.order) {
-    // The score/matrix already passed; these are the ways a qualifying setup
-    // still produces no order — the reward:risk and 6% rules reject outright.
+    // Seven ways to land here: the matrix vetoed the setup, the score didn't
+    // qualify, the zones are too tight, the position rounds to zero shares
+    // (two causes), or the reward:risk / 6% hard rules rejected it outright.
     let reason: string;
     if (result.objective === "no-trade") {
       reason =

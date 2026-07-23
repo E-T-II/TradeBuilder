@@ -310,12 +310,12 @@ export function TradeForm({
   const long = form.direction === "long";
 
   // Geometry errors block advancing on the step that owns the offending field:
-  // a bad curve high on the Curve step (1), zone-geometry errors on the Zones
+  // a bad curve on the Curve step (1), zone-geometry errors on the Zones
   // step (3). Any lingering error also blocks the final submit, since the
   // stepper lets a user jump ahead once the required fields are filled.
   const zoneErrors = validateZones(form);
   const hasZoneErrors = Object.keys(zoneErrors).length > 0;
-  const curveStepError = !!zoneErrors.curveHigh;
+  const curveStepError = !!zoneErrors.curveLow;
   const zoneStepError = !!(
     zoneErrors.demandHigh ||
     zoneErrors.demandLow ||
@@ -451,65 +451,71 @@ export function TradeForm({
                     value={form.targetMode}
                     options={[
                       { value: "percent", label: "Percentage" },
-                      { value: "ratio", label: "3:1 R:R" },
+                      // Read aloud, "3:1 R:R" becomes "three colon one R colon
+                      // R", so the spoken name spells the intent out instead.
+                      {
+                        value: "ratio",
+                        label: "3:1 R:R",
+                        ariaLabel: "3 to 1 reward to risk",
+                      },
                       { value: "auto", label: "Auto" },
                     ]}
                     onChange={(targetMode) => onChange({ targetMode })}
                   />
                 </Field>
                 <div className="grid gap-5 sm:grid-cols-2">
-                <Field
-                  id="risk"
-                  label="Risk per trade (%)"
-                  hint="Up to 2%, to preserve the account"
-                >
-                  <Input
+                  <Field
                     id="risk"
-                    type="number"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={form.riskTolerance}
-                    onChange={(e) => onChange({ riskTolerance: e.target.value })}
-                    onBlur={(e) =>
-                      onChange({
-                        riskTolerance: clampNumericString(e.target.value, 0, 2),
-                      })
-                    }
-                  />
-                </Field>
-                <Field
-                  id="buffer"
-                  label="Target buffer (%)"
-                  hint="Between 75% and 80% (used in Percentage and Auto modes)"
-                >
-                  <Input
+                    label="Risk per trade (%)"
+                    hint="Up to 2%, to preserve the account"
+                  >
+                    <Input
+                      id="risk"
+                      type="number"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={form.riskTolerance}
+                      onChange={(e) => onChange({ riskTolerance: e.target.value })}
+                      onBlur={(e) =>
+                        onChange({
+                          riskTolerance: clampNumericString(e.target.value, 0, 2),
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
                     id="buffer"
-                    type="number"
-                    min="75"
-                    max="80"
-                    inputMode="decimal"
-                    value={form.targetBuffer}
-                    onChange={(e) => onChange({ targetBuffer: e.target.value })}
-                    onBlur={(e) =>
-                      onChange({
-                        targetBuffer: clampNumericString(e.target.value, 75, 80),
-                      })
-                    }
-                  />
-                </Field>
-                <Field
-                  id="openRisk"
-                  label="Risk in open trades ($)"
-                  hint="For the 6% rule. Leave 0 if this is your only trade"
-                >
-                  <NumberInput
+                    label="Target buffer (%)"
+                    hint="Between 75% and 80% (used in Percentage and Auto modes)"
+                  >
+                    <Input
+                      id="buffer"
+                      type="number"
+                      min="75"
+                      max="80"
+                      inputMode="decimal"
+                      value={form.targetBuffer}
+                      onChange={(e) => onChange({ targetBuffer: e.target.value })}
+                      onBlur={(e) =>
+                        onChange({
+                          targetBuffer: clampNumericString(e.target.value, 75, 80),
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
                     id="openRisk"
-                    value={form.openTradeRisk}
-                    onChange={(openTradeRisk) => onChange({ openTradeRisk })}
-                  />
-                </Field>
+                    label="Risk in open trades ($)"
+                    hint="For the 6% rule. Leave 0 if this is your only trade"
+                  >
+                    <NumberInput
+                      id="openRisk"
+                      value={form.openTradeRisk}
+                      onChange={(openTradeRisk) => onChange({ openTradeRisk })}
+                    />
+                  </Field>
                 </div>
               </>
             ) : null}
@@ -524,7 +530,6 @@ export function TradeForm({
               hint="HTF supply zone distal line"
               value={form.curveHigh}
               onChange={(curveHigh) => onChange({ curveHigh })}
-              error={zoneErrors.curveHigh}
             />
             <PriceField
               id="curveLow"
@@ -532,6 +537,7 @@ export function TradeForm({
               hint="HTF demand zone distal line"
               value={form.curveLow}
               onChange={(curveLow) => onChange({ curveLow })}
+              error={zoneErrors.curveLow}
             />
           </div>
         ) : null}
@@ -564,7 +570,10 @@ export function TradeForm({
         {step === 3 ? (
           <>
             {/* Zone lines top-down, the way they read on the chart: supply on
-                top (distal above proximal), then demand below. */}
+                top (distal above proximal), then demand below. The top-down
+                reading is exact on mobile; side by side each row reads
+                left-to-right, so the zone order holds but the distal/proximal
+                columns swap between the two rows. */}
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="supplyHigh"

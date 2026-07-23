@@ -63,3 +63,18 @@ test("hydrating saved risk/buffer beyond the caps: normalizes the fields to the 
   expect(screen.getByLabelText("Risk per trade (%)")).toHaveValue(2);
   expect(screen.getByLabelText("Target buffer (%)")).toHaveValue(80);
 });
+
+test("hydrating a save from before target modes existed: defaults to the percentage mode", async () => {
+  // The universal upgrade path — every existing save predates the field, so
+  // this is what users actually hit on their first load after the release.
+  const { targetMode, ...beforeTargetModes } = savedForm;
+  expect(targetMode).toBeDefined(); // guard: the omission below has to be real
+  window.localStorage.setItem(KEY, JSON.stringify(beforeTargetModes));
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+
+  await user.click(screen.getByRole("button", { name: /advanced settings/i }));
+
+  const group = screen.getByRole("radiogroup", { name: "Target mode" });
+  expect(within(group).getByRole("radio", { name: "Percentage" })).toBeChecked();
+});

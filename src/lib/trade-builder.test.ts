@@ -623,6 +623,84 @@ describe("given buildTrade and the target modes", () => {
     expect(auto.order?.rewardRisk).toBe(3);
   });
 
+  test('given "auto" where neither candidate reaches 3:1: should reject', () => {
+    // Zone at 112 leaves the percentage short of 3:1 and puts the mechanical
+    // 3:1 target (114.24) outside the zone, so auto has nothing to fall back on.
+    const result = buildTrade({
+      ...proximal,
+      targetProximal: 112,
+      targetDistal: 114,
+      targetMode: "auto",
+    });
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("reward-risk");
+  });
+
+  test("given a percentage target at exactly 3:1: should allow it", () => {
+    // The boundary the rule is written on: 3:1 is "at least 3:1", so the trade
+    // stands. A `>=` drifting to `>` here would silently start rejecting it.
+    // Entry 108, stop 105.92, risk 2.08; a 75% buffer to a 116.32 zone lands
+    // on 114.24, exactly 3x the risk out from the entry.
+    const result = buildTrade({
+      ...proximal,
+      targetProximal: 116.32,
+      targetDistal: 118,
+    });
+    expect(result.order?.target).toBe(114.24);
+    expect(result.order?.rewardRisk).toBeCloseTo(3, 9);
+    expect(result.order).not.toBeNull();
+    expect(result.checks?.meetsRewardRisk).toBe(true);
+  });
+
+  // Both target modes branch on direction, so a flipped sign in either ternary
+  // would ship green against long-only coverage.
+  describe("given a short setup", () => {
+    // Proximal short off a supply zone: entry 124, stop 126.08, risk 2.08.
+    const short: TradeInputs = {
+      ...proximal,
+      direction: "short",
+      trend: "downtrend",
+      entryProximal: 124,
+      entryDistal: 126,
+      targetProximal: 108,
+      targetDistal: 106,
+    };
+
+    test('given "ratio" mode: should place the mechanical 3:1 target below the entry', () => {
+      const result = buildTrade({ ...short, targetMode: "ratio" });
+      expect(result.order?.entry).toBe(124);
+      expect(result.order?.target).toBe(117.76); // 124 - 3 x 2.08
+      expect(result.order?.rewardRisk).toBe(3);
+    });
+
+    test('given "auto" with a percentage that beats 3:1: should keep the percentage target', () => {
+      const result = buildTrade({ ...short, targetMode: "auto" });
+      expect(result.order?.target).toBe(112);
+      expect(result.order!.rewardRisk).toBeGreaterThan(3);
+    });
+
+    test('given "auto" where only the mechanical 3:1 fits: should switch to it', () => {
+      const near = { ...short, targetProximal: 117, targetDistal: 115 };
+      expect(buildTrade({ ...near, targetMode: "percent" }).blockedReason).toBe(
+        "reward-risk",
+      );
+      const auto = buildTrade({ ...near, targetMode: "auto" });
+      expect(auto.order?.target).toBe(117.76);
+      expect(auto.order?.rewardRisk).toBe(3);
+    });
+
+    test('given "ratio" mode where 3:1 overshoots the zone: should reject', () => {
+      const result = buildTrade({
+        ...short,
+        targetProximal: 120,
+        targetDistal: 118,
+        targetMode: "ratio",
+      });
+      expect(result.order).toBeNull();
+      expect(result.blockedReason).toBe("reward-risk");
+    });
+  });
+
   test('given "ratio" mode where 3:1 overshoots the zone: should reject', () => {
     // Zone at 112 is closer than the 3:1 target (114.24), so 3:1 can't be
     // reached before the opposing zone.

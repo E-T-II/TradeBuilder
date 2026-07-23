@@ -140,10 +140,14 @@ describe("given the advanced settings caps", () => {
       .map((r) => r.textContent);
     expect(options).toEqual(["Percentage", "3:1 R:R", "Auto"]);
 
+    // The visible label reads "3:1 R:R"; the accessible name spells it out, so
+    // a screen reader says "3 to 1 reward to risk", not "three colon one R
+    // colon R".
+    const ratio = { name: "3 to 1 reward to risk" };
     // Percentage is selected by default; switching to 3:1 checks it.
     expect(within(group).getByRole("radio", { name: "Percentage" })).toBeChecked();
-    await user.click(within(group).getByRole("radio", { name: "3:1 R:R" }));
-    expect(within(group).getByRole("radio", { name: "3:1 R:R" })).toBeChecked();
+    await user.click(within(group).getByRole("radio", ratio));
+    expect(within(group).getByRole("radio", ratio)).toBeChecked();
   });
 });
 
@@ -173,6 +177,51 @@ describe("given the comma-formatted account balance field", () => {
     await user.type(input, "-5");
 
     expect(input).toHaveValue("-5");
+  });
+});
+
+// Renders the wizard parked on the Curve step.
+function CurveStep({ initial }: { initial: FormState }) {
+  const [form, setForm] = useState<FormState>(initial);
+  return (
+    <TradeForm
+      form={form}
+      onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+      step={1}
+      onBack={() => {}}
+      onNext={() => {}}
+      showAdvanced={false}
+      onToggleAdvanced={() => {}}
+    />
+  );
+}
+
+// The input order is the point of the top-down flow, and it's exactly the kind
+// of thing a later layout refactor undoes without anyone noticing.
+describe("given the top-down input order", () => {
+  test("given the Curve step: should ask for the high before the low", () => {
+    render(<CurveStep initial={baseForm()} />);
+    const labels = screen
+      .getAllByRole("textbox")
+      .map((i) => i.getAttribute("id"));
+    expect(labels).toEqual(["curveHigh", "curveLow"]);
+  });
+
+  test("given the Zones step: should run supply distal down to demand distal, then direction", () => {
+    render(<ZonesStep initial={baseForm()} />);
+    const ids = screen.getAllByRole("textbox").map((i) => i.getAttribute("id"));
+    // Top-down as the chart reads: supply above (distal over proximal), then
+    // demand below (proximal over distal).
+    expect(ids).toEqual(["supplyHigh", "supplyLow", "demandHigh", "demandLow"]);
+
+    // Direction is deliberately last: mark the zones as they appear, then
+    // decide which way to trade them.
+    const direction = screen.getByRole("radiogroup", { name: "Direction" });
+    const lastPrice = screen.getByLabelText("Demand distal ($)");
+    expect(
+      lastPrice.compareDocumentPosition(direction) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
 

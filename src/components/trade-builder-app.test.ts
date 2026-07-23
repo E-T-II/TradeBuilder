@@ -167,6 +167,17 @@ describe("given loadStoredForm", () => {
     expect(loadStoredForm()).toBeNull();
   });
 
+  test("given an out-of-range target mode: should drop it", () => {
+    // The newest enum, so the one most likely to arrive as a stale or hand-
+    // edited value; a bad mode would otherwise fall through to the percent
+    // branch and silently price the target a different way.
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ accountBalance: "600", targetMode: "3:1" }),
+    );
+    expect(loadStoredForm()).toEqual({ accountBalance: "600" });
+  });
+
   test("given a well-formed string payload: should return it", () => {
     window.localStorage.setItem(KEY, JSON.stringify({ accountBalance: "600" }));
     expect(loadStoredForm()).toEqual({ accountBalance: "600" });
