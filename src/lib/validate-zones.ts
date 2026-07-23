@@ -37,12 +37,14 @@ export function validateZones(form: FormState): ZoneErrors {
     errors.curveHigh = "Curve high must be above curve low.";
   }
 
-  // Each zone needs real height.
+  // Each zone needs real height. (Demand distal is the low edge, demand
+  // proximal the high edge; supply proximal the low edge, supply distal the
+  // high edge — the messages name the fields as they're labeled.)
   if (demandHigh !== null && demandLow !== null && demandLow >= demandHigh) {
-    errors.demandLow = "Demand low must be below demand high.";
+    errors.demandLow = "Demand distal must be below demand proximal.";
   }
   if (supplyHigh !== null && supplyLow !== null && supplyLow >= supplyHigh) {
-    errors.supplyLow = "Supply low must be below supply high.";
+    errors.supplyLow = "Supply proximal must be below supply distal.";
   }
 
   // Supply sits entirely above demand. Whether the buffered exit actually

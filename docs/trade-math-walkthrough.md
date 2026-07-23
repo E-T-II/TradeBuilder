@@ -1,8 +1,8 @@
 # How the calculator reads a chart
 
-Notes on what the Trade Builder actually does with the numbers you type into the Zones step: Demand high, Demand low, Supply high, and Supply low. The example below is a long trade on a stock whose curve runs from 100 to 130, a demand zone of 106 to 108, and a supply zone of 124 to 126. It assumes the setup scored 8.5 or higher, a proximal entry, so you buy right at Demand high (108).
+Notes on what the Trade Builder actually does with the numbers you type into the Zones step: Supply distal, Supply proximal, Demand proximal, and Demand distal (entered top-down, the way they read on the chart). The example below is a long trade on a stock whose curve runs from 100 to 130, a demand zone of 106 to 108, and a supply zone of 124 to 126. It assumes the setup scored 8.5 or higher, a proximal entry, so you buy right at Demand proximal (108).
 
-![Vertical price chart from 100 to 130, split into wholesale, equilibrium and retail thirds, with a demand zone (high 108, low 106) where you buy, a stop just below at 105.92, and a target of 120 below the supply zone (high 126, low 124)](./price-map.svg)
+![Vertical price chart from 100 to 130, split into wholesale, equilibrium and retail thirds, with a demand zone (proximal 108, distal 106) where you buy, a stop just below at 105.92, and a target of 120 below the supply zone (distal 126, proximal 124)](./price-map.svg)
 
 ## Two steps
 
@@ -18,14 +18,14 @@ You give it a price range (here 100 at the bottom, 130 at the top) and it cuts t
 
 The idea is buy cheap, sell dear. On a long you want to be buying down in wholesale. On a short it flips, you want to be selling up in retail.
 
-## Demand high/low and supply high/low
+## Proximal and distal
 
-Each zone is a box on the chart with two edges, and both are values you type in. Every edge also has an older name from the strategy's original terms, proximal and distal, which you'll see if you read Eugene's README:
+Each zone is a box on the chart with two edges, and both are values you type in. The strategy names them **proximal** (the near edge, the one price reaches first) and **distal** (the far edge):
 
-- A demand zone sits below price. Its top edge, Demand high, is the one price reaches first (proximal). Its bottom edge, Demand low, is the far edge (distal) — your stop goes just past it.
-- A supply zone sits above price. It's the mirror: its bottom edge, Supply low, is the near edge (proximal); its top edge, Supply high, is the far edge (distal).
+- A demand zone sits below price. Its top edge is **Demand proximal** (price reaches it first). Its bottom edge is **Demand distal** — your stop goes just past it.
+- A supply zone sits above price. It's the mirror: its bottom edge is **Supply proximal** (the near edge); its top edge is **Supply distal** (the far edge).
 
-This is fixed per zone, not per direction — a demand zone's near edge is always its high, a supply zone's near edge is always its low, whichever direction you're trading.
+This is fixed per zone, not per direction — a demand zone's near edge is always its top, a supply zone's near edge is always its bottom, whichever direction you're trading. You enter the four fields top-down as they appear on the chart: Supply distal, Supply proximal, Demand proximal, Demand distal.
 
 ## Two zones, not one
 
@@ -43,26 +43,26 @@ If the matrix vetoes the setup, the scorecard still gets built and shown — the
 
 ## The numbers on the diagram
 
-- Demand high 108: the near edge of the demand zone, where you buy on this long.
-- Demand low 106: the far edge, the stop sits past it.
-- Stop 105.92: just below Demand low.
-- Supply high 126 and Supply low 124: the zone you're aiming for.
+- Demand proximal 108: the near edge of the demand zone, where you buy on this long.
+- Demand distal 106: the far edge, the stop sits past it.
+- Stop 105.92: just below Demand distal.
+- Supply distal 126 and Supply proximal 124: the zone you're aiming for.
 - Target 120: where you actually exit, most of the way up but before the zone.
 
 ### Why this entry scores well
 
-108 (Demand high) sits in wholesale (100 to 110), the good side of the curve for a long, so it gets the full curve point. If the entry had been up at 122 it would be buying in retail and score nothing.
+108 (Demand proximal) sits in wholesale (100 to 110), the good side of the curve for a long, so it gets the full curve point. If the entry had been up at 122 it would be buying in retail and score nothing.
 
 ### The stop
 
-The stop sits past Demand low by a buffer based on volatility:
+The stop sits past Demand distal by a buffer based on volatility:
 
 ```
 buffer = ATR x 2% = 4 x 0.02 = 0.08
 stop   = 106 - 0.08 = 105.92
 ```
 
-Daily trades use 2% of ATR, weekly or longer use 10%. The gap here is tiny, so on the diagram the stop sits right up against the demand zone's low line.
+Daily trades use 2% of ATR, weekly or longer use 10%. The gap here is tiny, so on the diagram the stop sits right up against the demand zone's distal line.
 
 Risk per share is just entry minus stop: 108 - 105.92 = 2.08.
 
@@ -71,7 +71,7 @@ Risk per share is just entry minus stop: 108 - 105.92 = 2.08.
 You exit before the supply zone, because that is where sellers turn up. The target is a set percentage of the way from your entry up to the near edge of the supply zone:
 
 ```
-target = Demand high + (Supply low - Demand high) x 75%
+target = Demand proximal + (Supply proximal - Demand proximal) x 75%
        = 108 + (124 - 108) x 75% = 108 + 12 = 120
 ```
 
@@ -98,7 +98,7 @@ Three are scored automatically from what you've already entered:
 
 - **Curve — 1 point.** 108 sits in wholesale, the cheap third, and that's the good side of the curve for a long. Wholesale scores 1, equilibrium 0.5, retail 0 (mirrored for a short).
 - **Trend — 2 points.** This is a long in an uptrend, trading with the trend. Uptrend scores 2, sideways 1, downtrend 0 for a long (mirrored for a short).
-- **Profit zone — 2 points.** The demand zone's height (Demand high 108 - Demand low 106 = 2) divides into the distance from Demand high to Supply low (124 - 108 = 16) eight times over, well past the 5:1 needed for the full 2 points. This is the same ratio the Decision Matrix checks for the marginal cells above.
+- **Profit zone — 2 points.** The demand zone's height (Demand proximal 108 - Demand distal 106 = 2) divides into the distance from Demand proximal to Supply proximal (124 - 108 = 16) eight times over, well past the 5:1 needed for the full 2 points. This is the same ratio the Decision Matrix checks for the marginal cells above.
 
 The other three are your own read of the chart, typed in as the strength, time, and freshness ratings. The diagram has no candles to read these off, so for this worked example, assume the chart showed a strong rejection, some time in the zone (between "lingered" and "in and out"), and one prior retest:
 
@@ -112,4 +112,4 @@ total = curve + trend + profit zone + strength + time + freshness
       = 8.5
 ```
 
-8.5 and up is a proximal entry — buy right at Demand high, which is the worked example above. 7 up to just under 8.5 is a confirmation entry, where you wait for price to re-cross Demand high before buying, 10 cents past it. Below 7, the strategy calls no trade regardless of what the Decision Matrix said.
+8.5 and up is a proximal entry — buy right at Demand proximal, which is the worked example above. 7 up to just under 8.5 is a confirmation entry, where you wait for price to re-cross Demand proximal before buying, 10 cents past it. Below 7, the strategy calls no trade regardless of what the Decision Matrix said.

@@ -173,21 +173,21 @@ describe("given the Zones step guard", () => {
 
     // The error is wired to the field, not just rendered somewhere: the input
     // is marked invalid and exposes the message as its accessible description.
-    const demandLow = screen.getByLabelText("Demand low ($)");
-    expect(demandLow).toHaveAttribute("aria-invalid", "true");
-    expect(demandLow).toHaveAccessibleDescription(
-      /demand low must be below demand high/i,
+    const demandDistal = screen.getByLabelText("Demand distal ($)");
+    expect(demandDistal).toHaveAttribute("aria-invalid", "true");
+    expect(demandDistal).toHaveAccessibleDescription(
+      /demand distal must be below demand proximal/i,
     );
 
-    // Correct the demand low so the zone has real height.
-    await user.clear(demandLow);
-    await user.type(demandLow, "106");
+    // Correct the demand distal so the zone has real height.
+    await user.clear(demandDistal);
+    await user.type(demandDistal, "106");
 
     // The error clears, and with it the invalid state and description.
     expect(
-      screen.queryByText(/demand low must be below demand high/i),
+      screen.queryByText(/demand distal must be below demand proximal/i),
     ).not.toBeInTheDocument();
-    expect(demandLow).not.toHaveAttribute("aria-invalid");
+    expect(demandDistal).not.toHaveAttribute("aria-invalid");
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).toBeEnabled();
 
@@ -199,7 +199,7 @@ describe("given the Zones step guard", () => {
 });
 
 describe("given the direction control on the Zones step", () => {
-  test("switching direction should flip the entry/target labels, not the geometry", async () => {
+  test("switching direction should flip the entry/target sentence, not the geometry", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm()} />); // long by default
 
@@ -207,24 +207,12 @@ describe("given the direction control on the Zones step", () => {
     expect(
       screen.getByText(/you enter at the demand zone/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/top of the demand zone \(your entry\)/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/bottom of the supply zone \(your target\)/i),
-    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: "Sell short" }));
 
-    // Short: the roles swap — demand becomes the target, supply the entry.
+    // Short: the roles swap — enter supply, target demand.
     expect(
       screen.getByText(/you enter at the supply zone/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/top of the demand zone \(your target\)/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/bottom of the supply zone \(your entry\)/i),
     ).toBeInTheDocument();
 
     // Geometry is unchanged: the valid demand-below-supply zones still pass, so

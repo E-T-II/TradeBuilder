@@ -500,19 +500,19 @@ export function TradeForm({
         {step === 1 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <PriceField
-              id="curveLow"
-              label="Curve low ($)"
-              hint="HTF demand zone distal line"
-              value={form.curveLow}
-              onChange={(curveLow) => onChange({ curveLow })}
-            />
-            <PriceField
               id="curveHigh"
               label="Curve high ($)"
               hint="HTF supply zone distal line"
               value={form.curveHigh}
               onChange={(curveHigh) => onChange({ curveHigh })}
               error={zoneErrors.curveHigh}
+            />
+            <PriceField
+              id="curveLow"
+              label="Curve low ($)"
+              hint="HTF demand zone distal line"
+              value={form.curveLow}
+              onChange={(curveLow) => onChange({ curveLow })}
             />
           </div>
         ) : null}
@@ -544,6 +544,46 @@ export function TradeForm({
 
         {step === 3 ? (
           <>
+            {/* Zone lines top-down, the way they read on the chart: supply on
+                top (distal above proximal), then demand below. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PriceField
+                id="supplyHigh"
+                label="Supply distal ($)"
+                hint="Top edge of the supply zone"
+                value={form.supplyHigh}
+                onChange={(supplyHigh) => onChange({ supplyHigh })}
+                error={zoneErrors.supplyHigh}
+              />
+              <PriceField
+                id="supplyLow"
+                label="Supply proximal ($)"
+                hint="Bottom edge of the supply zone"
+                value={form.supplyLow}
+                onChange={(supplyLow) => onChange({ supplyLow })}
+                error={zoneErrors.supplyLow}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PriceField
+                id="demandHigh"
+                label="Demand proximal ($)"
+                hint="Top edge of the demand zone"
+                value={form.demandHigh}
+                onChange={(demandHigh) => onChange({ demandHigh })}
+                error={zoneErrors.demandHigh}
+              />
+              <PriceField
+                id="demandLow"
+                label="Demand distal ($)"
+                hint="Bottom edge of the demand zone"
+                value={form.demandLow}
+                onChange={(demandLow) => onChange({ demandLow })}
+                error={zoneErrors.demandLow}
+              />
+            </div>
+            {/* Direction comes after the zone lines: mark the zones as they
+                appear on the chart, then decide which way to trade them. */}
             <Field id="direction" label="Direction" group>
               <SegmentedControl
                 aria-labelledby="direction-label"
@@ -570,42 +610,6 @@ export function TradeForm({
                 ? "You enter at the demand zone and target the supply zone."
                 : "You enter at the supply zone and target the demand zone."}
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PriceField
-                id="demandHigh"
-                label="Demand high ($)"
-                hint={`Top of the demand zone${long ? " (your entry)" : " (your target)"}`}
-                value={form.demandHigh}
-                onChange={(demandHigh) => onChange({ demandHigh })}
-                error={zoneErrors.demandHigh}
-              />
-              <PriceField
-                id="demandLow"
-                label="Demand low ($)"
-                hint="Bottom of the demand zone"
-                value={form.demandLow}
-                onChange={(demandLow) => onChange({ demandLow })}
-                error={zoneErrors.demandLow}
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PriceField
-                id="supplyHigh"
-                label="Supply high ($)"
-                hint="Top of the supply zone"
-                value={form.supplyHigh}
-                onChange={(supplyHigh) => onChange({ supplyHigh })}
-                error={zoneErrors.supplyHigh}
-              />
-              <PriceField
-                id="supplyLow"
-                label="Supply low ($)"
-                hint={`Bottom of the supply zone${long ? " (your target)" : " (your entry)"}`}
-                value={form.supplyLow}
-                onChange={(supplyLow) => onChange({ supplyLow })}
-                error={zoneErrors.supplyLow}
-              />
-            </div>
           </>
         ) : null}
 

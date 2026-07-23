@@ -37,15 +37,19 @@ describe("validateZones()", () => {
     expect(actual).toEqual({});
   });
 
-  test("given demand low not below demand high: should flag demand low", () => {
+  test("given demand distal not below demand proximal: should flag demand distal", () => {
     const actual = validateZones(form({ demandLow: "108" }));
-    const expected = { demandLow: "Demand low must be below demand high." };
+    const expected = {
+      demandLow: "Demand distal must be below demand proximal.",
+    };
     expect(actual).toEqual(expected);
   });
 
-  test("given supply low not below supply high: should flag supply low", () => {
+  test("given supply proximal not below supply distal: should flag supply proximal", () => {
     const actual = validateZones(form({ supplyLow: "126" }));
-    const expected = { supplyLow: "Supply low must be below supply high." };
+    const expected = {
+      supplyLow: "Supply proximal must be below supply distal.",
+    };
     expect(actual).toEqual(expected);
   });
 

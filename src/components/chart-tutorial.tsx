@@ -34,7 +34,7 @@ export function ChartTutorial({ direction }: { direction: Direction }) {
         viewBox="0 0 430 270"
         className="w-full min-w-[400px] text-foreground"
         role="img"
-        aria-label={`A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. For a ${direction}, the ${long ? "demand" : "supply"} zone is the entry and the ${long ? "supply" : "demand"} zone is the target. The demand zone's top edge is Demand high and its bottom is Demand low; the supply zone's top edge is Supply high and its bottom is Supply low.`}
+        aria-label={`A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. For a ${direction}, the ${long ? "demand" : "supply"} zone is the entry and the ${long ? "supply" : "demand"} zone is the target. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal.`}
       >
         <text x="60" y="28" textAnchor="end" fontSize="11" className="fill-muted-foreground">130</text>
         <text x="60" y="252" textAnchor="end" fontSize="11" className="fill-muted-foreground">100</text>
@@ -59,8 +59,8 @@ export function ChartTutorial({ direction }: { direction: Direction }) {
         </g>
         <g style={cue(1.8)}>
           <rect x="70" y="53.9" width="180" height="14.9" className="fill-red-500/15 stroke-red-600" strokeWidth={demandEntry ? 1 : 2.25} />
-          <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">high</text>
-          <text x="160" y="79" textAnchor="middle" fontSize="10" className="fill-muted-foreground">low</text>
+          <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
+          <text x="160" y="79" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
           <circle cx="250" cy="61" r="3" className="fill-red-600" />
           <line x1="250" y1="61" x2="266" y2="61" className="stroke-border" />
           <text x="272" y="58" fontSize="12.5" className="fill-foreground">Supply zone</text>
@@ -68,8 +68,8 @@ export function ChartTutorial({ direction }: { direction: Direction }) {
         </g>
         <g style={cue(2.6)}>
           <rect x="70" y="188.3" width="180" height="14.9" className="fill-emerald-500/18 stroke-emerald-600" strokeWidth={demandEntry ? 2.25 : 1} />
-          <text x="160" y="184" textAnchor="middle" fontSize="10" className="fill-muted-foreground">high</text>
-          <text x="160" y="213" textAnchor="middle" fontSize="10" className="fill-muted-foreground">low</text>
+          <text x="160" y="184" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
+          <text x="160" y="213" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
           <circle cx="250" cy="196" r="3" className="fill-emerald-600" />
           <line x1="250" y1="196" x2="266" y2="196" className="stroke-border" />
           <text x="272" y="193" fontSize="12.5" className="fill-foreground">Demand zone</text>
