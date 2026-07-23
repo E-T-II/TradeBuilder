@@ -195,3 +195,18 @@ npm test            # vitest run
   strategy). Helpers: `roundToCent`, `roundUpToCent`.
 - Deploys run on Vercel from `main`; every PR gets a preview once the author has
   access to the Vercel project.
+
+## Future ideas
+
+- **Show the working behind S.E.T.S., not just the final numbers.** The order
+  ticket shows Entry/Stop/Target/Risk/Capital, but not the intermediate figures
+  the README calls out explicitly — ATR, the stop-buffer % and $, the target
+  buffer %. `buildTrade` already computes all of these internally; they'd need
+  to be added to the returned order (a small `breakdown`-style object) and
+  rendered as an expandable "show the math" section under the ticket rather
+  than cluttering the main card. The one real complexity is that the working
+  differs by `targetMode` — percent mode shows the 75–80% calc, ratio mode
+  shows the 3× risk calc, auto needs to say which of the two it picked and why
+  — so scope it to percent mode first if it's ever picked up. Gated on whether
+  Eugene actually wants this level of detail visible; not started because that
+  hasn't been confirmed.
