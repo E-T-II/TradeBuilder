@@ -20,6 +20,7 @@ import {
   buildTrade,
   decisionMatrix,
   deriveZoneLines,
+  roundToCent,
   type TradeInputs,
 } from "./trade-builder";
 
@@ -494,7 +495,9 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     const result = buildTrade({ ...tight, strength: 2, time: 1, freshness: 0.5 });
     expect(result.entryType).toBe("proximal");
     expect(result.order?.entry).toBe(100);
-    expect(result.order?.target).toBe(100.07);
+    // Target is 100 + 0.1 x 75% = 100.075, exactly on a half-cent boundary;
+    // rounds up to 100.08.
+    expect(result.order?.target).toBe(100.08);
     expect(result.order && result.order.target > result.order.entry).toBe(true);
   });
 });
@@ -887,5 +890,36 @@ describe("given buildTrade and the 6% multiple-trade rule", () => {
     const rounded = buildTrade({ ...base, openTradeRisk: 30.01 });
     expect(typed.blockedReason).toBe(rounded.blockedReason);
     expect(typed.openRisk).toBe(30.01);
+  });
+
+  test("given a half-cent open risk whose float noise rounds the wrong way: should still reject", () => {
+    // 30.005 happens to round correctly by luck of its float representation;
+    // 28.085 does not (28.085 * 100 === 2808.4999999999995), so a naive
+    // Math.round(n * 100) / 100 rounds it down to 28.08 instead of 28.09. This
+    // trade's own risk is 7.92, so the wrong rounding lands combined risk at
+    // exactly 36.00 (allowed) instead of the true 36.01 (over the $36 limit).
+    const typed = buildTrade({ ...base, openTradeRisk: 28.085 });
+    const rounded = buildTrade({ ...base, openTradeRisk: 28.09 });
+    expect(typed.blockedReason).toBe(rounded.blockedReason);
+    expect(typed.blockedReason).toBe("over-6pct");
+    expect(typed.openRisk).toBe(28.09);
+  });
+});
+
+describe("given roundToCent", () => {
+  test("given a value exactly on the half-cent boundary: should round up despite float noise", () => {
+    // 4.015 * 100 === 401.49999999999994 and 1.005 * 100 === 100.49999999999999
+    // in IEEE754, so a bare Math.round(n * 100) / 100 rounds both down. This
+    // is the exact defect that let a $100-balance, $1.99-risk trade with
+    // openTradeRisk "4.015" clear the 6% gate at $6.00 when it should be
+    // rejected at $6.01.
+    expect(roundToCent(4.015)).toBe(4.02);
+    expect(roundToCent(1.005)).toBe(1.01);
+  });
+
+  test("given ordinary values: should round exactly as before", () => {
+    expect(roundToCent(105.92)).toBe(105.92);
+    expect(roundToCent(2.08)).toBe(2.08);
+    expect(roundToCent(0)).toBe(0);
   });
 });

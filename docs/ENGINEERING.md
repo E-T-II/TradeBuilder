@@ -96,7 +96,7 @@ add funds for a setup that was never tradeable at any size.
 Reasons 4 and 7 are hard rules (per Eugene): a failing reward:risk or 6% check
 rejects the trade outright rather than showing a flagged, placeable order. The
 user has to resolve those themselves, so the rejection carries the numbers: a
-reward:risk rejection reports the ratio the setup reaches (`result.rewardRisk`),
+reward:risk rejection reports the ratio the setup reaches (`result.reachedRewardRisk`),
 and a 6% rejection reports both halves of the sum (`result.totalTradeRisk`,
 `result.openRisk`) plus the full `checks`, so the Risk-rules card still renders
 with the failing row.
