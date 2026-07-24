@@ -138,8 +138,9 @@ nothing to offer the user in either mode.
 ## The S.E.T.S. breakdown
 
 Per Eugene: the order ticket shows the final Entry/Stop/Target, but also the
-working behind Stop and Target, so the numbers aren't a black box. `order`
-carries four extra fields for this:
+working behind Stop and Target, so the numbers aren't a black box. Every result
+carries a top-level `math` block for this — present even on a no-trade, where
+the results screen shows it greyed under the "No trade" explanation:
 
 - `dailyAtr` — echoes `inputs.atr`.
 - `stopBufferPct` — 2 or 10, from the income timeframe.
@@ -147,8 +148,12 @@ carries four extra fields for this:
 - `targetBufferPct` — the percentage used, or `null` when the mechanical 3:1
   was used instead (`ratio` mode outright, or `auto` picking the mechanical
   target over the percentage one). `OrderTicket` shows "Mechanical 3:1" in
-  that case rather than a percentage. Always `80` when `auto` picked the
-  percentage side — see the auto note under Target modes above.
+  that case rather than a percentage. `80` when `auto` picked the percentage
+  side — see the auto note under Target modes above.
+- `targetBufferPending` — `true` only when an `auto` setup returned no order
+  *before* its 75-80%-vs-3:1 comparison ran (a matrix veto or a sub-7 score),
+  so no buffer was ever chosen. `OrderTicket` shows the `75–80%` range then;
+  every other result resolves `targetBufferPct` and leaves this `false`.
 
 ## Validation layers
 
