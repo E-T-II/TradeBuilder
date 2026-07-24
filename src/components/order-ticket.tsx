@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -41,9 +42,7 @@ function Line({
       }`}
     >
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
-      <span
-        className={`font-mono tabular-nums ${muted ? "text-muted-foreground" : ""}`}
-      >
+      <span className={cn("font-mono tabular-nums", muted && "text-muted-foreground")}>
         {value}
       </span>
     </div>
@@ -51,8 +50,9 @@ function Line({
 }
 
 // How the target buffer reads: a plain percentage, "Mechanical 3:1" when the
-// mechanical target was used, or the 75-80% range while auto is still pending
-// (a no-trade result never ran auto's comparison, so no single buffer won).
+// mechanical target was used, or the 75-80% range while auto is still pending —
+// an auto setup that returned no order before its comparison ran (a matrix veto
+// or a sub-7 score), so no single buffer was ever chosen.
 function targetBufferText(math: TradeResult["math"]): string {
   if (math.targetBufferPending) {
     return `${TARGET_BUFFER_MIN_PCT}–${TARGET_BUFFER_MAX_PCT}%`;
@@ -142,8 +142,13 @@ export function OrderTicket({
           <AlertDescription>{reason}</AlertDescription>
         </Alert>
         {/* The math still applies even without an order (per Eugene): show it in
-            gray so the ATR and buffers behind the rejected setup stay visible. */}
-        <div className="space-y-2 rounded-lg border px-4 py-3">
+            gray so the ATR and buffers behind the rejected setup stay visible.
+            Matches the alert's chrome above; the heading gives the standalone
+            rows the context the order card gets from the lines above them. */}
+        <div className="space-y-1.5 rounded-lg border bg-card px-2.5 py-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Behind the numbers
+          </p>
           <MathLines math={result.math} muted />
         </div>
       </div>

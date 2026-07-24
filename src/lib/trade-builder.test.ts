@@ -654,6 +654,28 @@ describe("given buildTrade and the target modes", () => {
     });
     expect(result.order).toBeNull();
     expect(result.blockedReason).toBe("reward-risk");
+    // Auto ran its comparison before rejecting, so the buffer is settled — it
+    // must NOT still read as pending (the 75-80% range). The percentage side is
+    // the one it compared, so it resolves to the 80% ceiling.
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBe(80);
+  });
+
+  test('given "auto" that picks the mechanical target then fails the 6% rule: should report Mechanical 3:1, not the range', () => {
+    // Auto picks the mechanical 3:1 (usedRatio), clears the reward-risk gate,
+    // then a large open risk trips the 6% rule. The comparison ran, so the
+    // buffer is settled to null (mechanical), never the pending 75-80% range.
+    const result = buildTrade({
+      ...proximal,
+      targetProximal: 115,
+      targetDistal: 117,
+      targetMode: "auto",
+      openTradeRisk: 1_000,
+    });
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("over-6pct");
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBeNull();
   });
 
   test("given a percentage target at exactly 3:1: should allow it", () => {
@@ -844,6 +866,47 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
     expect(result.math.stopBufferDollar).toBe(0.08);
     expect(result.math.targetBufferPending).toBe(true);
     expect(result.math.targetBufferPct).toBeNull();
+  });
+
+  test("given no trade in percent mode: should report the typed buffer, settled", () => {
+    // Percent and ratio never run auto's comparison either, but their buffer is
+    // known up front, so a no-trade result is settled (not pending) — percent
+    // reports the typed value.
+    const result = buildTrade({
+      ...longTrade,
+      strength: 0,
+      time: 0,
+      freshness: 0,
+      targetMode: "percent",
+      targetBufferPct: 0.78,
+    });
+    expect(result.order).toBeNull();
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBe(78);
+  });
+
+  test("given no trade in ratio mode: should report mechanical, settled", () => {
+    const result = buildTrade({
+      ...longTrade,
+      strength: 0,
+      time: 0,
+      freshness: 0,
+      targetMode: "ratio",
+    });
+    expect(result.order).toBeNull();
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBeNull();
+  });
+
+  test("given a typed buffer on a half-cent boundary: should round the percent up", () => {
+    // 75.045% is 7504.4999… raw; without the precision guard Math.round drops it
+    // to 75.04. Display-only, but it's the buffer the ticket shows.
+    const result = buildTrade({
+      ...proximal,
+      targetMode: "percent",
+      targetBufferPct: 0.75045,
+    });
+    expect(result.math.targetBufferPct).toBe(75.05);
   });
 });
 

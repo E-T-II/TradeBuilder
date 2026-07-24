@@ -191,6 +191,9 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("2%")).toBeInTheDocument();
     expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
     expect(screen.getByText("$0.08")).toBeInTheDocument(); // 4 x 2%, up to cent
+    // On the built order the values are not grayed — only the no-trade view mutes
+    // them. This is the contrast the no-trade test below asserts the other side of.
+    expect(screen.getByText("$0.08")).not.toHaveClass("text-muted-foreground");
   });
 
   test('given "ratio" mode: should say "Mechanical 3:1" instead of a percentage', () => {
@@ -248,8 +251,10 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("Daily ATR")).toBeInTheDocument();
     expect(screen.getByText("$4.00")).toBeInTheDocument(); // atr: 4
     expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
-    expect(screen.getByText("$0.08")).toBeInTheDocument();
     expect(screen.getByText("Target buffer %")).toBeInTheDocument();
     expect(screen.getByText("75–80%")).toBeInTheDocument(); // auto, unresolved
+    // The whole point of this view: the values are grayed, not just present.
+    expect(screen.getByText("$4.00")).toHaveClass("text-muted-foreground"); // atr
+    expect(screen.getByText("$0.08")).toHaveClass("text-muted-foreground");
   });
 });
