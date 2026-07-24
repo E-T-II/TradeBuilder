@@ -123,6 +123,21 @@ export function OrderTicket({
           label="Reward : risk (needs 3:1)"
           value={`${ratio.format(o.rewardRisk)} : 1`}
         />
+        <div className="my-3 border-t" />
+        {/* The working behind Stop/Target, so the numbers above aren't a black
+            box (per Eugene). Target buffer % is absent when the mechanical
+            3:1 was used instead of a percentage. */}
+        <Line
+          label="Target buffer %"
+          value={
+            o.targetBufferPct === null
+              ? "Mechanical 3:1"
+              : `${o.targetBufferPct}%`
+          }
+        />
+        <Line label="Daily ATR" value={usd.format(o.dailyAtr)} />
+        <Line label="Stop buffer %" value={`${o.stopBufferPct}%`} />
+        <Line label="Stop buffer $" value={usd.format(o.stopBufferDollar)} />
       </CardContent>
     </Card>
   );

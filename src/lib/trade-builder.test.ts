@@ -748,6 +748,53 @@ describe("given buildTrade and the target modes", () => {
   });
 });
 
+describe("given buildTrade's S.E.T.S. breakdown", () => {
+  // Same proximal long as the target-mode tests above: entry 108, stop 105.92,
+  // risk 2.08, daily ATR 4, percentage target 120, mechanical target 114.24.
+  const proximal: TradeInputs = {
+    ...longTrade,
+    strength: 2,
+    time: 1,
+    freshness: 2,
+  };
+
+  test("given percent mode: should report the buffer %, ATR, and stop buffer", () => {
+    const result = buildTrade({ ...proximal, targetMode: "percent" });
+    expect(result.order?.targetBufferPct).toBe(75);
+    expect(result.order?.dailyAtr).toBe(4);
+    expect(result.order?.stopBufferPct).toBe(2);
+    expect(result.order?.stopBufferDollar).toBe(0.08);
+  });
+
+  test('given "ratio" mode: should report no target buffer %', () => {
+    const result = buildTrade({ ...proximal, targetMode: "ratio" });
+    expect(result.order?.targetBufferPct).toBeNull();
+  });
+
+  test('given "auto" picking the percentage: should still report its %', () => {
+    const result = buildTrade({ ...proximal, targetMode: "auto" });
+    expect(result.order?.target).toBe(120); // confirms percentage won
+    expect(result.order?.targetBufferPct).toBe(75);
+  });
+
+  test('given "auto" picking the mechanical target: should report no %', () => {
+    const near = { ...proximal, targetProximal: 115, targetDistal: 117 };
+    const result = buildTrade({ ...near, targetMode: "auto" });
+    expect(result.order?.target).toBe(114.24); // confirms the mechanical won
+    expect(result.order?.targetBufferPct).toBeNull();
+  });
+
+  test("given a weekly income objective: should report the 10% stop buffer", () => {
+    const result = buildTrade({
+      ...proximal,
+      timeframe: "weekly",
+      targetMode: "percent",
+    });
+    expect(result.order?.stopBufferPct).toBe(10);
+    expect(result.order?.stopBufferDollar).toBe(0.4); // 4 x 10%
+  });
+});
+
 describe("given buildTrade and the 3:1 reward-risk rule", () => {
   test("given a qualifying setup whose reward:risk is below 3:1: should reject outright", () => {
     // Long, proximal, matrix-approved, sizes fine — but a nearby target zone
