@@ -447,7 +447,7 @@ export function TradeForm({
                 <Field
                   id="targetMode"
                   label="Target mode"
-                  hint="Percentage buffer, a mechanical 3:1, or Auto (the better of the two)"
+                  hint="Percentage buffer, a mechanical 3:1, or Auto (the better of an 80% buffer and 3:1)"
                   group
                 >
                   <SegmentedControl
