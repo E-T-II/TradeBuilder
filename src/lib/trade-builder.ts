@@ -469,18 +469,20 @@ export interface TradeResult {
    * raw inputs — so the results screen can show it in gray even when there's no
    * order.
    *
-   * targetBufferPct is null when the target is a mechanical 3:1 (ratio mode, or
-   * auto picking the mechanical target). targetBufferPending is true only in the
-   * one case the buffer genuinely isn't settled yet: an auto setup that returned
-   * no order *before* the 75-80%-vs-3:1 comparison ran — a matrix veto or a
-   * sub-7 score. Every other result resolves the buffer, including auto no-trades
-   * rejected *after* the comparison, so the UI shows the 75-80% range only when
-   * pending is true.
+   * targetMode echoes the mode the user selected, so the results screen can name
+   * it (per Eugene: the user should know what was selected). targetBufferPct is
+   * null when the target is a mechanical 3:1 (ratio mode, or auto picking the
+   * mechanical target). targetBufferPending is true only in the one case the
+   * buffer genuinely isn't settled yet: an auto setup that returned no order
+   * *before* the 75-80%-vs-3:1 comparison ran — a matrix veto or a sub-7 score.
+   * Every other result resolves the buffer, including auto no-trades rejected
+   * *after* the comparison.
    */
   math: {
     dailyAtr: number;
     stopBufferPct: number;
     stopBufferDollar: number;
+    targetMode: TargetMode;
     targetBufferPct: number | null;
     targetBufferPending: boolean;
   };
@@ -552,6 +554,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     stopBufferPct:
       Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
     stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
+    targetMode: inputs.targetMode,
     // Snap to 15 significant digits before rounding, the float-noise guard
     // roundToCent documents: a typed buffer like 75.045% is 7504.4999999… raw,
     // which Math.round would drop to 75.04 instead of 75.05.
