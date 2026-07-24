@@ -538,17 +538,21 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
 
   // The "show the math" figures (per Eugene), computed straight from the inputs
   // so they're available on every return — the results screen shows them in gray
-  // even when there's no order. targetBufferPct starts settled for percent (the
-  // typed buffer) and ratio (mechanical, null); auto starts pending and is
-  // resolved right after the mode-selection block below, once its comparison has
-  // run. The two early no-trade returns fire before that, so auto stays pending
-  // there — the only case the UI shows the 75-80% range.
+  // even when there's no order. The buffer is settled here for percent (the
+  // typed value) and ratio (mechanical, null); auto's placeholder null is
+  // resolved inside the mode-selection block below. targetBufferPending defaults
+  // false and is flipped true only by the early return that fires before auto's
+  // comparison — the one case with no settled buffer.
   const math = {
     dailyAtr: inputs.atr,
+    // 4 decimals of a percent, matching checks.riskLimitPct: cleans float noise
+    // (0.02 -> 2, not 2.0000004) while keeping a fractional rate precise. The
+    // rate is always 0.02 or 0.1 — exact — so unlike targetBufferPct it needs no
+    // toPrecision guard; the shape just stays identical to that sibling.
     stopBufferPct:
       Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
     stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
-    // Snap to 15 significant digits before rounding, the same float-noise guard
+    // Snap to 15 significant digits before rounding, the float-noise guard
     // roundToCent documents: a typed buffer like 75.045% is 7504.4999999… raw,
     // which Math.round would drop to 75.04 instead of 75.05.
     targetBufferPct:
@@ -556,17 +560,18 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
         ? Math.round(Number((inputs.targetBufferPct * 10_000).toPrecision(15))) /
           100
         : null,
-    targetBufferPending: inputs.targetMode === "auto",
+    targetBufferPending: false,
   };
 
-  // No order if the matrix vetoed the setup or the score didn't qualify. This
-  // fires before the buffer is resolved below, so auto stays pending here.
+  // No order if the matrix vetoed the setup or the score didn't qualify. Both
+  // fire before auto's comparison, so auto's buffer is genuinely unsettled — the
+  // only case pending is true. percent/ratio already know theirs.
   if (objective === "no-trade" || type === "no-trade") {
     return {
       scorecard,
       entryType: type,
       objective,
-      math,
+      math: { ...math, targetBufferPending: inputs.targetMode === "auto" },
       order: null,
       checks: null,
     };
@@ -621,42 +626,35 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   );
   const autoPercentRr = rewardRiskRatio(entry, stop, autoPercentTarget);
 
+  // Each branch settles both the target/rr and the displayed buffer together, so
+  // the buffer can never drift from the comparison — even if a gate is later
+  // inserted before the returns below. (pending is already false for all of
+  // these; only the pre-comparison early return above leaves it true.)
   let target: number;
   let rr: number;
-  let usedRatio: boolean;
   if (inputs.targetMode === "ratio") {
     target = ratioTarget;
     // Mechanical targets are 3:1 by construction; recomputing from the
     // cent-rounded price could dip just under 3 and falsely trip the rule.
     rr = 3;
-    usedRatio = true;
+    // math.targetBufferPct stays the base null (mechanical).
   } else if (inputs.targetMode === "auto") {
     if (fitsZone(ratioTarget) && !meetsProfitRatio(autoPercentRr, 3)) {
       target = ratioTarget;
       rr = 3;
-      usedRatio = true;
+      // Mechanical won: math.targetBufferPct stays the base null.
     } else {
       target = autoPercentTarget;
       rr = autoPercentRr;
-      usedRatio = false;
+      // Percentage side won: report the 80% ceiling auto actually compared, not
+      // the user's typed value.
+      math.targetBufferPct = TARGET_BUFFER_MAX_PCT;
     }
   } else {
     target = percentTarget;
     rr = percentRr;
-    usedRatio = false;
+    // percent mode: math.targetBufferPct already holds the typed buffer.
   }
-
-  // Auto's comparison has now run, so the target buffer is settled for every
-  // path below — the built order and the post-comparison no-trade rejections
-  // alike. Only the two early returns above, which fire before this line, leave
-  // auto pending. The percentage side reports the 80% ceiling it actually
-  // compared, not the user's typed value; a mechanical win reports null.
-  math.targetBufferPct = usedRatio
-    ? null
-    : inputs.targetMode === "auto"
-      ? TARGET_BUFFER_MAX_PCT
-      : math.targetBufferPct;
-  math.targetBufferPending = false;
 
   // A tight zone plus the confirmation offset can push the computed entry past
   // the computed target, leaving an order whose exit sits on the wrong side of

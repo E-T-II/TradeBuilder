@@ -488,6 +488,9 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     expect(result.order).toBeNull();
     expect(result.checks).toBeNull();
     expect(result.blockedReason).toBe("tight-zones");
+    // A post-comparison return: the buffer is settled, not the pending range.
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBe(75);
   });
 
   test("given the same zones scoring a proximal entry: should still produce a valid order", () => {
@@ -570,6 +573,37 @@ describe("given buildTrade and the Decision Matrix", () => {
     expect(result.objective).toBe("no-trade");
     expect(result.order).toBeNull();
     expect(result.checks).toBeNull();
+  });
+
+  test("given a matrix veto in auto mode: should report the math with the buffer pending", () => {
+    // The other pre-comparison no-trade path (a matrix veto, not a sub-7 score),
+    // on a short. Auto never ran its comparison, so the buffer is still pending —
+    // and short direction doesn't change the ATR/stop-buffer math.
+    const result = buildTrade({
+      accountBalance: 2500,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      targetMode: "auto",
+      direction: "short",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 4,
+      curveLow: 100,
+      curveHigh: 130,
+      entryProximal: 115,
+      entryDistal: 117,
+      targetProximal: 105,
+      targetDistal: 103,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.objective).toBe("no-trade");
+    expect(result.order).toBeNull();
+    expect(result.math.dailyAtr).toBe(4);
+    expect(result.math.stopBufferDollar).toBe(0.08);
+    expect(result.math.targetBufferPending).toBe(true);
+    expect(result.math.targetBufferPct).toBeNull();
   });
 
   test("given a matrix-approved setup: should set the objective and build the order", () => {

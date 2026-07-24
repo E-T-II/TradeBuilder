@@ -26,25 +26,20 @@ function Line({
   label,
   value,
   strong,
-  muted,
 }: {
   label: string;
   value: string;
   strong?: boolean;
-  // Grays the value too (not just the label), so the whole row reads as
-  // context rather than an actionable number — used on the no-trade screen.
-  muted?: boolean;
 }) {
   return (
     <div
-      className={`flex items-center justify-between text-sm ${
-        strong ? "font-medium" : ""
-      }`}
+      className={cn(
+        "flex items-center justify-between text-sm",
+        strong && "font-medium",
+      )}
     >
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
-      <span className={cn("font-mono tabular-nums", muted && "text-muted-foreground")}>
-        {value}
-      </span>
+      <span className="font-mono tabular-nums">{value}</span>
     </div>
   );
 }
@@ -63,25 +58,15 @@ function targetBufferText(math: TradeResult["math"]): string {
 }
 
 // The "show the math" breakdown (per Eugene): the working behind Stop/Target.
-// Shown under the built order, and again in gray on the no-trade screen so the
-// numbers are visible whether or not the setup was tradeable.
-function MathLines({
-  math,
-  muted,
-}: {
-  math: TradeResult["math"];
-  muted?: boolean;
-}) {
+// Shown under the built order, and again on the no-trade screen, where the
+// wrapper greys the whole block so the numbers read as context, not an order.
+function MathLines({ math }: { math: TradeResult["math"] }) {
   return (
     <>
-      <Line label="Target buffer %" value={targetBufferText(math)} muted={muted} />
-      <Line label="Daily ATR" value={usd.format(math.dailyAtr)} muted={muted} />
-      <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} muted={muted} />
-      <Line
-        label="Stop buffer $"
-        value={usd.format(math.stopBufferDollar)}
-        muted={muted}
-      />
+      <Line label="Target buffer %" value={targetBufferText(math)} />
+      <Line label="Daily ATR" value={usd.format(math.dailyAtr)} />
+      <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} />
+      <Line label="Stop buffer $" value={usd.format(math.stopBufferDollar)} />
     </>
   );
 }
@@ -143,13 +128,14 @@ export function OrderTicket({
         </Alert>
         {/* The math still applies even without an order (per Eugene): show it in
             gray so the ATR and buffers behind the rejected setup stay visible.
-            Matches the alert's chrome above; the heading gives the standalone
-            rows the context the order card gets from the lines above them. */}
-        <div className="space-y-1.5 rounded-lg border bg-card px-2.5 py-2">
-          <p className="text-sm font-medium text-muted-foreground">
-            Behind the numbers
-          </p>
-          <MathLines math={result.math} muted />
+            text-muted-foreground on the box greys every row by inheritance (the
+            Line values set no colour of their own); on the order card they take
+            the Card's normal foreground instead. Chrome matches the alert above;
+            the heading gives the standalone rows the context the order card gets
+            from the order lines above them. */}
+        <div className="space-y-2 rounded-lg border bg-card px-2.5 py-2 text-muted-foreground">
+          <p className="text-sm font-medium">Behind the numbers</p>
+          <MathLines math={result.math} />
         </div>
       </div>
     );
