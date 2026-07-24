@@ -12,7 +12,7 @@ import {
 import type { FormState } from "@/components/trade-builder-app";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
-import { clampNumericString } from "@/lib/utils";
+import { clampNumericString, cn } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +76,7 @@ function Field({
   hint,
   group,
   error,
+  className,
   children,
 }: {
   id: string;
@@ -83,10 +84,11 @@ function Field({
   hint?: string;
   group?: boolean;
   error?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", className)}>
       <Label id={`${id}-label`} htmlFor={group ? undefined : id}>
         {label}
       </Label>
@@ -471,6 +473,7 @@ export function TradeForm({
                     id="risk"
                     label="Risk per trade (%)"
                     hint="Up to 2%, to preserve the account"
+                    className="sm:col-start-1 sm:row-start-1"
                   >
                     <Input
                       id="risk"
@@ -493,10 +496,16 @@ export function TradeForm({
                     // 75-80% range on its own rather than this field's value,
                     // and 3:1 doesn't use a percentage at all, so the control
                     // has nothing to offer in either mode.
+                    //
+                    // Pinned to col2/row1 (like "risk" and "openRisk" below)
+                    // so its absence doesn't pull "Risk in open trades" up
+                    // into its slot — that diagonal jump read as a layout
+                    // glitch when the field collapses.
                     <Field
                       id="buffer"
                       label="Target buffer (%)"
                       hint="Between 75% and 80%"
+                      className="sm:col-start-2 sm:row-start-1"
                     >
                       <Input
                         id="buffer"
@@ -520,6 +529,7 @@ export function TradeForm({
                     id="openRisk"
                     label="Risk in open trades ($)"
                     hint="For the 6% rule. Leave 0 if this is your only trade"
+                    className="sm:col-start-1 sm:row-start-2"
                   >
                     <NumberInput
                       id="openRisk"

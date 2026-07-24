@@ -197,4 +197,36 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
     expect(screen.queryByText("75%")).not.toBeInTheDocument();
   });
+
+  test('given "auto" picking the mechanical target: should also say "Mechanical 3:1"', () => {
+    // Zone at 115 -> the percentage side misses 3:1, so auto falls back to the
+    // mechanical target (same setup as buildTrade's own "picking the
+    // mechanical" test), and the UI must label it the same as ratio mode does.
+    const result = buildTrade({
+      ...longTrade,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      targetMode: "auto",
+      targetProximal: 115,
+      targetDistal: 117,
+    });
+    expect(result.order?.targetBufferPct).toBeNull(); // confirms the mechanical won
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
+  });
+
+  test("given a weekly income objective: should show the 10% stop buffer", () => {
+    const result = buildTrade({
+      ...longTrade,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      timeframe: "weekly",
+    });
+    expect(result.order?.stopBufferPct).toBe(10); // confirms the fixture exercises weekly
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("Stop buffer %")).toBeInTheDocument();
+    expect(screen.getByText("10%")).toBeInTheDocument();
+  });
 });
