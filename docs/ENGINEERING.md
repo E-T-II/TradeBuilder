@@ -119,14 +119,21 @@ advanced settings):
 - **ratio** — a mechanical 3:1 target: exactly 3× the per-share risk out from
   the entry. Its reward:risk is 3 by construction, so `buildTrade` reports it as
   3 rather than recomputing from the cent-rounded price.
-- **auto** — whichever of the two yields the higher reward:risk, provided the
-  target still sits before the opposing zone. "Before" is strict: a target
+- **auto** — checks every buffer in the 75–80% range against the mechanical
+  3:1 (per Eugene) and keeps whichever gives the higher reward:risk, provided
+  the target still sits before the opposing zone. "Before" is strict: a target
   resting on the zone's near edge is the fill risk the 75–80% buffer exists to
   avoid, so a mechanical target that lands exactly there doesn't qualify.
+  Implemented as comparing the 80% ceiling to the 3:1 rather than checking all
+  six percentages individually — target grows monotonically with the buffer,
+  so 80% always beats every lower percentage in the range, making the two
+  equivalent. The Target buffer (%) field's typed value plays no part in
+  this — auto always uses 80% when the percentage side wins.
 
 The Target buffer (%) field is only shown in `percent` mode (per Eugene) — in
-`ratio`/`auto` it has nothing to offer the user visually, though its stored
-value still drives `auto`'s comparison behind the scenes.
+`ratio` it doesn't apply at all, and in `auto` the field's value isn't used
+(auto always checks the 80% ceiling, not what's typed), so the control has
+nothing to offer the user in either mode.
 
 ## The S.E.T.S. breakdown
 
@@ -140,16 +147,8 @@ carries four extra fields for this:
 - `targetBufferPct` — the percentage used, or `null` when the mechanical 3:1
   was used instead (`ratio` mode outright, or `auto` picking the mechanical
   target over the percentage one). `OrderTicket` shows "Mechanical 3:1" in
-  that case rather than a percentage.
-
-  Note on the percentage side of auto: it compares the mechanical 3:1 against
-  the user's **currently entered** `targetBufferPct` (a single value), not the
-  best of the whole 75–80% range. Eugene's spreadsheet drives the buffer from a
-  discrete dropdown, but we kept it a free-typed field (his call), so there is
-  only one percentage to compare. Consequence: if the entered buffer isn't the
-  best of 75–80%, auto can pick the 3:1 when a higher buffer would have won. This
-  is the accepted behavior, not a follow-up — sweeping the full range was
-  considered and deliberately not built.
+  that case rather than a percentage. Always `80` when `auto` picked the
+  percentage side — see the auto note under Target modes above.
 
 ## Validation layers
 

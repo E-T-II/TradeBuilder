@@ -489,11 +489,10 @@ export function TradeForm({
                     />
                   </Field>
                   {form.targetMode === "percent" ? (
-                    // Collapsed for 3:1/Auto (per Eugene): the field only
-                    // controls the percentage side of the target, so it has
-                    // nothing to offer once a mechanical mode is in play. The
-                    // stored value is untouched and still drives Auto's
-                    // comparison — this only hides the control.
+                    // Collapsed for 3:1/Auto (per Eugene): auto checks the
+                    // 75-80% range on its own rather than this field's value,
+                    // and 3:1 doesn't use a percentage at all, so the control
+                    // has nothing to offer in either mode.
                     <Field
                       id="buffer"
                       label="Target buffer (%)"

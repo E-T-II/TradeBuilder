@@ -199,6 +199,9 @@ export function entryType(score: number): EntryType {
 /** Offset for a confirmation entry: 10 cents past the proximal line. */
 const CONFIRMATION_OFFSET = 0.1;
 
+/** The top of the target buffer's 75-80% range; the form clamps to it too. */
+const MAX_TARGET_BUFFER_PCT = 0.8;
+
 /**
  * The entry price. A proximal entry is a limit order right at the proximal
  * line. A confirmation entry waits for price to re-cross the proximal line,
@@ -539,28 +542,45 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       ? t < inputs.targetProximal
       : t > inputs.targetProximal;
 
+  // Auto checks every buffer from 75-80% against the mechanical 3:1 (per
+  // Eugene) and keeps whichever gives the higher reward:risk without
+  // overshooting the opposing zone. The target grows monotonically with the
+  // buffer percentage, so the 80% ceiling always beats every lower percentage
+  // in that range — comparing it to the 3:1 is equivalent to sweeping all six
+  // and picking the best. Percentage targets always sit inside the zone, so
+  // only the mechanical side needs the fitsZone check.
+  const autoPercentTarget = targetPrice(
+    inputs.entryProximal,
+    inputs.targetProximal,
+    MAX_TARGET_BUFFER_PCT,
+    inputs.direction,
+  );
+  const autoPercentRr = rewardRiskRatio(entry, stop, autoPercentTarget);
+
   let target: number;
+  let rr: number;
   let usedRatio: boolean;
   if (inputs.targetMode === "ratio") {
     target = ratioTarget;
+    // Mechanical targets are 3:1 by construction; recomputing from the
+    // cent-rounded price could dip just under 3 and falsely trip the rule.
+    rr = 3;
     usedRatio = true;
   } else if (inputs.targetMode === "auto") {
-    // Higher reward:risk wins; the mechanical 3:1 only counts if it fits before
-    // the opposing zone. (A percentage over 3 already beats the mechanical 3.)
-    if (fitsZone(ratioTarget) && !meetsProfitRatio(percentRr, 3)) {
+    if (fitsZone(ratioTarget) && !meetsProfitRatio(autoPercentRr, 3)) {
       target = ratioTarget;
+      rr = 3;
       usedRatio = true;
     } else {
-      target = percentTarget;
+      target = autoPercentTarget;
+      rr = autoPercentRr;
       usedRatio = false;
     }
   } else {
     target = percentTarget;
+    rr = percentRr;
     usedRatio = false;
   }
-  // Mechanical targets are 3:1 by construction; recomputing from the
-  // cent-rounded price could dip just under 3 and falsely trip the rule.
-  const rr = usedRatio ? 3 : percentRr;
 
   // A tight zone plus the confirmation offset can push the computed entry past
   // the computed target, leaving an order whose exit sits on the wrong side of
@@ -689,9 +709,13 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       dailyAtr: inputs.atr,
       stopBufferPct: inputs.timeframe === "weekly" ? 10 : 2,
       stopBufferDollar: buffer,
+      // Auto always lands on the 80% ceiling when the percentage side wins
+      // (it's the one that was actually compared), not the user's typed value.
       targetBufferPct: usedRatio
         ? null
-        : Math.round(inputs.targetBufferPct * 10_000) / 100,
+        : inputs.targetMode === "auto"
+          ? MAX_TARGET_BUFFER_PCT * 100
+          : Math.round(inputs.targetBufferPct * 10_000) / 100,
     },
     checks,
   };

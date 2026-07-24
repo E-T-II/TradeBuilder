@@ -608,9 +608,12 @@ describe("given buildTrade and the target modes", () => {
     expect(result.order?.rewardRisk).toBe(3);
   });
 
-  test('given "auto" with a percentage that beats 3:1: should keep the percentage target', () => {
+  test('given "auto" with a percentage that beats 3:1: should keep the percentage target, at the 80% ceiling', () => {
+    // Auto checks every buffer 75-80% against the mechanical 3:1 (per Eugene);
+    // 80% always wins among the percentages, so that's the one it keeps.
+    // 108 + (124 - 108) x 80% = 120.8.
     const result = buildTrade({ ...proximal, targetMode: "auto" });
-    expect(result.order?.target).toBe(120);
+    expect(result.order?.target).toBe(120.8);
     expect(result.order?.rewardRisk).toBeGreaterThan(3);
   });
 
@@ -624,6 +627,20 @@ describe("given buildTrade and the target modes", () => {
     const auto = buildTrade({ ...near, targetMode: "auto" });
     expect(auto.order?.target).toBe(114.24);
     expect(auto.order?.rewardRisk).toBe(3);
+  });
+
+  test('given "auto" where the entered buffer misses 3:1 but 80% clears it: should use 80%, not the mechanical', () => {
+    // Target zone at 116 -> the entered 75% buffer gives only ~2.88:1, which
+    // would have fallen back to the mechanical 3:1 before Eugene's sweep. The
+    // 80% ceiling gives ~3.08:1, so auto now keeps the percentage instead.
+    const wider = { ...proximal, targetProximal: 116, targetDistal: 118 };
+    expect(buildTrade({ ...wider, targetMode: "percent" }).blockedReason).toBe(
+      "reward-risk",
+    );
+    const auto = buildTrade({ ...wider, targetMode: "auto" });
+    expect(auto.order?.target).toBe(114.4); // 108 + 8 x 80%
+    expect(auto.order?.rewardRisk).toBeGreaterThan(3);
+    expect(auto.order?.targetBufferPct).toBe(80);
   });
 
   test('given "auto" where neither candidate reaches 3:1: should reject', () => {
@@ -692,9 +709,10 @@ describe("given buildTrade and the target modes", () => {
       expect(result.order?.rewardRisk).toBe(3);
     });
 
-    test('given "auto" with a percentage that beats 3:1: should keep the percentage target', () => {
+    test('given "auto" with a percentage that beats 3:1: should keep the percentage target, at the 80% ceiling', () => {
+      // 124 - (124 - 108) x 80% = 111.2.
       const result = buildTrade({ ...short, targetMode: "auto" });
-      expect(result.order?.target).toBe(112);
+      expect(result.order?.target).toBe(111.2);
       expect(result.order!.rewardRisk).toBeGreaterThan(3);
     });
 
@@ -771,10 +789,12 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
     expect(result.order?.targetBufferPct).toBeNull();
   });
 
-  test('given "auto" picking the percentage: should still report its %', () => {
+  test('given "auto" picking the percentage: should report the 80% ceiling it actually used', () => {
+    // Auto always checks the 80% ceiling, not the user's typed buffer, so
+    // that's what this line reports when the percentage side wins.
     const result = buildTrade({ ...proximal, targetMode: "auto" });
-    expect(result.order?.target).toBe(120); // confirms percentage won
-    expect(result.order?.targetBufferPct).toBe(75);
+    expect(result.order?.target).toBe(120.8); // confirms percentage won
+    expect(result.order?.targetBufferPct).toBe(80);
   });
 
   test('given "auto" picking the mechanical target: should report no %', () => {
