@@ -148,6 +148,26 @@ describe("given the advanced settings caps", () => {
     await user.click(within(group).getByRole("radio", ratio));
     expect(within(group).getByRole("radio", ratio)).toBeChecked();
   });
+
+  test("given a mechanical target mode: should collapse the target buffer field", async () => {
+    // Per Eugene: the buffer % only means something in Percentage mode, so
+    // 3:1 and Auto hide the control rather than leave it inert on screen.
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm()} />);
+    expect(screen.getByLabelText("Target buffer (%)")).toBeInTheDocument();
+
+    const group = screen.getByRole("radiogroup", { name: "Target mode" });
+    await user.click(within(group).getByRole("radio", { name: "Auto" }));
+    expect(screen.queryByLabelText("Target buffer (%)")).not.toBeInTheDocument();
+
+    await user.click(
+      within(group).getByRole("radio", { name: "3:1 R:R, 3 to 1 reward to risk" }),
+    );
+    expect(screen.queryByLabelText("Target buffer (%)")).not.toBeInTheDocument();
+
+    await user.click(within(group).getByRole("radio", { name: "Percentage" }));
+    expect(screen.getByLabelText("Target buffer (%)")).toBeInTheDocument();
+  });
 });
 
 describe("given the comma-formatted account balance field", () => {

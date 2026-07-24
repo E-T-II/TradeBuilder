@@ -179,4 +179,22 @@ describe("given OrderTicket", () => {
       screen.getByText(/isn't a valid setup for the current trend/i),
     ).toBeInTheDocument();
   });
+
+  test("given percent mode: should show the buffer %, ATR, and stop buffer", () => {
+    const result = buildTrade(longTrade);
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("Target buffer %")).toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText("Daily ATR")).toBeInTheDocument();
+    expect(screen.getByText("Stop buffer %")).toBeInTheDocument();
+    expect(screen.getByText("2%")).toBeInTheDocument();
+    expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
+  });
+
+  test('given "ratio" mode: should say "Mechanical 3:1" instead of a percentage', () => {
+    const result = buildTrade({ ...longTrade, targetMode: "ratio" });
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
+    expect(screen.queryByText("75%")).not.toBeInTheDocument();
+  });
 });

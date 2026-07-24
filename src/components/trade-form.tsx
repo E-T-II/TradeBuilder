@@ -488,26 +488,35 @@ export function TradeForm({
                       }
                     />
                   </Field>
-                  <Field
-                    id="buffer"
-                    label="Target buffer (%)"
-                    hint="Between 75% and 80% (used in Percentage and Auto modes)"
-                  >
-                    <Input
+                  {form.targetMode === "percent" ? (
+                    // Collapsed for 3:1/Auto (per Eugene): the field only
+                    // controls the percentage side of the target, so it has
+                    // nothing to offer once a mechanical mode is in play. The
+                    // stored value is untouched and still drives Auto's
+                    // comparison — this only hides the control.
+                    <Field
                       id="buffer"
-                      type="number"
-                      min="75"
-                      max="80"
-                      inputMode="decimal"
-                      value={form.targetBuffer}
-                      onChange={(e) => onChange({ targetBuffer: e.target.value })}
-                      onBlur={(e) =>
-                        onChange({
-                          targetBuffer: clampNumericString(e.target.value, 75, 80),
-                        })
-                      }
-                    />
-                  </Field>
+                      label="Target buffer (%)"
+                      hint="Between 75% and 80%"
+                    >
+                      <Input
+                        id="buffer"
+                        type="number"
+                        min="75"
+                        max="80"
+                        inputMode="decimal"
+                        value={form.targetBuffer}
+                        onChange={(e) =>
+                          onChange({ targetBuffer: e.target.value })
+                        }
+                        onBlur={(e) =>
+                          onChange({
+                            targetBuffer: clampNumericString(e.target.value, 75, 80),
+                          })
+                        }
+                      />
+                    </Field>
+                  ) : null}
                   <Field
                     id="openRisk"
                     label="Risk in open trades ($)"

@@ -438,6 +438,16 @@ export interface TradeResult {
     positionSize: number;
     capitalRequirement: number;
     totalTradeRisk: number;
+    /**
+     * The working behind Stop/Target, for the results card's "show the math"
+     * breakdown (per Eugene). targetBufferPct is null when the mechanical 3:1
+     * was used instead of a percentage — ratio mode outright, or auto picking
+     * the mechanical target over the percentage one.
+     */
+    dailyAtr: number;
+    stopBufferPct: number;
+    stopBufferDollar: number;
+    targetBufferPct: number | null;
   } | null;
   checks: {
     maxAccountRisk: number;
@@ -676,6 +686,12 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       positionSize: size,
       capitalRequirement: capital,
       totalTradeRisk: totalRisk,
+      dailyAtr: inputs.atr,
+      stopBufferPct: inputs.timeframe === "weekly" ? 10 : 2,
+      stopBufferDollar: buffer,
+      targetBufferPct: usedRatio
+        ? null
+        : Math.round(inputs.targetBufferPct * 10_000) / 100,
     },
     checks,
   };
