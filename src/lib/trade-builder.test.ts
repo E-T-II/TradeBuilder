@@ -640,7 +640,7 @@ describe("given buildTrade and the target modes", () => {
     const auto = buildTrade({ ...wider, targetMode: "auto" });
     expect(auto.order?.target).toBe(114.4); // 108 + 8 x 80%
     expect(auto.order?.rewardRisk).toBeGreaterThan(3);
-    expect(auto.order?.targetBufferPct).toBe(80);
+    expect(auto.math.targetBufferPct).toBe(80);
   });
 
   test('given "auto" where neither candidate reaches 3:1: should reject', () => {
@@ -778,10 +778,10 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
 
   test("given percent mode: should report the buffer %, ATR, and stop buffer", () => {
     const result = buildTrade({ ...proximal, targetMode: "percent" });
-    expect(result.order?.targetBufferPct).toBe(75);
-    expect(result.order?.dailyAtr).toBe(4);
-    expect(result.order?.stopBufferPct).toBe(2);
-    expect(result.order?.stopBufferDollar).toBe(0.08);
+    expect(result.math.targetBufferPct).toBe(75);
+    expect(result.math.dailyAtr).toBe(4);
+    expect(result.math.stopBufferPct).toBe(2);
+    expect(result.math.stopBufferDollar).toBe(0.08);
   });
 
   test("given a fractional buffer: should report it to two decimals", () => {
@@ -794,12 +794,12 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
       targetMode: "percent",
       targetBufferPct: 0.7733,
     });
-    expect(result.order?.targetBufferPct).toBe(77.33);
+    expect(result.math.targetBufferPct).toBe(77.33);
   });
 
   test('given "ratio" mode: should report no target buffer %', () => {
     const result = buildTrade({ ...proximal, targetMode: "ratio" });
-    expect(result.order?.targetBufferPct).toBeNull();
+    expect(result.math.targetBufferPct).toBeNull();
   });
 
   test('given "auto" picking the percentage: should report the 80% ceiling it actually used', () => {
@@ -807,14 +807,14 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
     // that's what this line reports when the percentage side wins.
     const result = buildTrade({ ...proximal, targetMode: "auto" });
     expect(result.order?.target).toBe(120.8); // confirms percentage won
-    expect(result.order?.targetBufferPct).toBe(80);
+    expect(result.math.targetBufferPct).toBe(80);
   });
 
   test('given "auto" picking the mechanical target: should report no %', () => {
     const near = { ...proximal, targetProximal: 115, targetDistal: 117 };
     const result = buildTrade({ ...near, targetMode: "auto" });
     expect(result.order?.target).toBe(114.24); // confirms the mechanical won
-    expect(result.order?.targetBufferPct).toBeNull();
+    expect(result.math.targetBufferPct).toBeNull();
   });
 
   test("given a weekly income objective: should report the 10% stop buffer", () => {
@@ -823,8 +823,27 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
       timeframe: "weekly",
       targetMode: "percent",
     });
-    expect(result.order?.stopBufferPct).toBe(10);
-    expect(result.order?.stopBufferDollar).toBe(0.4); // 4 x 10%
+    expect(result.math.stopBufferPct).toBe(10);
+    expect(result.math.stopBufferDollar).toBe(0.4); // 4 x 10%
+  });
+
+  test("given no trade: should still report the math from the inputs", () => {
+    // A sub-7 score returns no order, but the ATR and stop buffer are pure
+    // input math (per Eugene: show it in gray anyway). Auto hasn't run its
+    // comparison, so the target buffer is pending, not a settled percentage.
+    const result = buildTrade({
+      ...longTrade,
+      strength: 0,
+      time: 0,
+      freshness: 0,
+      targetMode: "auto",
+    });
+    expect(result.order).toBeNull();
+    expect(result.math.dailyAtr).toBe(4);
+    expect(result.math.stopBufferPct).toBe(2);
+    expect(result.math.stopBufferDollar).toBe(0.08);
+    expect(result.math.targetBufferPending).toBe(true);
+    expect(result.math.targetBufferPct).toBeNull();
   });
 });
 

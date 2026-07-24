@@ -213,7 +213,7 @@ describe("given OrderTicket", () => {
       targetProximal: 115,
       targetDistal: 117,
     });
-    expect(result.order?.targetBufferPct).toBeNull(); // confirms the mechanical won
+    expect(result.math.targetBufferPct).toBeNull(); // confirms the mechanical won
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
   });
@@ -226,9 +226,30 @@ describe("given OrderTicket", () => {
       freshness: 2,
       timeframe: "weekly",
     });
-    expect(result.order?.stopBufferPct).toBe(10); // confirms the fixture exercises weekly
+    expect(result.math.stopBufferPct).toBe(10); // confirms the fixture exercises weekly
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Stop buffer %")).toBeInTheDocument();
     expect(screen.getByText("10%")).toBeInTheDocument();
+  });
+
+  test("given no trade: should still show the math in gray beside the reason", () => {
+    // A sub-7 score produces no order, but Eugene wants the ATR and buffers
+    // shown anyway. Auto here means the target buffer reads as the 75-80% range.
+    const result = buildTrade({
+      ...longTrade,
+      strength: 0,
+      time: 0,
+      freshness: 0,
+      targetMode: "auto",
+    });
+    expect(result.order).toBeNull();
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("No trade")).toBeInTheDocument();
+    expect(screen.getByText("Daily ATR")).toBeInTheDocument();
+    expect(screen.getByText("$4.00")).toBeInTheDocument(); // atr: 4
+    expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
+    expect(screen.getByText("$0.08")).toBeInTheDocument();
+    expect(screen.getByText("Target buffer %")).toBeInTheDocument();
+    expect(screen.getByText("75–80%")).toBeInTheDocument(); // auto, unresolved
   });
 });

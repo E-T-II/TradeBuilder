@@ -1,4 +1,10 @@
-import { roundToCent, type Direction, type TradeResult } from "@/lib/trade-builder";
+import {
+  roundToCent,
+  TARGET_BUFFER_MAX_PCT,
+  TARGET_BUFFER_MIN_PCT,
+  type Direction,
+  type TradeResult,
+} from "@/lib/trade-builder";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -19,10 +25,14 @@ function Line({
   label,
   value,
   strong,
+  muted,
 }: {
   label: string;
   value: string;
   strong?: boolean;
+  // Grays the value too (not just the label), so the whole row reads as
+  // context rather than an actionable number — used on the no-trade screen.
+  muted?: boolean;
 }) {
   return (
     <div
@@ -31,8 +41,48 @@ function Line({
       }`}
     >
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
-      <span className="font-mono tabular-nums">{value}</span>
+      <span
+        className={`font-mono tabular-nums ${muted ? "text-muted-foreground" : ""}`}
+      >
+        {value}
+      </span>
     </div>
+  );
+}
+
+// How the target buffer reads: a plain percentage, "Mechanical 3:1" when the
+// mechanical target was used, or the 75-80% range while auto is still pending
+// (a no-trade result never ran auto's comparison, so no single buffer won).
+function targetBufferText(math: TradeResult["math"]): string {
+  if (math.targetBufferPending) {
+    return `${TARGET_BUFFER_MIN_PCT}–${TARGET_BUFFER_MAX_PCT}%`;
+  }
+  return math.targetBufferPct === null
+    ? "Mechanical 3:1"
+    : `${math.targetBufferPct}%`;
+}
+
+// The "show the math" breakdown (per Eugene): the working behind Stop/Target.
+// Shown under the built order, and again in gray on the no-trade screen so the
+// numbers are visible whether or not the setup was tradeable.
+function MathLines({
+  math,
+  muted,
+}: {
+  math: TradeResult["math"];
+  muted?: boolean;
+}) {
+  return (
+    <>
+      <Line label="Target buffer %" value={targetBufferText(math)} muted={muted} />
+      <Line label="Daily ATR" value={usd.format(math.dailyAtr)} muted={muted} />
+      <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} muted={muted} />
+      <Line
+        label="Stop buffer $"
+        value={usd.format(math.stopBufferDollar)}
+        muted={muted}
+      />
+    </>
   );
 }
 
@@ -86,10 +136,17 @@ export function OrderTicket({
         "The score qualifies, but after the buffer the target lands on the wrong side of the entry, so there's no valid trade here. Widen the gap between your entry and target zones.";
     }
     return (
-      <Alert>
-        <AlertTitle>No trade</AlertTitle>
-        <AlertDescription>{reason}</AlertDescription>
-      </Alert>
+      <div className="space-y-3">
+        <Alert>
+          <AlertTitle>No trade</AlertTitle>
+          <AlertDescription>{reason}</AlertDescription>
+        </Alert>
+        {/* The math still applies even without an order (per Eugene): show it in
+            gray so the ATR and buffers behind the rejected setup stay visible. */}
+        <div className="space-y-2 rounded-lg border px-4 py-3">
+          <MathLines math={result.math} muted />
+        </div>
+      </div>
     );
   }
 
@@ -125,19 +182,8 @@ export function OrderTicket({
         />
         <div className="my-3 border-t" />
         {/* The working behind Stop/Target, so the numbers above aren't a black
-            box (per Eugene). Target buffer % is absent when the mechanical
-            3:1 was used instead of a percentage. */}
-        <Line
-          label="Target buffer %"
-          value={
-            o.targetBufferPct === null
-              ? "Mechanical 3:1"
-              : `${o.targetBufferPct}%`
-          }
-        />
-        <Line label="Daily ATR" value={usd.format(o.dailyAtr)} />
-        <Line label="Stop buffer %" value={`${o.stopBufferPct}%`} />
-        <Line label="Stop buffer $" value={usd.format(o.stopBufferDollar)} />
+            box (per Eugene). */}
+        <MathLines math={result.math} />
       </CardContent>
     </Card>
   );
