@@ -56,7 +56,7 @@ export interface FormState {
 const initialState: FormState = {
   accountBalance: "",
   riskTolerance: "2",
-  targetBuffer: "75",
+  targetBuffer: String(TARGET_BUFFER_MIN_PCT),
   targetMode: "percent",
   direction: "long",
   trend: "uptrend",

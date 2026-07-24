@@ -229,12 +229,20 @@ export function entryPrice(
 }
 
 /**
+ * Fraction of ATR the stop sits beyond the entry zone: 2% for daily income,
+ * 10% for weekly or greater. The dollar buffer and the percent shown on the
+ * ticket both derive from this, so a rule change moves them together.
+ */
+export function stopBufferRate(timeframe: IncomeTimeframe): number {
+  return timeframe === "weekly" ? 0.1 : 0.02;
+}
+
+/**
  * Stop buffer: ATR x 2% for daily income, ATR x 10% for weekly or greater.
  * Always rounds up to the cent (NVDA example: 5.93 x 0.02 = 0.1186 -> 0.12).
  */
 export function stopBuffer(atr: number, timeframe: IncomeTimeframe): number {
-  const multiplier = timeframe === "weekly" ? 0.1 : 0.02;
-  return roundUpToCent(atr * multiplier);
+  return roundUpToCent(atr * stopBufferRate(timeframe));
 }
 
 /**
@@ -358,7 +366,10 @@ export function deriveZoneLines(zones: Zones, direction: Direction): ZoneLines {
  * How the target is set:
  * - "percent": a % of the profit zone (targetBufferPct, kept in 0.75–0.80).
  * - "ratio": a mechanical 3:1 target (3x the per-share risk out from entry).
- * - "auto": whichever of the two gives the higher reward:risk within the zone.
+ * - "auto": the better reward:risk of the mechanical 3:1 and the percentage
+ *   side. Auto scans the 75-80% range itself and, since the target grows with
+ *   the buffer, effectively uses the 80% ceiling — it ignores the supplied
+ *   targetBufferPct.
  */
 export type TargetMode = "percent" | "ratio" | "auto";
 
@@ -367,7 +378,11 @@ export interface TradeInputs {
   accountBalance: number;
   /** e.g. 0.02 for 2% risk per trade; the form caps this at 2% (0.02) */
   riskTolerancePct: number;
-  /** the take-profit buffer used in "percent"/"auto" mode; kept in 0.75–0.80 */
+  /**
+   * the take-profit buffer used in "percent" mode; kept in 0.75–0.80. "auto"
+   * ignores this and scans the 75-80% range itself (effectively the 80%
+   * ceiling); "ratio" doesn't use it at all.
+   */
   targetBufferPct: number;
   /** how the target price is derived */
   targetMode: TargetMode;
@@ -713,7 +728,10 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       capitalRequirement: capital,
       totalTradeRisk: totalRisk,
       dailyAtr: inputs.atr,
-      stopBufferPct: inputs.timeframe === "weekly" ? 10 : 2,
+      // Same rate that sizes the dollar buffer above, as a percent. Round off
+      // the float noise a fractional rate could carry (0.07 * 100 = 7.00…01).
+      stopBufferPct:
+        Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
       stopBufferDollar: buffer,
       // Auto always lands on the 80% ceiling when the percentage side wins
       // (it's the one that was actually compared), not the user's typed value.
