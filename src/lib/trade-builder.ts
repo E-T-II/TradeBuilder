@@ -462,17 +462,25 @@ export interface TradeResult {
     positionSize: number;
     capitalRequirement: number;
     totalTradeRisk: number;
-    /**
-     * The working behind Stop/Target, for the results card's "show the math"
-     * breakdown (per Eugene). targetBufferPct is null when the mechanical 3:1
-     * was used instead of a percentage — ratio mode outright, or auto picking
-     * the mechanical target over the percentage one.
-     */
+  } | null;
+  /**
+   * The working behind Stop/Target, for the results card's "show the math"
+   * breakdown (per Eugene). Always present — every figure here follows from the
+   * raw inputs — so the results screen can show it in gray even when there's no
+   * order.
+   *
+   * targetBufferPct is null when the target is a mechanical 3:1 (ratio mode, or
+   * auto picking the mechanical target). targetBufferPending is true only while
+   * auto hasn't run its comparison — which is any no-trade result — so the UI
+   * shows the 75-80% range auto chooses within rather than a settled figure.
+   */
+  math: {
     dailyAtr: number;
     stopBufferPct: number;
     stopBufferDollar: number;
     targetBufferPct: number | null;
-  } | null;
+    targetBufferPending: boolean;
+  };
   checks: {
     maxAccountRisk: number;
     /** The configured per-trade risk limit as a percent (2 by default). */
@@ -524,13 +532,32 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   scorecard.total = totalScore(scorecard);
 
   const type = entryType(scorecard.total);
+
+  // The "show the math" figures (per Eugene), computed straight from the inputs
+  // so they're available on every return — the results screen shows them in gray
+  // even when there's no order. targetBufferPct is resolved on the order path
+  // below; here percent mode already knows its buffer, ratio is mechanical
+  // (null), and auto stays pending until its comparison runs (any no-trade
+  // result), where the UI shows the 75-80% range instead of a settled figure.
+  const math = {
+    dailyAtr: inputs.atr,
+    stopBufferPct:
+      Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
+    stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
+    targetBufferPct:
+      inputs.targetMode === "percent"
+        ? Math.round(inputs.targetBufferPct * 10_000) / 100
+        : null,
+    targetBufferPending: inputs.targetMode === "auto",
+  };
+
   // No order if the matrix vetoed the setup or the score didn't qualify.
   if (objective === "no-trade" || type === "no-trade") {
-    return { scorecard, entryType: type, objective, order: null, checks: null };
+    return { scorecard, entryType: type, objective, math, order: null, checks: null };
   }
 
   const entry = entryPrice(inputs.entryProximal, type, inputs.direction)!;
-  const buffer = stopBuffer(inputs.atr, inputs.timeframe);
+  const buffer = math.stopBufferDollar;
   const stop = stopLoss(inputs.entryDistal, buffer, inputs.direction);
   const riskPerShare = tradeRiskPerShare(entry, stop);
   const maxRisk = maxAccountRisk(
@@ -615,6 +642,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       entryType: type,
       objective,
       blockedReason: "tight-zones",
+      math,
       order: null,
       checks: null,
     };
@@ -636,6 +664,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       entryType: type,
       objective,
       blockedReason: "reward-risk",
+      math,
       order: null,
       checks: null,
     };
@@ -649,6 +678,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       objective,
       blockedReason: "reward-risk",
       reachedRewardRisk: rr,
+      math,
       order: null,
       checks: null,
     };
@@ -664,6 +694,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       entryType: type,
       objective,
       blockedReason: rawSize <= 0 ? "risk-too-small" : "capital-too-large",
+      math,
       order: null,
       checks: null,
     };
@@ -707,6 +738,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       blockedReason: "over-6pct",
       openRisk,
       totalTradeRisk: totalRisk,
+      math,
       order: null,
       checks,
     };
@@ -727,19 +759,18 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       positionSize: size,
       capitalRequirement: capital,
       totalTradeRisk: totalRisk,
-      dailyAtr: inputs.atr,
-      // Same rate that sizes the dollar buffer above, as a percent. Round off
-      // the float noise a fractional rate could carry (0.07 * 100 = 7.00…01).
-      stopBufferPct:
-        Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
-      stopBufferDollar: buffer,
+    },
+    math: {
+      ...math,
       // Auto always lands on the 80% ceiling when the percentage side wins
-      // (it's the one that was actually compared), not the user's typed value.
+      // (it's the one that was actually compared), not the user's typed value;
+      // mechanical wins report null. Either way the comparison has now run.
       targetBufferPct: usedRatio
         ? null
         : inputs.targetMode === "auto"
           ? TARGET_BUFFER_MAX_PCT
-          : Math.round(inputs.targetBufferPct * 10_000) / 100,
+          : math.targetBufferPct,
+      targetBufferPending: false,
     },
     checks,
   };
