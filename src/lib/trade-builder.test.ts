@@ -784,6 +784,19 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
     expect(result.order?.stopBufferDollar).toBe(0.08);
   });
 
+  test("given a fractional buffer: should report it to two decimals", () => {
+    // The fraction -> percent conversion has to keep two decimals: 0.7733
+    // becomes 77.33, not 77 or 7733. A plainer formula (e.g. * 100 with no
+    // rounding, or rounding to a whole number) would slip past the round
+    // 0.75/0.80 fixtures above but fail here.
+    const result = buildTrade({
+      ...proximal,
+      targetMode: "percent",
+      targetBufferPct: 0.7733,
+    });
+    expect(result.order?.targetBufferPct).toBe(77.33);
+  });
+
   test('given "ratio" mode: should report no target buffer %', () => {
     const result = buildTrade({ ...proximal, targetMode: "ratio" });
     expect(result.order?.targetBufferPct).toBeNull();

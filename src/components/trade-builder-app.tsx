@@ -6,6 +6,8 @@ import {
   buildTrade,
   deriveZoneLines,
   JUDGED_MAX,
+  TARGET_BUFFER_MAX_PCT,
+  TARGET_BUFFER_MIN_PCT,
   type Direction,
   type IncomeTimeframe,
   type TargetMode,
@@ -186,7 +188,13 @@ export function toInputs(form: FormState): TradeInputs | null {
   const numbers = {
     accountBalance: Number(form.accountBalance),
     riskTolerancePct: clampPercent(form.riskTolerance, 2, 0, 2) / 100,
-    targetBufferPct: clampPercent(form.targetBuffer, 75, 75, 80) / 100,
+    targetBufferPct:
+      clampPercent(
+        form.targetBuffer,
+        TARGET_BUFFER_MIN_PCT,
+        TARGET_BUFFER_MIN_PCT,
+        TARGET_BUFFER_MAX_PCT,
+      ) / 100,
     atr: Number(form.atr),
     curveLow: Number(form.curveLow),
     curveHigh: Number(form.curveHigh),
@@ -245,7 +253,11 @@ export function TradeBuilderApp() {
     // of sync with the clamped order math (the blur handler only runs if the
     // user opens advanced settings and edits the field).
     merged.riskTolerance = clampNumericString(merged.riskTolerance, 0, 2);
-    merged.targetBuffer = clampNumericString(merged.targetBuffer, 75, 80);
+    merged.targetBuffer = clampNumericString(
+      merged.targetBuffer,
+      TARGET_BUFFER_MIN_PCT,
+      TARGET_BUFFER_MAX_PCT,
+    );
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
     setForm(merged);
   }, []);

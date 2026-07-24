@@ -10,7 +10,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { FormState } from "@/components/trade-builder-app";
-import { JUDGED_MAX } from "@/lib/trade-builder";
+import {
+  JUDGED_MAX,
+  TARGET_BUFFER_MAX_PCT,
+  TARGET_BUFFER_MIN_PCT,
+} from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
@@ -476,19 +480,23 @@ export function TradeForm({
                   <Field
                     id="buffer"
                     label="Target buffer (%)"
-                    hint="Between 75% and 80%"
+                    hint={`Between ${TARGET_BUFFER_MIN_PCT}% and ${TARGET_BUFFER_MAX_PCT}%`}
                   >
                     <Input
                       id="buffer"
                       type="number"
-                      min="75"
-                      max="80"
+                      min={TARGET_BUFFER_MIN_PCT}
+                      max={TARGET_BUFFER_MAX_PCT}
                       inputMode="decimal"
                       value={form.targetBuffer}
                       onChange={(e) => onChange({ targetBuffer: e.target.value })}
                       onBlur={(e) =>
                         onChange({
-                          targetBuffer: clampNumericString(e.target.value, 75, 80),
+                          targetBuffer: clampNumericString(
+                            e.target.value,
+                            TARGET_BUFFER_MIN_PCT,
+                            TARGET_BUFFER_MAX_PCT,
+                          ),
                         })
                       }
                     />

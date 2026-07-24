@@ -199,8 +199,14 @@ export function entryType(score: number): EntryType {
 /** Offset for a confirmation entry: 10 cents past the proximal line. */
 const CONFIRMATION_OFFSET = 0.1;
 
-/** The top of the target buffer's 75-80% range; the form clamps to it too. */
-const MAX_TARGET_BUFFER_PCT = 0.8;
+/**
+ * The target buffer's allowed band, as whole-number percents of the profit
+ * zone. This is the single source of truth for the 75-80% range: the engine
+ * (auto's ceiling), the form's min/max, and the advanced-settings clamps all
+ * read these so the bounds only ever live in one place.
+ */
+export const TARGET_BUFFER_MIN_PCT = 75;
+export const TARGET_BUFFER_MAX_PCT = 80;
 
 /**
  * The entry price. A proximal entry is a limit order right at the proximal
@@ -552,7 +558,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   const autoPercentTarget = targetPrice(
     inputs.entryProximal,
     inputs.targetProximal,
-    MAX_TARGET_BUFFER_PCT,
+    TARGET_BUFFER_MAX_PCT / 100,
     inputs.direction,
   );
   const autoPercentRr = rewardRiskRatio(entry, stop, autoPercentTarget);
@@ -714,7 +720,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       targetBufferPct: usedRatio
         ? null
         : inputs.targetMode === "auto"
-          ? MAX_TARGET_BUFFER_PCT * 100
+          ? TARGET_BUFFER_MAX_PCT
           : Math.round(inputs.targetBufferPct * 10_000) / 100,
     },
     checks,
