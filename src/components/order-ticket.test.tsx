@@ -203,10 +203,10 @@ describe("given OrderTicket", () => {
     expect(screen.queryByText("75%")).not.toBeInTheDocument();
   });
 
-  test('given "auto" picking the mechanical target: should also say "Mechanical 3:1"', () => {
+  test('given "auto" picking the mechanical target: should name Auto and the mechanical target', () => {
     // Zone at 115 -> the percentage side misses 3:1, so auto falls back to the
-    // mechanical target (same setup as buildTrade's own "picking the
-    // mechanical" test), and the UI must label it the same as ratio mode does.
+    // mechanical target. The line names Auto (per Eugene: show what was selected)
+    // alongside what it landed on — distinct from a plain "ratio" mode.
     const result = buildTrade({
       ...longTrade,
       strength: 2,
@@ -218,7 +218,7 @@ describe("given OrderTicket", () => {
     });
     expect(result.math.targetBufferPct).toBeNull(); // confirms the mechanical won
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
+    expect(screen.getByText("Auto (Mechanical 3:1)")).toBeInTheDocument();
   });
 
   test("given a weekly income objective: should show the 10% stop buffer", () => {
@@ -237,7 +237,8 @@ describe("given OrderTicket", () => {
 
   test("given no trade: should still show the math in gray beside the reason", () => {
     // A sub-7 score produces no order, but Eugene wants the ATR and buffers
-    // shown anyway. Auto here means the target buffer reads as the 75-80% range.
+    // shown anyway. Auto never ran its comparison, so the line just names "Auto"
+    // (what was selected) — no resolved buffer to append.
     const result = buildTrade({
       ...longTrade,
       strength: 0,
@@ -252,7 +253,7 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("$4.00")).toBeInTheDocument(); // atr: 4
     expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
     expect(screen.getByText("Target buffer %")).toBeInTheDocument();
-    expect(screen.getByText("75–80%")).toBeInTheDocument(); // auto, unresolved
+    expect(screen.getByText("Auto")).toBeInTheDocument(); // the selected mode
     // The whole point of this view: the values are grayed, not just present. The
     // box greys them by inheritance, so assert the muted container wraps them.
     const box = screen.getByText("Behind the numbers").closest("div");
@@ -261,14 +262,13 @@ describe("given OrderTicket", () => {
     expect(box).toContainElement(screen.getByText("$4.00"));
   });
 
-  test('given a built "auto" order on the percentage side: should show 80%, not the range', () => {
-    // The regression the range must never leak into: a real order where auto's
-    // comparison resolved to the 80% ceiling. "75–80%" is only for no-trades.
+  test('given a built "auto" order on the percentage side: should name Auto and its 80% ceiling', () => {
+    // A real order where auto's comparison resolved to the 80% ceiling: the line
+    // names the mode and what it landed on, never the bare "Auto" of a no-trade.
     const result = buildTrade({ ...longTrade, strength: 2, time: 1, freshness: 2, targetMode: "auto" });
     expect(result.order).not.toBeNull();
     expect(result.math.targetBufferPct).toBe(80);
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText("80%")).toBeInTheDocument();
-    expect(screen.queryByText("75–80%")).not.toBeInTheDocument();
+    expect(screen.getByText("Auto (80%)")).toBeInTheDocument();
   });
 });

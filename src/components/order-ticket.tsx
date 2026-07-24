@@ -1,7 +1,5 @@
 import {
   roundToCent,
-  TARGET_BUFFER_MAX_PCT,
-  TARGET_BUFFER_MIN_PCT,
   type Direction,
   type TradeResult,
 } from "@/lib/trade-builder";
@@ -44,17 +42,19 @@ function Line({
   );
 }
 
-// How the target buffer reads: a plain percentage, "Mechanical 3:1" when the
-// mechanical target was used, or the 75-80% range while auto is still pending —
-// an auto setup that returned no order before its comparison ran (a matrix veto
-// or a sub-7 score), so no single buffer was ever chosen.
+// How the target buffer reads. Auto names itself (per Eugene: the user should
+// know what was selected, not just see a number), and adds what it landed on
+// once its comparison has run — "Auto" alone before that (a no-trade that never
+// got there). Percent shows its buffer; ratio, the mechanical target.
 function targetBufferText(math: TradeResult["math"]): string {
-  if (math.targetBufferPending) {
-    return `${TARGET_BUFFER_MIN_PCT}–${TARGET_BUFFER_MAX_PCT}%`;
+  if (math.targetMode === "auto") {
+    if (math.targetBufferPending) return "Auto";
+    return math.targetBufferPct === null
+      ? "Auto (Mechanical 3:1)"
+      : `Auto (${math.targetBufferPct}%)`;
   }
-  return math.targetBufferPct === null
-    ? "Mechanical 3:1"
-    : `${math.targetBufferPct}%`;
+  if (math.targetMode === "ratio") return "Mechanical 3:1";
+  return `${math.targetBufferPct}%`;
 }
 
 // The "show the math" breakdown (per Eugene): the working behind Stop/Target.

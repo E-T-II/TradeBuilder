@@ -898,6 +898,7 @@ describe("given buildTrade's S.E.T.S. breakdown", () => {
     expect(result.math.dailyAtr).toBe(4);
     expect(result.math.stopBufferPct).toBe(2);
     expect(result.math.stopBufferDollar).toBe(0.08);
+    expect(result.math.targetMode).toBe("auto"); // echoes what was selected
     expect(result.math.targetBufferPending).toBe(true);
     expect(result.math.targetBufferPct).toBeNull();
   });

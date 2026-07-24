@@ -146,15 +146,18 @@ the results screen shows it greyed under the "No trade" explanation:
 - `stopBufferPct` — 2 or 10, from the income timeframe.
 - `stopBufferDollar` — the computed stop buffer (`ATR × 2%` daily or `× 10%`
   weekly, rounded up to the cent).
+- `targetMode` — echoes the mode the user selected. `OrderTicket` names it (per
+  Eugene: the user should know what was selected). `percent` shows its buffer
+  (`75%`); `ratio` shows `Mechanical 3:1`; `auto` shows `Auto`, plus what it
+  landed on once resolved — `Auto (80%)` or `Auto (Mechanical 3:1)`.
 - `targetBufferPct` — the percentage used, or `null` when the mechanical 3:1
   was used instead (`ratio` mode outright, or `auto` picking the mechanical
-  target over the percentage one). `OrderTicket` shows "Mechanical 3:1" in
-  that case rather than a percentage. `80` when `auto` picked the percentage
-  side — see the auto note under Target modes above.
+  target over the percentage one). `80` when `auto` picked the percentage side —
+  see the auto note under Target modes above.
 - `targetBufferPending` — `true` only when an `auto` setup returned no order
-  *before* its 75-80%-vs-3:1 comparison ran (a matrix veto or a sub-7 score),
-  so no buffer was ever chosen. `OrderTicket` shows the `75–80%` range then;
-  every other result resolves `targetBufferPct` and leaves this `false`.
+  *before* its 75-80%-vs-3:1 comparison ran (a matrix veto or a sub-7 score), so
+  no buffer was ever chosen. `OrderTicket` shows a bare `Auto` then; every other
+  result resolves `targetBufferPct` and leaves this `false`.
 
 ## Validation layers
 
