@@ -75,7 +75,7 @@ target = Demand proximal + (Supply proximal - Demand proximal) x 75%
        = 108 + (124 - 108) x 75% = 108 + 12 = 120
 ```
 
-That 75% is the default. Advanced settings offer two other target modes: a **mechanical 3:1** (target set exactly 3x the per-share risk out from entry, `108 + 3 x 2.08 = 114.24` here), and **Auto**, which picks whichever of the percentage buffer and the mechanical 3:1 gives the higher reward:risk while still sitting before the supply zone.
+That 75% is the default. Advanced settings offer two other target modes: a **mechanical 3:1** (target set exactly 3x the per-share risk out from entry, `108 + 3 x 2.08 = 114.24` here), and **Auto**, which checks every buffer from 75% to 80% against the mechanical 3:1 and keeps whichever gives the higher reward:risk while still sitting before the supply zone — in practice that means 80% (`108 + 16 x 80% = 120.8` here) unless the mechanical target wins instead.
 
 ### Reward against risk
 
