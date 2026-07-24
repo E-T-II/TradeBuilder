@@ -191,9 +191,9 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("2%")).toBeInTheDocument();
     expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
     expect(screen.getByText("$0.08")).toBeInTheDocument(); // 4 x 2%, up to cent
-    // On the built order the values are not grayed — only the no-trade view mutes
-    // them. This is the contrast the no-trade test below asserts the other side of.
-    expect(screen.getByText("$0.08")).not.toHaveClass("text-muted-foreground");
+    // On the built order the values sit under no muted container — only the
+    // no-trade view greys them. This is the other side of the no-trade contrast.
+    expect(screen.getByText("$0.08").closest(".text-muted-foreground")).toBeNull();
   });
 
   test('given "ratio" mode: should say "Mechanical 3:1" instead of a percentage', () => {
@@ -253,8 +253,22 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("Stop buffer $")).toBeInTheDocument();
     expect(screen.getByText("Target buffer %")).toBeInTheDocument();
     expect(screen.getByText("75–80%")).toBeInTheDocument(); // auto, unresolved
-    // The whole point of this view: the values are grayed, not just present.
-    expect(screen.getByText("$4.00")).toHaveClass("text-muted-foreground"); // atr
-    expect(screen.getByText("$0.08")).toHaveClass("text-muted-foreground");
+    // The whole point of this view: the values are grayed, not just present. The
+    // box greys them by inheritance, so assert the muted container wraps them.
+    const box = screen.getByText("Behind the numbers").closest("div");
+    expect(box).toHaveClass("text-muted-foreground");
+    expect(box).toContainElement(screen.getByText("$0.08"));
+    expect(box).toContainElement(screen.getByText("$4.00"));
+  });
+
+  test('given a built "auto" order on the percentage side: should show 80%, not the range', () => {
+    // The regression the range must never leak into: a real order where auto's
+    // comparison resolved to the 80% ceiling. "75–80%" is only for no-trades.
+    const result = buildTrade({ ...longTrade, strength: 2, time: 1, freshness: 2, targetMode: "auto" });
+    expect(result.order).not.toBeNull();
+    expect(result.math.targetBufferPct).toBe(80);
+    render(<OrderTicket result={result} direction="long" />);
+    expect(screen.getByText("80%")).toBeInTheDocument();
+    expect(screen.queryByText("75–80%")).not.toBeInTheDocument();
   });
 });

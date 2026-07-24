@@ -144,7 +144,8 @@ the results screen shows it greyed under the "No trade" explanation:
 
 - `dailyAtr` — echoes `inputs.atr`.
 - `stopBufferPct` — 2 or 10, from the income timeframe.
-- `stopBufferDollar` — the computed stop buffer (`ATR × stopBufferPct`).
+- `stopBufferDollar` — the computed stop buffer (`ATR × 2%` daily or `× 10%`
+  weekly, rounded up to the cent).
 - `targetBufferPct` — the percentage used, or `null` when the mechanical 3:1
   was used instead (`ratio` mode outright, or `auto` picking the mechanical
   target over the percentage one). `OrderTicket` shows "Mechanical 3:1" in
