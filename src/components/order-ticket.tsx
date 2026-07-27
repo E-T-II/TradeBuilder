@@ -4,12 +4,7 @@ import {
   type TradeResult,
 } from "@/lib/trade-builder";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -146,7 +141,7 @@ export function OrderTicket({
   const orderKind =
     result.entryType === "proximal"
       ? "limit order at the proximal line"
-      : "stop limit order 10¢ past the proximal line";
+      : "stop limit order 10¢ before the proximal line";
 
   return (
     <Card>
