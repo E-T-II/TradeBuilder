@@ -277,6 +277,18 @@ describe("given OrderTicket", () => {
     expect(box).toContainElement(screen.getByText("$4.00"));
   });
 
+  test("given no trade in percent mode: should show the typed buffer in the gray box", () => {
+    // Percent is the default mode, so this is the no-trade most users will hit —
+    // and unlike auto it has a real buffer to show rather than a mode name.
+    const result = buildTrade({ ...longTrade, trend: "sideways" });
+    expect(result.order).toBeNull();
+    render(<OrderTicket result={result} direction="long" />);
+    const box = screen.getByText("Behind the numbers").closest("div");
+    expect(box).toHaveClass("text-muted-foreground");
+    expect(box).toContainElement(screen.getByText("75%"));
+    expect(box).toContainElement(screen.getByText("$4.00"));
+  });
+
   test('given a built "auto" order on the percentage side: should name Auto and its 80% ceiling', () => {
     // A real order where auto's comparison resolved to the 80% ceiling: the line
     // names the mode and what it landed on, never the bare "Auto" of a no-trade.

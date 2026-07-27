@@ -493,6 +493,16 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     expect(result.math.targetBufferPct).toBe(75);
   });
 
+  test("given the same tight zones in auto mode: should settle the buffer before rejecting", () => {
+    // tight-zones is the first return downstream of auto's comparison, and auto
+    // is the mode where the buffer isn't known up front — so this is where a
+    // resolved buffer would most easily be missed and shown as a bare "Auto".
+    const result = buildTrade({ ...tight, targetMode: "auto" });
+    expect(result.blockedReason).toBe("tight-zones");
+    expect(result.math.targetBufferPending).toBe(false);
+    expect(result.math.targetBufferPct).toBe(80); // the ceiling it compared
+  });
+
   test("given the same zones scoring a proximal entry: should still produce a valid order", () => {
     // Bump the judged score to 8.5 so the entry sits on the proximal line.
     const result = buildTrade({ ...tight, strength: 2, time: 1, freshness: 0.5 });
@@ -514,6 +524,12 @@ describe("given buildTrade where the position rounds to zero shares", () => {
     expect(result.objective).toBe("long");
     expect(result.order).toBeNull();
     expect(result.blockedReason).toBe("risk-too-small");
+    // The gray box still has to fill: a sizing block is downstream of the
+    // comparison, so percent's buffer is settled, not pending.
+    expect(result.math.dailyAtr).toBe(4);
+    expect(result.math.stopBufferDollar).toBe(0.08);
+    expect(result.math.targetBufferPct).toBe(75);
+    expect(result.math.targetBufferPending).toBe(false);
   });
 
   test("given one share costing over 50% of balance: should block as capital-too-large", () => {
@@ -542,6 +558,10 @@ describe("given buildTrade where the position rounds to zero shares", () => {
     expect(result.entryType).not.toBe("no-trade");
     expect(result.order).toBeNull();
     expect(result.blockedReason).toBe("capital-too-large");
+    expect(result.math.dailyAtr).toBe(5);
+    expect(result.math.stopBufferDollar).toBe(0.1);
+    expect(result.math.targetBufferPct).toBe(75);
+    expect(result.math.targetBufferPending).toBe(false);
   });
 });
 
@@ -696,7 +716,7 @@ describe("given buildTrade and the target modes", () => {
   });
 
   test('given "auto" that picks the mechanical target then fails the 6% rule: should report Mechanical 3:1, not the range', () => {
-    // Auto picks the mechanical 3:1 (usedRatio), clears the reward-risk gate,
+    // Auto picks the mechanical 3:1, clears the reward-risk gate,
     // then a large open risk trips the 6% rule. The comparison ran, so the
     // buffer is settled to null (mechanical), never the pending 75-80% range.
     const result = buildTrade({
