@@ -114,4 +114,4 @@ total = curve + trend + profit zone + strength + time + freshness
       = 8.5
 ```
 
-8.5 and up is a proximal entry — buy right at Demand proximal, which is the worked example above. 7 up to just under 8.5 is a confirmation entry, where you wait for price to re-cross Demand proximal before buying, 10 cents past it. Below 7, the strategy calls no trade regardless of what the Decision Matrix said.
+8.5 and up is a proximal entry — buy right at Demand proximal, which is the worked example above. 7 up to just under 8.5 is a confirmation entry, where you wait for price to re-cross Demand proximal, with the order resting 10 cents before that line. Below 7, the strategy calls no trade regardless of what the Decision Matrix said.

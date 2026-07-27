@@ -38,7 +38,11 @@ export type CurveZone = "wholesale" | "equilibrium" | "retail";
  * For low=100, high=130: wholesale is 100 to 110, equilibrium 110 to 120,
  * retail 120 to 130.
  */
-export function locateOnCurve(price: number, low: number, high: number): CurveZone {
+export function locateOnCurve(
+  price: number,
+  low: number,
+  high: number,
+): CurveZone {
   const third = (high - low) / 3;
   if (price < low + third) return "wholesale";
   if (price < low + 2 * third) return "equilibrium";
@@ -128,14 +132,22 @@ const DECISION_MATRIX: Record<
   Record<CurveZone, Record<Trend, MatrixVerdict>>
 > = {
   demand: {
-    retail: { downtrend: "no-trade", sideways: "no-trade", uptrend: "needs-5to1" }, // d, e, f
+    retail: {
+      downtrend: "no-trade",
+      sideways: "no-trade",
+      uptrend: "needs-5to1",
+    }, // d, e, f
     equilibrium: { downtrend: "no-trade", sideways: "trade", uptrend: "trade" }, // j, k, l
     wholesale: { downtrend: "needs-5to1", sideways: "trade", uptrend: "trade" }, // p, q, r
   },
   supply: {
     retail: { downtrend: "trade", sideways: "trade", uptrend: "needs-5to1" }, // a, b, c
     equilibrium: { downtrend: "trade", sideways: "trade", uptrend: "no-trade" }, // g, h, i
-    wholesale: { downtrend: "needs-5to1", sideways: "no-trade", uptrend: "no-trade" }, // m, n, o
+    wholesale: {
+      downtrend: "needs-5to1",
+      sideways: "no-trade",
+      uptrend: "no-trade",
+    }, // m, n, o
   },
 };
 
@@ -196,7 +208,7 @@ export function entryType(score: number): EntryType {
   return "no-trade";
 }
 
-/** Offset for a confirmation entry: 10 cents past the proximal line. */
+/** Offset for a confirmation entry: 10 cents before the proximal line. */
 const CONFIRMATION_OFFSET = 0.1;
 
 /**
@@ -211,8 +223,9 @@ export const TARGET_BUFFER_MAX_PCT = 80;
 /**
  * The entry price. A proximal entry is a limit order right at the proximal
  * line. A confirmation entry waits for price to re-cross the proximal line,
- * so the order sits 10 cents past it (above for long, below for short -
- * mirrored per the strategy).
+ * so the order sits 10 cents before it — the side price reaches first coming
+ * back to the line (above for long, below for short - mirrored per the
+ * strategy).
  */
 export function entryPrice(
   entryProximal: number,
@@ -560,8 +573,9 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     // which Math.round would drop to 75.04 instead of 75.05.
     targetBufferPct:
       inputs.targetMode === "percent"
-        ? Math.round(Number((inputs.targetBufferPct * 10_000).toPrecision(15))) /
-          100
+        ? Math.round(
+            Number((inputs.targetBufferPct * 10_000).toPrecision(15)),
+          ) / 100
         : null,
     targetBufferPending: false,
   };

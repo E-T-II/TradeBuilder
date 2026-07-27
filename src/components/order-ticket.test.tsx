@@ -33,6 +33,15 @@ describe("given OrderTicket", () => {
     expect(screen.getByText(/buy .* shares/i)).toBeInTheDocument();
   });
 
+  test("given a confirmation entry: should rest the order 10¢ before the proximal", () => {
+    const result = buildTrade(longTrade);
+    expect(result.entryType).toBe("confirmation");
+    render(<OrderTicket result={result} direction="long" />);
+    expect(
+      screen.getByText(/stop limit order 10¢ before the proximal line/i),
+    ).toBeInTheDocument();
+  });
+
   test("given a score below 7: should say the setup doesn't qualify", () => {
     // A sideways trend drops this setup to 6.5, a no-trade score.
     const result = buildTrade({ ...longTrade, trend: "sideways" });
@@ -77,7 +86,9 @@ describe("given OrderTicket", () => {
     expect(result.reachedRewardRisk).toBeUndefined();
     render(<OrderTicket result={result} direction="long" />);
     expect(
-      screen.getByText(/can't reach a 3:1 reward-to-risk before the opposing zone/i),
+      screen.getByText(
+        /can't reach a 3:1 reward-to-risk before the opposing zone/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -155,7 +166,9 @@ describe("given OrderTicket", () => {
     });
     expect(result.blockedReason).toBe("capital-too-large");
     render(<OrderTicket result={result} direction="long" />);
-    expect(screen.getByText(/more than 50% of your balance/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/more than 50% of your balance/i),
+    ).toBeInTheDocument();
   });
 
   test("given a Decision Matrix veto: should say the setup isn't valid for the trend and curve", () => {
@@ -193,7 +206,9 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("$0.08")).toBeInTheDocument(); // 4 x 2%, up to cent
     // On the built order the values sit under no muted container — only the
     // no-trade view greys them. This is the other side of the no-trade contrast.
-    expect(screen.getByText("$0.08").closest(".text-muted-foreground")).toBeNull();
+    expect(
+      screen.getByText("$0.08").closest(".text-muted-foreground"),
+    ).toBeNull();
   });
 
   test('given "ratio" mode: should say "Mechanical 3:1" instead of a percentage', () => {
@@ -265,7 +280,13 @@ describe("given OrderTicket", () => {
   test('given a built "auto" order on the percentage side: should name Auto and its 80% ceiling', () => {
     // A real order where auto's comparison resolved to the 80% ceiling: the line
     // names the mode and what it landed on, never the bare "Auto" of a no-trade.
-    const result = buildTrade({ ...longTrade, strength: 2, time: 1, freshness: 2, targetMode: "auto" });
+    const result = buildTrade({
+      ...longTrade,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+      targetMode: "auto",
+    });
     expect(result.order).not.toBeNull();
     expect(result.math.targetBufferPct).toBe(80);
     render(<OrderTicket result={result} direction="long" />);

@@ -253,7 +253,7 @@ describe("given entryPrice", () => {
     expect(entryPrice(122, "proximal", "short")).toBe(122);
   });
 
-  test("given a confirmation entry: should place it 10 cents past the proximal line", () => {
+  test("given a confirmation entry: should place it 10 cents before the proximal line", () => {
     expect(entryPrice(108, "confirmation", "long")).toBe(108.1);
     expect(entryPrice(122, "confirmation", "short")).toBe(121.9);
   });
