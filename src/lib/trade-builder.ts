@@ -85,6 +85,12 @@ export const roundToCent = (n: number) =>
   Math.round(Number((n * 100).toPrecision(15))) / 100;
 const roundUpToCent = (n: number) => Math.ceil(n * 100 - 1e-9) / 100;
 
+// A rate as a percent for display: 0.02 -> 2, keeping 4 decimals so a
+// fractional rate stays precise, and rounding off the float noise the
+// multiplication introduces (0.07 * 100 = 7.00…01). Shared by the risk limit
+// and the stop buffer, the two rates the results screen quotes back.
+const rateToPercent = (rate: number) => Math.round(rate * 1_000_000) / 10_000;
+
 /**
  * Scorecard factor #3, PROFIT ZONE ratio.
  *
@@ -208,7 +214,7 @@ export function entryType(score: number): EntryType {
   return "no-trade";
 }
 
-/** Offset for a confirmation entry: 10 cents before the proximal line. */
+/** Offset for a confirmation entry: 10 cents outside the proximal line. */
 const CONFIRMATION_OFFSET = 0.1;
 
 /**
@@ -222,10 +228,11 @@ export const TARGET_BUFFER_MAX_PCT = 80;
 
 /**
  * The entry price. A proximal entry is a limit order right at the proximal
- * line. A confirmation entry waits for price to re-cross the proximal line,
- * so the order sits 10 cents before it — the side price reaches first coming
- * back to the line (above for long, below for short - mirrored per the
- * strategy).
+ * line. A confirmation entry waits for price to enter the zone and cross back
+ * out, so the order rests 10 cents clear of the line on the outside — the near
+ * side, before the zone starts: above proximal for a long demand zone, below it
+ * for a short supply zone (README step 5). "Before" the line, not "past" it,
+ * is Eugene's wording for that side.
  */
 export function entryPrice(
   entryProximal: number,
@@ -553,42 +560,33 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
 
   // The "show the math" figures (per Eugene), computed straight from the inputs
   // so they're available on every return — the results screen shows them in gray
-  // even when there's no order. The buffer is settled here for percent (the
-  // typed value) and ratio (mechanical, null); auto's placeholder null is
-  // resolved inside the mode-selection block below. targetBufferPending defaults
-  // false and is flipped true only by the early return that fires before auto's
-  // comparison — the one case with no settled buffer.
+  // even when there's no order. percent (the typed value) and ratio (mechanical,
+  // null) know their buffer up front; auto's only settles once its 75-80%-vs-3:1
+  // comparison runs, so it starts pending and the comparison clears the flag.
+  // Pending-until-proven that way, any return that fires before the comparison
+  // reports the buffer as unsettled without having to know it's early.
   const math = {
     dailyAtr: inputs.atr,
-    // 4 decimals of a percent, matching checks.riskLimitPct: cleans float noise
-    // (0.02 -> 2, not 2.0000004) while keeping a fractional rate precise. The
-    // rate is always 0.02 or 0.1 — exact — so unlike targetBufferPct it needs no
-    // toPrecision guard; the shape just stays identical to that sibling.
-    stopBufferPct:
-      Math.round(stopBufferRate(inputs.timeframe) * 1_000_000) / 10_000,
+    stopBufferPct: rateToPercent(stopBufferRate(inputs.timeframe)),
     stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
     targetMode: inputs.targetMode,
-    // Snap to 15 significant digits before rounding, the float-noise guard
-    // roundToCent documents: a typed buffer like 75.045% is 7504.4999999… raw,
-    // which Math.round would drop to 75.04 instead of 75.05.
+    // A percent to two decimals, so roundToCent's float-noise guard is the one
+    // this needs: a typed 75.045% is 7504.4999999… raw, which a plain round
+    // would drop to 75.04 instead of 75.05.
     targetBufferPct:
       inputs.targetMode === "percent"
-        ? Math.round(
-            Number((inputs.targetBufferPct * 10_000).toPrecision(15)),
-          ) / 100
+        ? roundToCent(inputs.targetBufferPct * 100)
         : null,
-    targetBufferPending: false,
+    targetBufferPending: inputs.targetMode === "auto",
   };
 
-  // No order if the matrix vetoed the setup or the score didn't qualify. Both
-  // fire before auto's comparison, so auto's buffer is genuinely unsettled — the
-  // only case pending is true. percent/ratio already know theirs.
+  // No order if the matrix vetoed the setup or the score didn't qualify.
   if (objective === "no-trade" || type === "no-trade") {
     return {
       scorecard,
       entryType: type,
       objective,
-      math: { ...math, targetBufferPending: inputs.targetMode === "auto" },
+      math,
       order: null,
       checks: null,
     };
@@ -643,10 +641,11 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   );
   const autoPercentRr = rewardRiskRatio(entry, stop, autoPercentTarget);
 
-  // Each branch settles both the target/rr and the displayed buffer together, so
-  // the buffer can never drift from the comparison — even if a gate is later
-  // inserted before the returns below. (pending is already false for all of
-  // these; only the pre-comparison early return above leaves it true.)
+  // Each branch settles the target, the reward:risk and the displayed buffer
+  // together, so the buffer can never drift from the comparison that produced
+  // it. Auto clears its pending flag here and nowhere else: any return inserted
+  // upstream of this block keeps reporting the buffer as unsettled, which is
+  // exactly what it is.
   let target: number;
   let rr: number;
   if (inputs.targetMode === "ratio") {
@@ -656,6 +655,8 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     rr = 3;
     // math.targetBufferPct stays the base null (mechanical).
   } else if (inputs.targetMode === "auto") {
+    // The comparison has run either way, so the buffer is settled from here on.
+    math.targetBufferPending = false;
     if (fitsZone(ratioTarget) && !meetsProfitRatio(autoPercentRr, 3)) {
       target = ratioTarget;
       rr = 3;
@@ -761,7 +762,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     // 4 decimals of a percent: cleans float noise (0.02 -> 2, not 2.0000004)
     // while keeping a sub-2% value (e.g. 1.5%) precise rather than rounded
     // to a flat whole percent for display.
-    riskLimitPct: Math.round(inputs.riskTolerancePct * 1_000_000) / 10_000,
+    riskLimitPct: rateToPercent(inputs.riskTolerancePct),
     withinPerTradeRisk: totalRisk <= maxRisk,
     withinCapitalCap: capital <= inputs.accountBalance * 0.5,
     meetsRewardRisk: meetsProfitRatio(rr, 3),
