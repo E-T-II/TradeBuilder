@@ -24,7 +24,28 @@ beforeAll(() => {
       writable: true,
     });
   define(globalThis);
-  if (typeof window !== "undefined") define(window);
+  if (typeof window !== "undefined") {
+    define(window);
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => { },
+        removeListener: () => { },
+        addEventListener: () => { },
+        removeEventListener: () => { },
+        dispatchEvent: () => false,
+      }),
+    });
+    Object.defineProperty(window, "scrollTo", {
+      configurable: true,
+      writable: true,
+      value: () => { },
+    });
+  }
 });
 
 // Unmount rendered components after each test so the DOM doesn't leak between
