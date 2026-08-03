@@ -6,11 +6,11 @@ import { CirclePlay, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
 
-const YOUTUBE_CURVE_VIDEO_ID = "VW-WTSCWFhM";
-const YOUTUBE_CURVE_VIDEO_URL =
-    `https://www.youtube.com/embed/${YOUTUBE_CURVE_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
+const YOUTUBE_ODDS_ENHANCER_VIDEO_ID = "BBBVCRWfE1I";
+const YOUTUBE_ODDS_ENHANCER_VIDEO_URL =
+    `https://www.youtube.com/embed/${YOUTUBE_ODDS_ENHANCER_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&controls=1&enablejsapi=1`;
 
-export function CurveVideoDialog() {
+export function OddsEnhancerVideoDialog() {
     const [open, setOpen] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -24,14 +24,14 @@ export function CurveVideoDialog() {
                 render={<Button variant="ghost" size="sm" className="text-muted-foreground" />}
             >
                 <CirclePlay aria-hidden />
-                Watch curve video
+                Watch odds enhancer video
             </Dialog.Trigger>
 
             <Dialog.Portal>
                 <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
                 <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(40rem,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none transition-all data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
                     <div className="mb-3 flex items-center justify-between">
-                        <Dialog.Title className="text-sm font-medium">Curve tutorial</Dialog.Title>
+                        <Dialog.Title className="text-sm font-medium">Zone structure odds enhancers tutorial</Dialog.Title>
                         <Dialog.Close
                             render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}
                         >
@@ -39,13 +39,13 @@ export function CurveVideoDialog() {
                         </Dialog.Close>
                     </div>
                     <Dialog.Description className="sr-only">
-                        A YouTube video explaining how to set the curve on the high time frame.
+                        A YouTube video explaining scoring odds enhancers for the Score step.
                     </Dialog.Description>
                     <div className="overflow-hidden rounded-2xl border border-border bg-black">
                         <iframe
                             ref={iframeRef}
-                            src={YOUTUBE_CURVE_VIDEO_URL}
-                            title="Curve tutorial video"
+                            src={YOUTUBE_ODDS_ENHANCER_VIDEO_URL}
+                            title="Scoring odds enhancer video"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="aspect-video w-full"

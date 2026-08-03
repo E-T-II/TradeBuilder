@@ -23,8 +23,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
-import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { CurveVideoDialog } from "@/components/curve-video-dialog";
+import { TrendVideoDialog } from "@/components/trend-video-dialog";
+import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
+import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
 
 // Order mirrors Eugene's Six Step Process Flowchart so the wizard walks the
 // trade methodology: pre-steps, then curve (HTF), trend (ITF), zones (LTF),
@@ -39,7 +41,7 @@ export const STEPS = [
     title: "Zones",
     blurb: "Mark the supply and demand zones on your low time frame",
   },
-  { title: "Score", blurb: "Score the zone quality yourself" },
+  { title: "Score", blurb: "Score the zone structure" },
 ] as const;
 
 // Required fields per step; Next stays disabled until these are filled.
@@ -259,8 +261,8 @@ export function TopStepper({
               <span
                 aria-hidden
                 className={`mx-2 w-8 xl:w-12 ${i <= step
-                    ? "h-px bg-primary"
-                    : "border-t border-dotted border-neutral-300 dark:border-neutral-600"
+                  ? "h-px bg-primary"
+                  : "border-t border-dotted border-neutral-300 dark:border-neutral-600"
                   }`}
               />
             ) : null}
@@ -273,16 +275,16 @@ export function TopStepper({
             >
               <span
                 className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done || current
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
                   }`}
               >
                 {done ? <Check className="size-3.5" aria-hidden /> : i + 1}
               </span>
               <span
                 className={`whitespace-nowrap text-sm ${done || current
-                    ? "font-medium text-foreground"
-                    : "text-muted-foreground"
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground"
                   }`}
               >
                 {s.title}
@@ -376,8 +378,12 @@ export function TradeForm({
           </h2>
           {step === 1 ? (
             <CurveVideoDialog />
+          ) : step === 2 ? (
+            <TrendVideoDialog />
           ) : step === 3 ? (
-            <ChartTutorialButton direction={form.direction} />
+            <ZoningVideoDialog />
+          ) : step === 4 ? (
+            <OddsEnhancerVideoDialog />
           ) : null}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
