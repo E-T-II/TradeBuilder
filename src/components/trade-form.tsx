@@ -700,7 +700,7 @@ export function TradeForm({
             <Field
               id="freshness"
               label="Freshness"
-              hint="Has price returned to the zone since it formed"
+              hint="Has price returned to the zone"
               group
             >
               <RatingChips
