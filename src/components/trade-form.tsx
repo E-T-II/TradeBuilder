@@ -36,7 +36,7 @@ export const STEPS = [
   { title: "Trend", blurb: "Check the trend on your intermediary time frame" },
   {
     title: "Zones",
-    blurb: "Mark the demand and supply zones on your low time frame",
+    blurb: "Mark the supply and demand zones on your low time frame",
   },
   { title: "Score", blurb: "Score the zone quality yourself" },
 ] as const;
@@ -407,7 +407,7 @@ export function TradeForm({
               <Field
                 id="atr"
                 label="Daily ATR ($)"
-                hint="From finviz.com (14-day average true range)"
+                hint="From finviz.com (14-day Average True Range)"
               >
                 <NumberInput
                   id="atr"
@@ -420,15 +420,15 @@ export function TradeForm({
             <Field
               id="timeframe"
               label="Income objective"
-              hint="Sets the stop buffer: 2% or 10% of ATR"
+              hint="Sets the stop buffer: 2% or 10% of Daily ATR"
               group
             >
               <SegmentedControl
                 aria-labelledby="timeframe-label"
                 value={form.timeframe}
                 options={[
-                  { value: "daily", label: "Daily" },
-                  { value: "weekly", label: "Weekly +" },
+                  { value: "daily", label: "Daily (-)" },
+                  { value: "weekly", label: "Weekly (+)" },
                 ]}
                 onChange={(timeframe) => onChange({ timeframe })}
               />
@@ -669,7 +669,7 @@ export function TradeForm({
             <Field
               id="strength"
               label="Strength"
-              hint="How sharply price rejected the zone"
+              hint="How sharply price left the zone"
               group
             >
               <RatingChips
@@ -700,7 +700,7 @@ export function TradeForm({
             <Field
               id="freshness"
               label="Freshness"
-              hint="How untouched the zone is since it formed"
+              hint="Has price returned to the zone since it formed"
               group
             >
               <RatingChips
