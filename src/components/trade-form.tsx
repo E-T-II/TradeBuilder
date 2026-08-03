@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
+import { CurveVideoDialog } from "@/components/curve-video-dialog";
 
 // Order mirrors Eugene's Six Step Process Flowchart so the wizard walks the
 // trade methodology: pre-steps, then curve (HTF), trend (ITF), zones (LTF),
@@ -257,36 +258,32 @@ export function TopStepper({
             {i > 0 ? (
               <span
                 aria-hidden
-                className={`mx-2 w-8 xl:w-12 ${
-                  i <= step
+                className={`mx-2 w-8 xl:w-12 ${i <= step
                     ? "h-px bg-primary"
                     : "border-t border-dotted border-neutral-300 dark:border-neutral-600"
-                }`}
+                  }`}
               />
             ) : null}
             <button
               type="button"
               disabled={!clickable}
               onClick={() => clickable && onJump(i)}
-              className={`flex items-center gap-2 rounded-full transition-opacity ${
-                clickable ? "hover:opacity-70" : ""
-              }`}
+              className={`flex items-center gap-2 rounded-full transition-opacity ${clickable ? "hover:opacity-70" : ""
+                }`}
             >
               <span
-                className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                  done || current
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done || current
                     ? "bg-primary text-primary-foreground"
                     : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
-                }`}
+                  }`}
               >
                 {done ? <Check className="size-3.5" aria-hidden /> : i + 1}
               </span>
               <span
-                className={`whitespace-nowrap text-sm ${
-                  done || current
+                className={`whitespace-nowrap text-sm ${done || current
                     ? "font-medium text-foreground"
                     : "text-muted-foreground"
-                }`}
+                  }`}
               >
                 {s.title}
               </span>
@@ -362,9 +359,8 @@ export function TradeForm({
         {STEPS.map((s, i) => (
           <div
             key={s.title}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= step ? "bg-primary" : "bg-muted"
-            }`}
+            className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"
+              }`}
           />
         ))}
       </div>
@@ -378,7 +374,9 @@ export function TradeForm({
           >
             {STEPS[step].title}
           </h2>
-          {step === 3 ? (
+          {step === 1 ? (
+            <CurveVideoDialog />
+          ) : step === 3 ? (
             <ChartTutorialButton direction={form.direction} />
           ) : null}
         </div>
