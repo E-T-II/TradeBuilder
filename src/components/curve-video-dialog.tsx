@@ -4,9 +4,9 @@ import { Dialog } from "@base-ui/react/dialog";
 import { CirclePlay, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const YOUTUBE_CURVE_VIDEO_ID = "ysz5S6PUM-U";
+const YOUTUBE_CURVE_VIDEO_ID = "VW-WTSCWFhM";
 const YOUTUBE_CURVE_VIDEO_URL =
-    `https://youtu.be/J4sVOhBb954?si=cvLaBhP71BYvmN20`;
+    `https://www.youtube.com/embed/${YOUTUBE_CURVE_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1`;
 
 export function CurveVideoDialog() {
     return (
