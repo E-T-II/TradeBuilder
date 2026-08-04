@@ -27,6 +27,8 @@ import { CurveVideoDialog } from "@/components/curve-video-dialog";
 import { TrendVideoDialog } from "@/components/trend-video-dialog";
 import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
+import { Analytics } from "@vercel/analytics/next"
+
 
 // Order mirrors Eugene's Six Step Process Flowchart so the wizard walks the
 // trade methodology: pre-steps, then curve (HTF), trend (ITF), zones (LTF),
