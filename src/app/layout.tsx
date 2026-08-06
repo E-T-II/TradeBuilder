@@ -6,10 +6,30 @@ export const metadata: Metadata = {
   title: "Trade Builder",
   description:
     "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
-      icons: {
-      icon: "/genoTrades.ico",
-    },
-  };
+  icons: {
+    icon: "/genoTrades.ico",
+  },
+  openGraph: {
+    title: "Trade Builder",
+    description:
+      "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
+    images: [
+      {
+        url: "/genoTrades.png",
+        width: 1200,
+        height: 630,
+        alt: "Trade Builder preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trade Builder",
+    description:
+      "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
+    images: ["/genoTrades.png"],
+  },
+};
 
 export default function RootLayout({
   children,
