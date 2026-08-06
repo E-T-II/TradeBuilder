@@ -6,7 +6,10 @@ export const metadata: Metadata = {
   title: "Trade Builder",
   description:
     "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
-};
+      icons: {
+      icon: "/genoTrades.ico",
+    },
+  };
 
 export default function RootLayout({
   children,
