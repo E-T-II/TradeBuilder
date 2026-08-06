@@ -7,7 +7,11 @@ export const metadata: Metadata = {
   description:
     "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
   icons: {
-    icon: "/genoTrades.ico",
+    icon: [
+      { url: "/genoTrades.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/genoTrades.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/genoTrades.png",
   },
   openGraph: {
     title: "Trade Builder",
