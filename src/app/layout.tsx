@@ -15,19 +15,19 @@ export const metadata: Metadata = {
       "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
     images: [
       {
-        url: "/genoTrades.png",
-        width: 1200,
-        height: 630,
+        url: "/genoTrades2.png",
+        width: 500,
+        height: 500,
         alt: "Trade Builder preview",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Trade Builder",
     description:
       "Score a trade with the odds enhancer scorecard and get your entry, stop, target and position size based on the Engineered Risk Trading Strategy.",
-    images: ["/genoTrades.png"],
+    images: ["/genoTrades2.png"],
   },
 };
 
