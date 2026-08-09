@@ -8,7 +8,7 @@ import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
 
 const YOUTUBE_ZONING_VIDEO_ID = "XLq6BR3MRTw";
 const YOUTUBE_ZONING_VIDEO_URL =
-    `https://www.youtube.com/embed/${YOUTUBE_ZONING_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&controls=1&enablejsapi=1`;
+    `https://www.youtube.com/embed/${YOUTUBE_ZONING_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
 
 export function ZoningVideoDialog() {
     const [open, setOpen] = useState(false);

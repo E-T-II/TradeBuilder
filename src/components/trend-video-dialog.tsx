@@ -6,9 +6,9 @@ import { CirclePlay, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
 
-const YOUTUBE_TREND_VIDEO_ID = "Xhqcm07bxH4";
+const YOUTUBE_TREND_VIDEO_ID = "FtsWTOQlnoA";
 const YOUTUBE_TREND_VIDEO_URL =
-    `https://www.youtube.com/embed/${YOUTUBE_TREND_VIDEO_ID}?start=116&end=278&autoplay=1&modestbranding=1&rel=0&controls=1&enablejsapi=1`;
+    `https://www.youtube.com/embed/${YOUTUBE_TREND_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
 
 export function TrendVideoDialog() {
     const [open, setOpen] = useState(false);

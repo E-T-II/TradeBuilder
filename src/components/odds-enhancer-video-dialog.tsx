@@ -8,7 +8,7 @@ import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
 
 const YOUTUBE_ODDS_ENHANCER_VIDEO_ID = "BBBVCRWfE1I";
 const YOUTUBE_ODDS_ENHANCER_VIDEO_URL =
-    `https://www.youtube.com/embed/${YOUTUBE_ODDS_ENHANCER_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&controls=1&enablejsapi=1`;
+    `https://www.youtube.com/embed/${YOUTUBE_ODDS_ENHANCER_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
 
 export function OddsEnhancerVideoDialog() {
     const [open, setOpen] = useState(false);
