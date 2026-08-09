@@ -6,7 +6,7 @@ import { CirclePlay, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
 
-const YOUTUBE_CURVE_VIDEO_ID = "4DvSv46v9oo";
+const YOUTUBE_CURVE_VIDEO_ID = "7YBiZB5RIUc";
 const YOUTUBE_CURVE_VIDEO_URL =
     `https://www.youtube.com/embed/${YOUTUBE_CURVE_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
 
