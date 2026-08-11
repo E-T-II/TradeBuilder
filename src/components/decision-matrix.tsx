@@ -13,10 +13,14 @@ const accentCellClasses =
 const pulseStyles = `
   @keyframes pulse-ring {
     0%, 100% { 
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      outline: 1px solid rgba(37, 99, 235, 1);
+      outline-offset: -1px;
+      box-shadow: inset 0 0 10px 3px rgba(37, 99, 235, 0.35);
     }
     50% { 
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0);
+      outline: 1px solid rgba(37, 99, 235, 0);
+      outline-offset: -1px;
+      box-shadow: inset 0 0 0px 0px rgba(37, 99, 235, 0);
     }
   }
   .animate-pulse-ring {
@@ -37,7 +41,7 @@ interface DecisionMatrixProps {
 
 function cell(classes: string, highlighted: boolean): string {
     return highlighted
-        ? classes + " ring-1 ring-blue-500 dark:ring-blue-400 animate-pulse-ring"
+        ? classes + " relative z-[1] animate-pulse-ring"
         : classes;
 }
 
