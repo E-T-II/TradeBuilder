@@ -61,11 +61,11 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
             <thead>
               <tr>
                 <th className={headerCellClasses} rowSpan={2}>
-                  <div className="flex h-full flex-col justify-between gap-2 py-2">
-                    <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">
+                  <div className="flex h-full flex-col items-center justify-between gap-2 py-2">
+                    <span className="block text-center text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">
                       Zone
                     </span>
-                    <span className="block border-t border-slate-300 pt-2 text-[10px] uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                    <span className="block border-t border-slate-300 pt-2 text-center text-[10px] uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:text-slate-300">
                       Trend
                     </span>
                   </div>
@@ -133,7 +133,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                   <div className="font-semibold text-emerald-600 dark:text-emerald-400">Curve Low</div>
                 </td>
                 <td className={cell(cellClasses, isActive(2, 0))}>
-                  <div><span className="text-rose-600">Short<span className="text-xl">*</span></span></div>
+                  <div className="flex flex-col items-center"><span className="text-rose-600">Short<span className="text-xl">*</span></span></div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                 </td>
                 <td className={cell(cellClasses, isActive(2, 1))}>No action</td>
