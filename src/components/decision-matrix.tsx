@@ -84,7 +84,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                     <span className="hidden sm:inline">ITF Downtrend</span>
                   </span>
                 </th>
-                <th className={headerCellClasses}>ITF Sideways</th>
+                <th className={headerCellClasses}><span className="sm:hidden">ITF Side<br />ways</span><span className="hidden sm:inline">ITF Sideways</span></th>
                 <th className={headerCellClasses}><span className="text-emerald-600">ITF Uptrend</span></th>
                 <th className={headerCellClasses}>
                   <span className="text-rose-600">
@@ -92,7 +92,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                     <span className="hidden sm:inline">ITF Downtrend</span>
                   </span>
                 </th>
-                <th className={headerCellClasses}>ITF Sideways</th>
+                <th className={headerCellClasses}><span className="sm:hidden">ITF Side<br />ways</span><span className="hidden sm:inline">ITF Sideways</span></th>
                 <th className={headerCellClasses}><span className="text-emerald-600">ITF Uptrend</span></th>
               </tr>
             </thead>
