@@ -272,7 +272,7 @@ export function TradeBuilderApp() {
     }
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
-    } catch {}
+    } catch { }
   }, [form]);
 
   const update = (patch: Partial<FormState>) => {

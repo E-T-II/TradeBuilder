@@ -74,7 +74,7 @@ function Row({
             {detail}
             {positive ? (
               <Check
-                className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                className="size-3.5 text-emerald-700 dark:text-emerald-400"
                 aria-hidden
               />
             ) : negative ? (
@@ -118,7 +118,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
   const animatedTotal = useCountUp(s.total, reduced ? 0 : 750);
   const barWidth = Math.min(100, (animatedTotal / 10) * 100);
 
-  
+
   const rows = [
 
     <Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
@@ -194,9 +194,8 @@ export function Scorecard({ result }: { result: TradeResult }) {
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Odds enhancers</CardTitle>
         <Badge
-          className={`${badgeClasses} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${
-            shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
-          }`}
+          className={`${badgeClasses} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
+            }`}
         >
           {badgeLabel}
         </Badge>
@@ -218,15 +217,14 @@ export function Scorecard({ result }: { result: TradeResult }) {
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
               <div
-                className={`h-full rounded-full ${
-                  noValidTrade
-                    ? "bg-neutral-400 dark:bg-neutral-500"
-                    : result.entryType === "proximal"
-                      ? "bg-emerald-500"
-                      : result.entryType === "confirmation"
-                        ? "bg-amber-500"
-                        : "bg-red-500"
-                }`}
+                className={`h-full rounded-full ${noValidTrade
+                  ? "bg-neutral-400 dark:bg-neutral-500"
+                  : result.entryType === "proximal"
+                    ? "bg-emerald-500"
+                    : result.entryType === "confirmation"
+                      ? "bg-amber-500"
+                      : "bg-red-500"
+                  }`}
                 style={{ width: `${barWidth}%` }}
               />
             </div>
