@@ -111,21 +111,13 @@ export function Scorecard({ result }: { result: TradeResult }) {
   const animatedTotal = useCountUp(s.total, reduced ? 0 : 750);
   const barWidth = Math.min(100, (animatedTotal / 10) * 100);
 
+  
   const rows = [
-    <Row
-      key="curve"
-      label="Curve"
-      points={s.curve}
-      max={1}
-      positive={s.curve === 1}
-      detail={
-        s.curve === 1
-          ? `${s.curveZone} (good side)`
-          : s.curve === 0.5
-            ? `${s.curveZone} (mid range)`
-            : `${s.curveZone} (wrong side)`
-      }
-    />,
+
+    <Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
+    <Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
+    <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
+
     <Row
       key="trend"
       label="Trend"
@@ -140,6 +132,22 @@ export function Scorecard({ result }: { result: TradeResult }) {
             : "against the trend"
       }
     />,
+
+    <Row
+      key="curve"
+      label="Curve"
+      points={s.curve}
+      max={1}
+      positive={s.curve === 1}
+      detail={
+        s.curve === 1
+          ? `${s.curveZone} (good side)`
+          : s.curve === 0.5
+            ? `${s.curveZone} (mid range)`
+            : `${s.curveZone} (wrong side)`
+      }
+    />,
+
     <Row
       key="profit"
       label="Profit zone"
@@ -154,9 +162,9 @@ export function Scorecard({ result }: { result: TradeResult }) {
             : `${ratio}:1 (below 3:1)`
       }
     />,
-    <Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
-    <Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
-    <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
+    //<Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
+    //<Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
+    //<Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
   ];
 
   // The score can qualify yet still produce no order (a matrix veto, zones too
