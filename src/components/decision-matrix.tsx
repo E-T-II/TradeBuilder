@@ -111,7 +111,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                 <td className={cell(cellClasses, isActive(0, 3))}>No action</td>
                 <td className={cell(cellClasses, isActive(0, 4))}>No action</td>
                 <td className={cell(cellClasses, isActive(0, 5))}>
-                  <div><span className="text-emerald-600">Long*</span></div>
+                  <div><span className="text-emerald-600">Long<span className="text-xl">*</span></span></div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                 </td>
               </tr>
@@ -133,7 +133,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                   <div className="font-semibold text-emerald-600 dark:text-emerald-400">Curve Low</div>
                 </td>
                 <td className={cell(cellClasses, isActive(2, 0))}>
-                  <div><span className="text-rose-600">Short*</span></div>
+                  <div><span className="text-rose-600">Short<span className="text-xl">*</span></span></div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                 </td>
                 <td className={cell(cellClasses, isActive(2, 1))}>No action</td>
@@ -149,7 +149,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
           </table>
           <div className="mt-4">
             <p className="ml-4 text-xs text-slate-500 dark:text-slate-400">
-              * Offering Profit Zone ≥ 5:1.
+              <span className="text-xl">*</span> Offering Profit Zone ≥ 5:1.
             </p>
           </div>
         </div>
