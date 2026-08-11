@@ -83,14 +83,14 @@ export function OrderTicket({
         "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade. The opposite direction may qualify.";
     } else if (result.entryType === "no-trade") {
       reason =
-        "The score is below 7, so this setup doesn't qualify. If we did not score the trade, we will not take the trade.";
+        "The score is below 7, so this setup doesn't qualify. If the trade score is not probable, we will not take the trade.";
     } else if (result.blockedReason === "reward-risk") {
       // The ratio is absent when the mechanical target overshot the opposing
       // zone — there the setup's own reward:risk isn't what was rejected.
       const reached =
         result.reachedRewardRisk === undefined
           ? "This setup can't reach a 3:1 reward-to-risk before the opposing zone"
-          : `This setup only reaches ${ratio.format(result.reachedRewardRisk)}:1, short of the 3:1 minimum`;
+          : `This setup only reaches ${ratio.format(result.reachedRewardRisk)}:1 reward-to-risk ratio, short of the 3:1 minimum`;
       reason = `${reached}, so the strategy rejects it. You'd need a farther target zone or a tighter stop.`;
     } else if (result.blockedReason === "over-6pct") {
       // Naming the rule without the numbers leaves "reduce the size" unanswerable,

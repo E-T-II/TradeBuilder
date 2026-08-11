@@ -28,6 +28,7 @@ import { Reveal } from "@/components/reveal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DecisionMatrix } from "@/components/decision-matrix";
 
 export interface FormState {
   accountBalance: string;
@@ -341,10 +342,19 @@ export function TradeBuilderApp() {
           ) : (
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
               {result ? (
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Reveal>
-                    <Scorecard result={result} />
-                  </Reveal>
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="space-y-6">
+                    <Reveal>
+                      <Scorecard result={result} />
+                    </Reveal>
+                    <Reveal delay={360}>
+                      <DecisionMatrix
+                        zoneType={form.direction === "long" ? "demand" : "supply"}
+                        curve={result.scorecard.curveZone}
+                        trend={form.trend}
+                      />
+                    </Reveal>
+                  </div>
                   <div className="flex flex-col gap-6">
                     <Reveal delay={140}>
                       <OrderTicket result={result} direction={form.direction} />

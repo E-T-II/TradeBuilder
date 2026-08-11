@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { TradeResult } from "@/lib/trade-builder";
 import { JUDGED_MAX } from "@/lib/trade-builder";
 import { Reveal, usePrefersReducedMotion } from "@/components/reveal";
@@ -56,12 +56,14 @@ function Row({
   max,
   detail,
   positive,
+  negative,
 }: {
   label: string;
   points: number;
   max: number;
   detail?: string;
   positive?: boolean;
+  negative?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between text-sm">
@@ -73,6 +75,11 @@ function Row({
             {positive ? (
               <Check
                 className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                aria-hidden
+              />
+            ) : negative ? (
+              <X
+                className="size-3.5 text-red-600 dark:text-red-400"
                 aria-hidden
               />
             ) : null}
@@ -124,6 +131,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
       points={s.trend}
       max={2}
       positive={s.trend === 2}
+      negative={s.trend === 0}
       detail={
         s.trend === 2
           ? "with the trend"
@@ -139,6 +147,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
       points={s.curve}
       max={1}
       positive={s.curve === 1}
+      negative={s.curve === 0}
       detail={
         s.curve === 1
           ? `${s.curveZone} (good side)`
@@ -154,6 +163,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
       points={s.profitZone}
       max={2}
       positive={s.profitZone === 2}
+      negative={s.profitZone === 0}
       detail={
         s.profitZone === 2
           ? `${ratio}:1 (5:1 or better)`
