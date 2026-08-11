@@ -102,10 +102,10 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                                     <div className="text-xs text-slate-500 dark:text-slate-400">HTF</div>
                                     <div className="font-semibold text-rose-600 dark:text-rose-400">Curve High</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-600">Short</span></td>
-                                <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-600">Short</span></td>
+                                <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-700">Short</span></td>
+                                <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-700">Short</span></td>
                                 <td className={cell(cellClasses, isActive(0, 2))}>
-                                    <div><span className="font-semibold text-rose-600">Short</span></div>
+                                    <div><span className="font-semibold text-rose-700">Short</span></div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                                 </td>
                                 <td className={cell(cellClasses, isActive(0, 3))}>No action</td>
@@ -120,8 +120,8 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                                     <div className="text-xs text-slate-500 dark:text-slate-400">HTF</div>
                                     <div className="font-semibold text-slate-900 dark:text-slate-100">Curve Middle</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(1, 0))}><span className="font-semibold text-rose-600">Short</span></td>
-                                <td className={cell(cellClasses, isActive(1, 1))}><span className="font-semibold text-rose-600">Short</span></td>
+                                <td className={cell(cellClasses, isActive(1, 0))}><span className="font-semibold text-rose-700">Short</span></td>
+                                <td className={cell(cellClasses, isActive(1, 1))}><span className="font-semibold text-rose-700">Short</span></td>
                                 <td className={cell(cellClasses, isActive(1, 2))}>No action</td>
                                 <td className={cell(cellClasses, isActive(1, 3))}>No action</td>
                                 <td className={cell(cellClasses, isActive(1, 4))}><span className="font-semibold text-emerald-700">Long</span></td>
@@ -133,7 +133,7 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                                     <div className="font-semibold text-emerald-700 dark:text-emerald-400">Curve Low</div>
                                 </td>
                                 <td className={cell(cellClasses, isActive(2, 0))}>
-                                    <div className="flex flex-col items-center"><span className="font-semibold text-rose-600">Short<span className="text-xl">*</span></span></div>
+                                    <div className="flex flex-col items-center"><span className="font-semibold text-rose-700">Short<span className="text-xl">*</span></span></div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                                 </td>
                                 <td className={cell(cellClasses, isActive(2, 1))}>No action</td>
