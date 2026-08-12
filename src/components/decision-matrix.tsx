@@ -37,6 +37,7 @@ interface DecisionMatrixProps {
     zoneType?: ZoneType;
     curve?: CurveZone;
     trend?: Trend;
+    embedded?: boolean;
 }
 
 function cell(classes: string, highlighted: boolean): string {
@@ -45,7 +46,7 @@ function cell(classes: string, highlighted: boolean): string {
         : classes;
 }
 
-export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) {
+export function DecisionMatrix({ zoneType, curve, trend, embedded = false }: DecisionMatrixProps) {
     const colOffset = zoneType != null ? ZONE_COL[zoneType] + (trend != null ? TREND_COL[trend] : -1) : -1;
     const activeRow = curve != null ? CURVE_ROW[curve] : -1;
 
@@ -53,12 +54,9 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
         return row === activeRow && col === colOffset;
     }
 
-    return (
-        <Card>
+    const content = (
+        <>
             <style>{pulseStyles}</style>
-            <CardHeader>
-                <CardTitle>Decision Matrix</CardTitle>
-            </CardHeader>
             <CardContent className="overflow-x-auto">
                 <div className="w-full overflow-hidden rounded-2xl border border-slate-300 dark:border-slate-700">
                     <table className="w-full border-collapse table-fixed rounded-2xl">
@@ -158,6 +156,15 @@ export function DecisionMatrix({ zoneType, curve, trend }: DecisionMatrixProps) 
                     </div>
                 </div>
             </CardContent>
+        </>
+    );
+
+    return embedded ? content : (
+        <Card>
+            <CardHeader>
+                <CardTitle>Decision Matrix</CardTitle>
+            </CardHeader>
+            {content}
         </Card>
     );
 }
