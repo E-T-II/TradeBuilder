@@ -26,6 +26,7 @@ import { SegmentedControl } from "@/components/segmented-control";
 import { CurveVideoDialog } from "@/components/curve-video-dialog";
 import { TrendVideoDialog } from "@/components/trend-video-dialog";
 import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
+import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
 import { Analytics } from "@vercel/analytics/next"
 
@@ -634,6 +635,9 @@ export function TradeForm({
                 onChange={(demandLow) => onChange({ demandLow })}
                 error={zoneErrors.demandLow}
               />
+            </div>
+            <div className="flex justify-center">
+              <DecisionMatrixDialog />
             </div>
             {/* Direction comes after the zone lines: mark the zones as they
                 appear on the chart, then decide which way to trade them. */}
