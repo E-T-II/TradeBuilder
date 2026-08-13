@@ -59,6 +59,9 @@ function MathLines({ math }: { math: TradeResult["math"] }) {
   return (
     <>
       <Line label="Target buffer %" value={targetBufferText(math)} />
+      {math.targetBufferDollar !== null ? (
+        <Line label="Target buffer $" value={usd.format(math.targetBufferDollar)} />
+      ) : null}
       <Line label="Daily ATR" value={usd.format(math.dailyAtr)} />
       <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} />
       <Line label="Stop buffer $" value={usd.format(math.stopBufferDollar)} />

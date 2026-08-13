@@ -504,6 +504,8 @@ export interface TradeResult {
     stopBufferDollar: number;
     targetMode: TargetMode;
     targetBufferPct: number | null;
+    /** Dollar distance from entry proximal to the percentage-based target. */
+    targetBufferDollar: number | null;
     targetBufferPending: boolean;
   };
   checks: {
@@ -576,6 +578,13 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     targetBufferPct:
       inputs.targetMode === "percent"
         ? roundToCent(inputs.targetBufferPct * 100)
+        : null,
+    targetBufferDollar:
+      inputs.targetMode === "percent"
+        ? roundToCent(
+            Math.abs(inputs.targetProximal - inputs.entryProximal) *
+              inputs.targetBufferPct,
+          )
         : null,
     targetBufferPending: inputs.targetMode === "auto",
   };
@@ -653,20 +662,28 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     // Mechanical targets are 3:1 by construction; recomputing from the
     // cent-rounded price could dip just under 3 and falsely trip the rule.
     rr = 3;
-    // math.targetBufferPct stays the base null (mechanical).
+    // Mechanical targets use three times the per-share trade risk as the
+    // dollar target buffer. The percentage remains null because none applies.
+    math.targetBufferDollar = roundToCent(riskPerShare * 3);
   } else if (inputs.targetMode === "auto") {
     // The comparison has run either way, so the buffer is settled from here on.
     math.targetBufferPending = false;
     if (fitsZone(ratioTarget) && !meetsProfitRatio(autoPercentRr, 3)) {
       target = ratioTarget;
       rr = 3;
-      // Mechanical won: math.targetBufferPct stays the base null.
+      // Mechanical won: no percentage applies, so the target buffer is three
+      // times the per-share trade risk.
+      math.targetBufferDollar = roundToCent(riskPerShare * 3);
     } else {
       target = autoPercentTarget;
       rr = autoPercentRr;
       // Percentage side won: report the 80% ceiling auto actually compared, not
       // the user's typed value.
       math.targetBufferPct = TARGET_BUFFER_MAX_PCT;
+      math.targetBufferDollar = roundToCent(
+        Math.abs(inputs.targetProximal - inputs.entryProximal) *
+          (TARGET_BUFFER_MAX_PCT / 100),
+      );
     }
   } else {
     target = percentTarget;

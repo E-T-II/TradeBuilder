@@ -198,6 +198,8 @@ describe("given OrderTicket", () => {
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Target buffer %")).toBeInTheDocument();
     expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText("Target buffer $")).toBeInTheDocument();
+    expect(screen.getByText("$12.00")).toBeInTheDocument();
     expect(screen.getByText("Daily ATR")).toBeInTheDocument();
     expect(screen.getByText("$4.00")).toBeInTheDocument(); // atr: 4
     expect(screen.getByText("Stop buffer %")).toBeInTheDocument();
@@ -216,6 +218,8 @@ describe("given OrderTicket", () => {
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Mechanical 3:1")).toBeInTheDocument();
     expect(screen.queryByText("75%")).not.toBeInTheDocument();
+    expect(screen.getByText("Target buffer $")).toBeInTheDocument();
+    expect(screen.getByText("$6.54")).toBeInTheDocument();
   });
 
   test('given "auto" picking the mechanical target: should name Auto and the mechanical target', () => {
@@ -232,8 +236,10 @@ describe("given OrderTicket", () => {
       targetDistal: 117,
     });
     expect(result.math.targetBufferPct).toBeNull(); // confirms the mechanical won
+    expect(result.math.targetBufferDollar).toBe(6.24);
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Auto (Mechanical 3:1)")).toBeInTheDocument();
+    expect(screen.getByText("$6.24")).toBeInTheDocument();
   });
 
   test("given a weekly income objective: should show the 10% stop buffer", () => {
@@ -301,7 +307,9 @@ describe("given OrderTicket", () => {
     });
     expect(result.order).not.toBeNull();
     expect(result.math.targetBufferPct).toBe(80);
+    expect(result.math.targetBufferDollar).toBe(12.8);
     render(<OrderTicket result={result} direction="long" />);
     expect(screen.getByText("Auto (80%)")).toBeInTheDocument();
+    expect(screen.getByText("$12.80")).toBeInTheDocument();
   });
 });
