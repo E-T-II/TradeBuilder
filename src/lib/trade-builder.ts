@@ -369,17 +369,17 @@ export function deriveZoneLines(zones: Zones, direction: Direction): ZoneLines {
   const { demandHigh, demandLow, supplyHigh, supplyLow } = zones;
   return direction === "long"
     ? {
-        entryProximal: demandHigh,
-        entryDistal: demandLow,
-        targetProximal: supplyLow,
-        targetDistal: supplyHigh,
-      }
+      entryProximal: demandHigh,
+      entryDistal: demandLow,
+      targetProximal: supplyLow,
+      targetDistal: supplyHigh,
+    }
     : {
-        entryProximal: supplyLow,
-        entryDistal: supplyHigh,
-        targetProximal: demandHigh,
-        targetDistal: demandLow,
-      };
+      entryProximal: supplyLow,
+      entryDistal: supplyHigh,
+      targetProximal: demandHigh,
+      targetDistal: demandLow,
+    };
 }
 
 /**
@@ -454,11 +454,11 @@ export interface TradeResult {
    * - "over-6pct": this trade's risk plus open risk exceeds 6% of the balance.
    */
   blockedReason?:
-    | "tight-zones"
-    | "risk-too-small"
-    | "capital-too-large"
-    | "reward-risk"
-    | "over-6pct";
+  | "tight-zones"
+  | "risk-too-small"
+  | "capital-too-large"
+  | "reward-risk"
+  | "over-6pct";
   /**
    * The numbers behind a hard-rule rejection, so the copy can quantify the miss
    * instead of just naming the rule. Set alongside blockedReason, never on the
@@ -582,9 +582,9 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     targetBufferDollar:
       inputs.targetMode === "percent"
         ? roundToCent(
-            Math.abs(inputs.targetProximal - inputs.entryProximal) *
-              inputs.targetBufferPct,
-          )
+          Math.abs(inputs.targetProximal - inputs.entryProximal) *
+          inputs.targetBufferPct,
+        )
         : null,
     targetBufferPending: inputs.targetMode === "auto",
   };
@@ -682,7 +682,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       math.targetBufferPct = TARGET_BUFFER_MAX_PCT;
       math.targetBufferDollar = roundToCent(
         Math.abs(inputs.targetProximal - inputs.entryProximal) *
-          (TARGET_BUFFER_MAX_PCT / 100),
+        (TARGET_BUFFER_MAX_PCT / 100),
       );
     }
   } else {

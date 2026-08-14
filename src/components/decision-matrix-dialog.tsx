@@ -9,7 +9,7 @@ export function DecisionMatrixDialog() {
     return (
         <Dialog.Root>
             <Dialog.Trigger
-                render={<Button variant="ghost" size="sm" className="text-muted-foreground" />}
+                render={<Button variant="outline" size="sm" />}
             >
                 <Table2 aria-hidden />
                 See the Decision Matrix
