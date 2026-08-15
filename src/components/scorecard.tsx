@@ -105,7 +105,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
   const ratio =
     s.profitZoneRatio >= 100
       ? Math.round(s.profitZoneRatio)
-      : Math.round(s.profitZoneRatio * 10) / 10;
+      : Math.round(s.profitZoneRatio * 100) / 100;
 
   const reduced = usePrefersReducedMotion();
   const [shown, setShown] = useState(false);

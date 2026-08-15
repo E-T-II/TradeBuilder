@@ -13,16 +13,16 @@ beforeAll(() => {
     matches: false,
     media: query,
     onchange: null,
-    addEventListener() {},
-    removeEventListener() {},
-    addListener() {},
-    removeListener() {},
+    addEventListener() { },
+    removeEventListener() { },
+    addListener() { },
+    removeListener() { },
     dispatchEvent() {
       return false;
     },
   })) as typeof window.matchMedia;
   window.requestAnimationFrame = (() => 0) as typeof window.requestAnimationFrame;
-  window.cancelAnimationFrame = (() => {}) as typeof window.cancelAnimationFrame;
+  window.cancelAnimationFrame = (() => { }) as typeof window.cancelAnimationFrame;
 });
 
 const longTrade: TradeInputs = {
@@ -71,5 +71,21 @@ describe("given Scorecard", () => {
     render(<Scorecard result={result} />);
     expect(screen.getByText("Confirmation entry")).toBeInTheDocument();
     expect(screen.queryByText("No valid trade")).not.toBeInTheDocument();
+  });
+
+  test("should show the profit-zone ratio to two decimal places", () => {
+    const result = buildTrade({
+      ...longTrade,
+      curveLow: 250,
+      curveHigh: 350,
+      entryProximal: 286.73,
+      entryDistal: 279.85,
+      targetProximal: 338.19,
+      targetDistal: 340,
+    });
+
+    render(<Scorecard result={result} />);
+
+    expect(screen.getByText(/7\.48:1/)).toBeInTheDocument();
   });
 });
