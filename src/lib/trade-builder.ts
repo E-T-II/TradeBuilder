@@ -332,6 +332,20 @@ export function targetPrice(
   );
 }
 
+function targetPriceFromEntry(
+  entry: number,
+  targetProximal: number,
+  bufferPct: number,
+  direction: Direction,
+): number {
+  const zone = Math.abs(targetProximal - entry);
+  return roundToCent(
+    direction === "long"
+      ? entry + zone * bufferPct
+      : entry - zone * bufferPct,
+  );
+}
+
 /** Reward-to-risk: entry->target distance over risk per share. Needs >= 3. */
 export function rewardRiskRatio(
   entry: number,
@@ -559,6 +573,9 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   scorecard.total = totalScore(scorecard);
 
   const type = entryType(scorecard.total);
+  const entry = type === "no-trade"
+    ? null
+    : entryPrice(inputs.entryProximal, type, inputs.direction);
 
   // The "show the math" figures (per Eugene), computed straight from the inputs
   // so they're available on every return — the results screen shows them in gray
@@ -582,7 +599,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     targetBufferDollar:
       inputs.targetMode === "percent"
         ? roundToCent(
-          Math.abs(inputs.targetProximal - inputs.entryProximal) *
+          Math.abs(inputs.targetProximal - (entry ?? inputs.entryProximal)) *
           inputs.targetBufferPct,
         )
         : null,
@@ -601,31 +618,31 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
-  const entry = entryPrice(inputs.entryProximal, type, inputs.direction)!;
+  const executableEntry = entry!;
   const buffer = math.stopBufferDollar;
   const stop = stopLoss(inputs.entryDistal, buffer, inputs.direction);
-  const riskPerShare = tradeRiskPerShare(entry, stop);
+  const riskPerShare = tradeRiskPerShare(executableEntry, stop);
   const maxRisk = maxAccountRisk(
     inputs.accountBalance,
     inputs.riskTolerancePct,
   );
   const rawSize = positionSize(maxRisk, riskPerShare);
-  const size = applyCapitalCap(rawSize, entry, inputs.accountBalance);
+  const size = applyCapitalCap(rawSize, executableEntry, inputs.accountBalance);
 
   // Target selection by mode. The percentage buffer is a % of the way to the
   // opposing zone (always inside it); the mechanical 3:1 is exactly 3x the
   // per-share risk out from the entry, so its reward:risk is 3 by construction.
-  const percentTarget = targetPrice(
-    inputs.entryProximal,
+  const percentTarget = targetPriceFromEntry(
+    executableEntry,
     inputs.targetProximal,
     inputs.targetBufferPct,
     inputs.direction,
   );
-  const percentRr = rewardRiskRatio(entry, stop, percentTarget);
+  const percentRr = rewardRiskRatio(executableEntry, stop, percentTarget);
   const ratioTarget = roundToCent(
     inputs.direction === "long"
-      ? entry + riskPerShare * 3
-      : entry - riskPerShare * 3,
+      ? executableEntry + riskPerShare * 3
+      : executableEntry - riskPerShare * 3,
   );
   // The exit must sit strictly before the opposing zone's near edge: resting
   // the limit on the edge itself is the fill risk the 75-80% buffer exists to
@@ -642,13 +659,13 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   // in that range — comparing it to the 3:1 is equivalent to sweeping all six
   // and picking the best. Percentage targets always sit inside the zone, so
   // only the mechanical side needs the fitsZone check.
-  const autoPercentTarget = targetPrice(
-    inputs.entryProximal,
+  const autoPercentTarget = targetPriceFromEntry(
+    executableEntry,
     inputs.targetProximal,
     TARGET_BUFFER_MAX_PCT / 100,
     inputs.direction,
   );
-  const autoPercentRr = rewardRiskRatio(entry, stop, autoPercentTarget);
+  const autoPercentRr = rewardRiskRatio(executableEntry, stop, autoPercentTarget);
 
   // Each branch settles the target, the reward:risk and the displayed buffer
   // together, so the buffer can never drift from the comparison that produced
@@ -681,14 +698,15 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       // the user's typed value.
       math.targetBufferPct = TARGET_BUFFER_MAX_PCT;
       math.targetBufferDollar = roundToCent(
-        Math.abs(inputs.targetProximal - inputs.entryProximal) *
-        (TARGET_BUFFER_MAX_PCT / 100),
+        Math.abs(autoPercentTarget - executableEntry),
       );
     }
   } else {
     target = percentTarget;
     rr = percentRr;
-    // percent mode: math.targetBufferPct already holds the typed buffer.
+    // Report the actual entry-to-target distance. Confirmation entries sit
+    // $0.10 beyond proximal, shrinking the displayed dollar buffer by $0.10.
+    math.targetBufferDollar = roundToCent(Math.abs(percentTarget - executableEntry));
   }
 
   // A tight zone plus the confirmation offset can push the computed entry past
@@ -696,7 +714,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   // the entry. That is not a tradeable setup, so return no order even though the
   // score qualified. entryType stays set so the results can explain why.
   const targetClears =
-    inputs.direction === "long" ? target > entry : target < entry;
+    inputs.direction === "long" ? target > executableEntry : target < executableEntry;
   if (!targetClears) {
     return {
       scorecard,
@@ -761,7 +779,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     };
   }
 
-  const capital = roundToCent(size * entry);
+  const capital = roundToCent(size * executableEntry);
   const totalRisk = roundToCent(size * riskPerShare);
   const multiTradeLimit = roundToCent(inputs.accountBalance * 0.06);
   const openRisk = roundToCent(inputs.openTradeRisk ?? 0);
@@ -812,7 +830,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     entryType: type,
     objective,
     order: {
-      entry,
+      entry: executableEntry,
       stop,
       target,
       riskPerShare,

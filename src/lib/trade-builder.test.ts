@@ -397,7 +397,7 @@ describe("given buildTrade for a long confirmation entry with the 50% cap", () =
   test("given the setup: should price the order off the proximal line plus 10 cents", () => {
     expect(result.order?.entry).toBe(108.1);
     expect(result.order?.stop).toBe(105.92); // 106 - (4 x 0.02)
-    expect(result.order?.target).toBe(120);
+    expect(result.order?.target).toBe(120.03);
     expect(result.order?.riskPerShare).toBe(2.18);
   });
 
@@ -449,7 +449,7 @@ describe("given buildTrade for a mirrored short trade", () => {
   test("given a short: should place the confirmation entry 10 cents below the proximal", () => {
     expect(result.order?.entry).toBe(121.9);
     expect(result.order?.stop).toBe(124.08); // 124 + buffer, above the zone
-    expect(result.order?.target).toBe(110); // 122 - 12
+    expect(result.order?.target).toBe(109.98); // 121.90 - (121.90 - 106) x 75%
   });
 
   test("given a short: should size and cap the position the same way", () => {
@@ -508,8 +508,8 @@ describe("given buildTrade with a zone gap tighter than the confirmation offset"
     const result = buildTrade({ ...tight, strength: 2, time: 1, freshness: 0.5 });
     expect(result.entryType).toBe("proximal");
     expect(result.order?.entry).toBe(100);
-    // Target is 100 + 0.1 x 75% = 100.075, exactly on a half-cent boundary;
-    // rounds up to 100.08.
+    // Proximal entry remains at 100, so its target is 100 + 0.1 x 75%,
+    // rounded up from the half-cent boundary.
     expect(result.order?.target).toBe(100.08);
     expect(result.order && result.order.target > result.order.entry).toBe(true);
   });

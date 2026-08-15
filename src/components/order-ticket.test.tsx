@@ -199,7 +199,7 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("Target buffer %")).toBeInTheDocument();
     expect(screen.getByText("75%")).toBeInTheDocument();
     expect(screen.getByText("Target buffer $")).toBeInTheDocument();
-    expect(screen.getByText("$12.00")).toBeInTheDocument();
+    expect(screen.getByText("$11.93")).toBeInTheDocument();
     expect(screen.getByText("Daily ATR")).toBeInTheDocument();
     expect(screen.getByText("$4.00")).toBeInTheDocument(); // atr: 4
     expect(screen.getByText("Stop buffer %")).toBeInTheDocument();
