@@ -37,21 +37,26 @@ interface DecisionMatrixProps {
     zoneType?: ZoneType;
     curve?: CurveZone;
     trend?: Trend;
+    highlights?: Array<{ zoneType: ZoneType; curve: CurveZone; trend: Trend }>;
     embedded?: boolean;
 }
 
 function cell(classes: string, highlighted: boolean): string {
     return highlighted
-        ? classes + " relative z-[1] animate-pulse-ring"
+        ? classes + " relative animate-pulse-ring"
         : classes;
 }
 
-export function DecisionMatrix({ zoneType, curve, trend, embedded = false }: DecisionMatrixProps) {
+export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = false }: DecisionMatrixProps) {
     const colOffset = zoneType != null ? ZONE_COL[zoneType] + (trend != null ? TREND_COL[trend] : -1) : -1;
     const activeRow = curve != null ? CURVE_ROW[curve] : -1;
 
     function isActive(row: number, col: number): boolean {
-        return row === activeRow && col === colOffset;
+        if (row === activeRow && col === colOffset) return true;
+        return highlights?.some(({ zoneType: highlightedZone, curve: highlightedCurve, trend: highlightedTrend }) =>
+            row === CURVE_ROW[highlightedCurve] &&
+            col === ZONE_COL[highlightedZone] + TREND_COL[highlightedTrend],
+        ) ?? false;
     }
 
     const content = (
@@ -106,7 +111,7 @@ export function DecisionMatrix({ zoneType, curve, trend, embedded = false }: Dec
                                 </td>
                                 <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-700">Short</span></td>
                                 <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-700">Short</span></td>
-                                <td className={cell(cellClasses, isActive(0, 2))}>
+                                <td className={cell(`${cellClasses} border-t border-slate-300 dark:border-slate-700`, isActive(0, 2))}>
                                     <div><span className="font-semibold text-rose-700">Short</span></div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                                 </td>

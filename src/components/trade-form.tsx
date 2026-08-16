@@ -94,23 +94,23 @@ const ScorePopupButton = forwardRef<HTMLButtonElement, {
   }, [popup, ref]);
 
   return (
-  <div className="relative justify-self-start">
-    <button
-      ref={ref}
-      id={id}
-      type="button"
-      aria-labelledby={labelId}
-      onClick={onClick}
-      className="flex h-9 w-11 items-center justify-center rounded-lg border border-input bg-background px-1 text-center text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-    >
-      <span>{value}</span>
-    </button>
-    {popup ? (
-      <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-[100] w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
-        {popup}
-      </div>
-    ) : null}
-  </div>
+    <div className="relative justify-self-start">
+      <button
+        ref={ref}
+        id={id}
+        type="button"
+        aria-labelledby={labelId}
+        onClick={onClick}
+        className="flex h-9 w-11 items-center justify-center rounded-lg border border-input bg-background px-1 text-center text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <span>{value}</span>
+      </button>
+      {popup ? (
+        <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-[100] w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
+          {popup}
+        </div>
+      ) : null}
+    </div>
   );
 });
 ScorePopupButton.displayName = "ScorePopupButton";
@@ -731,7 +731,13 @@ export function TradeForm({
               />
             </div>
             <div className="flex justify-center">
-              <DecisionMatrixDialog />
+              <DecisionMatrixDialog
+                curveLow={form.curveLow}
+                curveHigh={form.curveHigh}
+                demandProximal={form.demandHigh}
+                supplyProximal={form.supplyLow}
+                trend={form.trend}
+              />
             </div>
             {/* Direction comes after the zone lines: mark the zones as they
                 appear on the chart, then decide which way to trade them. */}

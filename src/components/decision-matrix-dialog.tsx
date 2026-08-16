@@ -4,8 +4,33 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Table2, X } from "lucide-react";
 import { DecisionMatrix } from "@/components/decision-matrix";
 import { Button } from "@/components/ui/button";
+import { locateOnCurve, type Trend } from "@/lib/trade-builder";
 
-export function DecisionMatrixDialog() {
+export function DecisionMatrixDialog({
+    curveLow,
+    curveHigh,
+    demandProximal,
+    supplyProximal,
+    trend,
+}: {
+    curveLow: string;
+    curveHigh: string;
+    demandProximal: string;
+    supplyProximal: string;
+    trend: Trend;
+}) {
+    const low = Number(curveLow);
+    const high = Number(curveHigh);
+    const demand = Number(demandProximal);
+    const supply = Number(supplyProximal);
+    const hasValidCurve = Number.isFinite(low) && Number.isFinite(high) && high > low;
+    const highlights = hasValidCurve
+        ? [
+            Number.isFinite(demand) ? { zoneType: "demand" as const, curve: locateOnCurve(demand, low, high), trend } : null,
+            Number.isFinite(supply) ? { zoneType: "supply" as const, curve: locateOnCurve(supply, low, high), trend } : null,
+        ].filter((highlight): highlight is NonNullable<typeof highlight> => highlight !== null)
+        : [];
+
     return (
         <Dialog.Root>
             <Dialog.Trigger
@@ -29,7 +54,7 @@ export function DecisionMatrixDialog() {
                     <Dialog.Description className="sr-only">
                         The decision matrix for choosing a trade direction from the zone, curve, and trend.
                     </Dialog.Description>
-                    <DecisionMatrix embedded />
+                    <DecisionMatrix embedded highlights={highlights} />
                 </Dialog.Popup>
             </Dialog.Portal>
         </Dialog.Root>
