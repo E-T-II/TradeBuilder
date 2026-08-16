@@ -73,7 +73,27 @@ const ScorePopupButton = forwardRef<HTMLButtonElement, {
   popup: React.ReactNode;
   popupRef: React.RefObject<HTMLDivElement | null>;
   popupClassName?: string;
-}>(({ id, labelId, value, onClick, popup, popupRef, popupClassName }, ref) => (
+}>(({ id, labelId, value, onClick, popup, popupRef, popupClassName }, ref) => {
+  const [popupTop, setPopupTop] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (!popup || typeof ref === "function" || !ref?.current) return;
+
+    const updatePopupPosition = () => {
+      const buttonRect = ref.current?.getBoundingClientRect();
+      if (buttonRect) setPopupTop(buttonRect.bottom + 8);
+    };
+
+    updatePopupPosition();
+    window.addEventListener("resize", updatePopupPosition);
+    window.addEventListener("scroll", updatePopupPosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePopupPosition);
+      window.removeEventListener("scroll", updatePopupPosition, true);
+    };
+  }, [popup, ref]);
+
+  return (
   <div className="relative justify-self-start">
     <button
       ref={ref}
@@ -86,12 +106,13 @@ const ScorePopupButton = forwardRef<HTMLButtonElement, {
       <span>{value}</span>
     </button>
     {popup ? (
-      <div ref={popupRef} className={`absolute right-0 top-full z-[100] mt-2 w-[min(39.5rem,calc(100vw-2.5rem))] shadow-xl ${popupClassName ?? ""}`}>
+      <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-[100] w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
         {popup}
       </div>
     ) : null}
   </div>
-));
+  );
+});
 ScorePopupButton.displayName = "ScorePopupButton";
 
 // `group` fields wrap a radiogroup (a div, which <label htmlFor> can't target),
