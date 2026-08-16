@@ -69,25 +69,25 @@ export function ChartTutorial({
           <text x="78" y="139" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">equilibrium</text>
           <text x="78" y="210" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">wholesale</text>
 
-          <g style={cue(1.4)}>
+          <g style={cue(2.1)}>
             <line x1="70" y1="24" x2="250" y2="24" className="stroke-red-700" strokeWidth="3" />
             <circle cx="250" cy="24" r="3" className="fill-red-700" />
             <line x1="250" y1="24" x2="266" y2="24" className="stroke-border" />
             <text x="272" y="28" fontSize="12.5" className="fill-foreground">Curve high</text>
           </g>
-          <g style={cue(2.2)}>
+          <g style={cue(3.0)}>
             <line x1="70" y1="248" x2="250" y2="248" className="stroke-emerald-700" strokeWidth="3" />
             <circle cx="250" cy="248" r="3" className="fill-emerald-700" />
             <line x1="250" y1="248" x2="266" y2="248" className="stroke-border" />
             <text x="272" y="252" fontSize="12.5" className="fill-foreground">Curve low</text>
           </g>
-          <g style={cue(0.2)}>
+          <g style={cue(0.3)}>
             <rect x="70" y="24" width="180" height="14.9" className="fill-red-500/15 stroke-red-600" />
             <text x="160" y="20" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
             <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
             <text x="272" y="44" fontSize="12.5" className="fill-foreground">Supply zone</text>
           </g>
-          <g style={cue(0.8)}>
+          <g style={cue(1.2)}>
             <rect x="70" y="233.1" width="180" height="14.9" className="fill-emerald-500/18 stroke-emerald-600" />
             <text x="160" y="229" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
             <text x="160" y="264" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>

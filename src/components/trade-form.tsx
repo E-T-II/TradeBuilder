@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import type { FormState } from "@/components/trade-builder-app";
 import {
-  JUDGED_MAX,
   TARGET_BUFFER_MAX_PCT,
   TARGET_BUFFER_MIN_PCT,
 } from "@/lib/trade-builder";
@@ -21,7 +20,6 @@ import { validateZones } from "@/lib/validate-zones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RatingChips } from "@/components/rating-chips";
 import { SegmentedControl } from "@/components/segmented-control";
 import { CurveVideoDialog } from "@/components/curve-video-dialog";
 import { TrendVideoDialog } from "@/components/trend-video-dialog";
@@ -29,45 +27,10 @@ import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
 import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
-import { Analytics } from "@vercel/analytics/next"
-
-
-// Order mirrors Eugene's Six Step Process Flowchart so the wizard walks the
-// trade methodology: pre-steps, then curve (HTF), trend (ITF), zones (LTF),
-// then score. Direction stays a user input on the Zones step (we collect both
-// zones up front, so the user has to say which one they're entering); the
-// Decision Matrix then verifies it.
-export const STEPS = [
-  { title: "Pre-steps", blurb: "Your account and the stock's volatility" },
-  { title: "Curve", blurb: "Set the curve on your high time frame" },
-  { title: "Trend", blurb: "Check the trend on your intermediary time frame" },
-  {
-    title: "Zones",
-    blurb: "Mark the supply and demand zones on your low time frame",
-  },
-  { title: "Score", blurb: "Score the zone structure" },
-] as const;
-
-// Required fields per step; Next stays disabled until these are filled.
-const STEP_FIELDS: (keyof FormState)[][] = [
-  ["accountBalance", "atr"],
-  ["curveLow", "curveHigh"],
-  [],
-  ["demandHigh", "demandLow", "supplyHigh", "supplyLow"],
-  // Required, not optional: the auto-scored factors (curve, trend, profit
-  // zone, up to 5) plus even two judged factors can clear 7, so skipping one
-  // would still qualify a trade the user never fully scored. The README's rule
-  // is "if we did not score the trade, we will not take the trade."
-  ["strength", "time", "freshness"],
-];
-
-// First step with an empty required field (or STEPS.length if all filled).
-export function firstIncompleteStep(form: FormState): number {
-  for (let i = 0; i < STEP_FIELDS.length; i++) {
-    if (STEP_FIELDS[i].some((key) => form[key].trim() === "")) return i;
-  }
-  return STEPS.length;
-}
+import { StrengthReference } from "@/components/strength-reference";
+import { TimeReference } from "@/components/time-reference";
+import { FreshnessReference } from "@/components/freshness-reference";
+import { Analytics } from "@vercel/analytics/next";
 
 interface TradeFormProps {
   form: FormState;
@@ -78,6 +41,58 @@ interface TradeFormProps {
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
 }
+
+export const STEPS = [
+  { title: "Pre-steps", blurb: "Your account and the stock's volatility" },
+  { title: "Curve", blurb: "Set the curve on your high time frame" },
+  { title: "Trend", blurb: "Check the trend on your intermediary time frame" },
+  { title: "Zones", blurb: "Mark the supply and demand zones on your low time frame" },
+  { title: "Score", blurb: "Score the zone structure" },
+] as const;
+
+const STEP_FIELDS: (keyof FormState)[][] = [
+  ["accountBalance", "atr"],
+  ["curveLow", "curveHigh"],
+  [],
+  ["demandHigh", "demandLow", "supplyHigh", "supplyLow"],
+  ["strength", "time", "freshness"],
+];
+
+export function firstIncompleteStep(form: FormState): number {
+  for (let i = 0; i < STEP_FIELDS.length; i++) {
+    if (STEP_FIELDS[i].some((key) => form[key].trim() === "")) return i;
+  }
+  return STEPS.length;
+}
+
+const ScorePopupButton = forwardRef<HTMLButtonElement, {
+  id: string;
+  labelId: string;
+  value: string;
+  onClick: () => void;
+  popup: React.ReactNode;
+  popupRef: React.RefObject<HTMLDivElement | null>;
+  popupClassName?: string;
+}>(({ id, labelId, value, onClick, popup, popupRef, popupClassName }, ref) => (
+  <div className="relative justify-self-start">
+    <button
+      ref={ref}
+      id={id}
+      type="button"
+      aria-labelledby={labelId}
+      onClick={onClick}
+      className="flex h-9 w-11 items-center justify-center rounded-lg border border-input bg-background px-1 text-center text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <span>{value}</span>
+    </button>
+    {popup ? (
+      <div ref={popupRef} className={`absolute right-0 top-full z-[100] mt-2 w-[min(39.5rem,calc(100vw-2.5rem))] shadow-xl ${popupClassName ?? ""}`}>
+        {popup}
+      </div>
+    ) : null}
+  </div>
+));
+ScorePopupButton.displayName = "ScorePopupButton";
 
 // `group` fields wrap a radiogroup (a div, which <label htmlFor> can't target),
 // so the label carries an id for the control to point at via aria-labelledby.
@@ -310,11 +325,59 @@ export function TradeForm({
   showAdvanced,
   onToggleAdvanced,
 }: TradeFormProps) {
+  const [showStrengthReference, setShowStrengthReference] = useState(false);
+  const [showTimeReference, setShowTimeReference] = useState(false);
+  const [showFreshnessReference, setShowFreshnessReference] = useState(false);
+  const strengthButtonRef = useRef<HTMLButtonElement>(null);
+  const strengthPopupRef = useRef<HTMLDivElement>(null);
+  const timeButtonRef = useRef<HTMLButtonElement>(null);
+  const timePopupRef = useRef<HTMLDivElement>(null);
+  const freshnessButtonRef = useRef<HTMLButtonElement>(null);
+  const freshnessPopupRef = useRef<HTMLDivElement>(null);
   const remaining = STEP_FIELDS[step].filter(
     (key) => form[key].trim() === "",
   ).length;
   const isLast = step === STEPS.length - 1;
   const long = form.direction === "long";
+
+  useEffect(() => {
+    if (!showStrengthReference) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (
+        !strengthButtonRef.current?.contains(target) &&
+        !strengthPopupRef.current?.contains(target)
+      ) {
+        setShowStrengthReference(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [showStrengthReference]);
+
+  useEffect(() => {
+    if (!showTimeReference) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!timeButtonRef.current?.contains(target) && !timePopupRef.current?.contains(target)) {
+        setShowTimeReference(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [showTimeReference]);
+
+  useEffect(() => {
+    if (!showFreshnessReference) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!freshnessButtonRef.current?.contains(target) && !freshnessPopupRef.current?.contains(target)) {
+        setShowFreshnessReference(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [showFreshnessReference]);
 
   // Geometry errors block advancing on the step that owns the offending field:
   // a bad curve on the Curve step (1), zone-geometry errors on the Zones
@@ -682,56 +745,48 @@ export function TradeForm({
 
         {step === 4 ? (
           <>
-            <p className="text-xs text-muted-foreground">
-              Score the entry zone from your own analysis per the trade
-              methodology.
-            </p>
-            <Field
-              id="strength"
-              label="Strength"
-              hint="How sharply price left the zone"
-              group
-            >
-              <RatingChips
-                aria-labelledby="strength-label"
-                value={form.strength === "" ? null : Number(form.strength)}
-                max={JUDGED_MAX.strength}
-                lowLabel="Weak move"
-                highLabel="Strong move"
-                onChange={(v) => onChange({ strength: String(v) })}
+            <div className="grid grid-cols-[minmax(0,1fr)_3rem_4rem] items-center gap-x-3 gap-y-3">
+              <div className="text-xs font-medium text-muted-foreground">Odds Enhancer</div>
+              <div className="text-center text-xs font-medium text-muted-foreground">Score</div>
+              <div className="text-center text-xs font-medium text-muted-foreground">Max</div>
+
+              <Label id="strength-label">Strength</Label>
+              <ScorePopupButton
+                ref={strengthButtonRef}
+                id="strength"
+                labelId="strength-label"
+                value={form.strength}
+                onClick={() => setShowStrengthReference(true)}
+                popup={showStrengthReference ? <StrengthReference direction={form.direction} selected={form.strength === "" ? null : Number(form.strength)} onSelect={(strength) => { onChange({ strength: String(strength) }); setShowStrengthReference(false); }} /> : null}
+                popupRef={strengthPopupRef}
               />
-            </Field>
-            <Field
-              id="time"
-              label="Time"
-              hint="How little time price spent at the zone"
-              group
-            >
-              <RatingChips
-                aria-labelledby="time-label"
-                value={form.time === "" ? null : Number(form.time)}
-                max={JUDGED_MAX.time}
-                step={0.5}
-                lowLabel="Lingered"
-                highLabel="In and out"
-                onChange={(v) => onChange({ time: String(v) })}
+              <div className="text-center font-mono text-sm tabular-nums">2</div>
+
+              <Label id="time-label">Time</Label>
+              <ScorePopupButton
+                ref={timeButtonRef}
+                id="time"
+                labelId="time-label"
+                value={form.time}
+                onClick={() => setShowTimeReference(true)}
+                popup={showTimeReference ? <TimeReference direction={form.direction} selected={form.time === "" ? null : Number(form.time)} onSelect={(time) => { onChange({ time: String(time) }); setShowTimeReference(false); }} /> : null}
+                popupRef={timePopupRef}
+                popupClassName="w-[min(34rem,calc(100vw-2.5rem))]"
               />
-            </Field>
-            <Field
-              id="freshness"
-              label="Freshness"
-              hint="Has price returned to the zone"
-              group
-            >
-              <RatingChips
-                aria-labelledby="freshness-label"
-                value={form.freshness === "" ? null : Number(form.freshness)}
-                max={JUDGED_MAX.freshness}
-                lowLabel="Retested"
-                highLabel="Untested"
-                onChange={(v) => onChange({ freshness: String(v) })}
+              <div className="text-center font-mono text-sm tabular-nums">1</div>
+
+              <Label id="freshness-label">Freshness</Label>
+              <ScorePopupButton
+                ref={freshnessButtonRef}
+                id="freshness"
+                labelId="freshness-label"
+                value={form.freshness}
+                onClick={() => setShowFreshnessReference(true)}
+                popup={showFreshnessReference ? <FreshnessReference direction={form.direction} selected={form.freshness === "" ? null : Number(form.freshness)} onSelect={(freshness) => { onChange({ freshness: String(freshness) }); setShowFreshnessReference(false); }} /> : null}
+                popupRef={freshnessPopupRef}
               />
-            </Field>
+              <div className="text-center font-mono text-sm tabular-nums">2</div>
+            </div>
           </>
         ) : null}
       </div>

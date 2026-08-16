@@ -42,10 +42,9 @@ test("hydrating a saved half-point strength: snaps the rendered selection onto a
     await user.click(screen.getByRole("button", { name: /next/i }));
   }
 
-  const strength = screen.getByRole("radiogroup", { name: "Strength" });
-  // 1.5 snaps up to 2; that chip is selected and no half-point chip exists.
-  expect(within(strength).getByRole("radio", { name: "2" })).toBeChecked();
-  expect(within(strength).queryByRole("radio", { name: "1.5" })).toBeNull();
+  const strength = screen.getByRole("button", { name: "Strength" });
+  // 1.5 snaps up to 2; the current graphic selector displays that score.
+  expect(strength).toHaveTextContent("2");
 });
 
 test("hydrating saved risk/buffer beyond the caps: normalizes the fields to the limits", async () => {

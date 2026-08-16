@@ -305,13 +305,13 @@ describe("given the direction control on the Zones step", () => {
   });
 });
 
-describe("given the odds-enhancer chips on the Score step", () => {
+describe("given the odds-enhancer controls on the Score step", () => {
   const optionsFor = (name: string) =>
     within(screen.getByRole("radiogroup", { name }))
       .getAllByRole("radio")
       .map((r) => r.textContent);
 
-  test("should offer 0/1/2 for strength and freshness, and 0/0.5/1 for time", () => {
+  test("should offer a strength dropdown and rating chips for the other factors", () => {
     render(
       <TradeForm
         form={baseForm()}
@@ -324,9 +324,30 @@ describe("given the odds-enhancer chips on the Score step", () => {
       />,
     );
 
-    expect(optionsFor("Strength")).toEqual(["0", "1", "2"]);
-    expect(optionsFor("Freshness")).toEqual(["0", "1", "2"]);
-    expect(optionsFor("Time")).toEqual(["0", "0.5", "1"]);
+    const strength = screen.getByRole("button", { name: "Strength" });
+    expect(strength).toHaveTextContent("1");
+    fireEvent.click(strength);
+    expect(screen.queryByRole("option", { name: "2" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "0" })).not.toBeInTheDocument();
+    expect(screen.getByText("How did price leave the zone?")).toBeInTheDocument();
+    expect(screen.getByText("Move out AND Breakout")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Best strength, 2 points" }));
+    expect(screen.queryByText("How did price leave the zone?")).not.toBeInTheDocument();
+    fireEvent.click(strength);
+    expect(screen.getByText("How did price leave the zone?")).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByText("How did price leave the zone?")).not.toBeInTheDocument();
+    fireEvent.click(strength);
+    fireEvent.pointerDown(screen.getByText("Strength"));
+    fireEvent.click(screen.getByText("Strength"));
+    expect(screen.queryByText("How did price leave the zone?")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Freshness" })).toHaveTextContent("1");
+    fireEvent.click(screen.getByRole("button", { name: "Freshness" }));
+    expect(screen.getByText("Has price returned to the zone?")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Poor freshness, 0 points" }));
+    expect(screen.queryByText("Has price returned to the zone?")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Time" })).toHaveTextContent("0.5");
   });
 
   test("given any factor unanswered: should disable the final action, even with the other two answered", () => {

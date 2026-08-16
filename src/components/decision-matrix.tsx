@@ -127,7 +127,7 @@ export function DecisionMatrix({ zoneType, curve, trend, embedded = false }: Dec
                                 <td className={cell(cellClasses, isActive(1, 2))}>No action</td>
                                 <td className={cell(cellClasses, isActive(1, 3))}>No action</td>
                                 <td className={cell(cellClasses, isActive(1, 4))}><span className="font-semibold text-emerald-700">Long</span></td>
-                                <td className={cell(cellClasses, isActive(1, 5))}><span className="font-semibold text-emerald-700">Long</span></td>
+                                <td className={cell(cellClasses, isActive(1, 5))}><span className="font-semibold text-emerald-7›00">Long</span></td>
                             </tr>
                             <tr>
                                 <td className={accentCellClasses}>
