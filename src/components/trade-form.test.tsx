@@ -42,7 +42,7 @@ function ZonesStep({ initial }: { initial: FormState }) {
       onBack={() => setStep((s) => Math.max(0, s - 1))}
       onNext={() => setStep((s) => s + 1)}
       showAdvanced={false}
-      onToggleAdvanced={() => {}}
+      onToggleAdvanced={() => { }}
     />
   );
 }
@@ -56,10 +56,10 @@ function AccountStep({ initial }: { initial: FormState }) {
       form={form}
       onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
       step={0}
-      onBack={() => {}}
-      onNext={() => {}}
+      onBack={() => { }}
+      onNext={() => { }}
       showAdvanced={false}
-      onToggleAdvanced={() => {}}
+      onToggleAdvanced={() => { }}
     />
   );
 }
@@ -73,10 +73,10 @@ function AdvancedSettings({ initial }: { initial: FormState }) {
       form={form}
       onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
       step={0}
-      onBack={() => {}}
-      onNext={() => {}}
+      onBack={() => { }}
+      onNext={() => { }}
       showAdvanced={true}
-      onToggleAdvanced={() => {}}
+      onToggleAdvanced={() => { }}
     />
   );
 }
@@ -207,10 +207,10 @@ function CurveStep({ initial }: { initial: FormState }) {
       form={form}
       onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
       step={1}
-      onBack={() => {}}
-      onNext={() => {}}
+      onBack={() => { }}
+      onNext={() => { }}
       showAdvanced={false}
-      onToggleAdvanced={() => {}}
+      onToggleAdvanced={() => { }}
     />
   );
 }
@@ -239,7 +239,7 @@ describe("given the top-down input order", () => {
     const lastPrice = screen.getByLabelText("Demand distal ($)");
     expect(
       lastPrice.compareDocumentPosition(direction) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 });
@@ -315,12 +315,12 @@ describe("given the odds-enhancer controls on the Score step", () => {
     render(
       <TradeForm
         form={baseForm()}
-        onChange={() => {}}
+        onChange={() => { }}
         step={4}
-        onBack={() => {}}
-        onNext={() => {}}
+        onBack={() => { }}
+        onNext={() => { }}
         showAdvanced={false}
-        onToggleAdvanced={() => {}}
+        onToggleAdvanced={() => { }}
       />,
     );
 
@@ -354,12 +354,12 @@ describe("given the odds-enhancer controls on the Score step", () => {
     render(
       <TradeForm
         form={baseForm({ freshness: "" })}
-        onChange={() => {}}
+        onChange={() => { }}
         step={4}
-        onBack={() => {}}
-        onNext={() => {}}
+        onBack={() => { }}
+        onNext={() => { }}
         showAdvanced={false}
-        onToggleAdvanced={() => {}}
+        onToggleAdvanced={() => { }}
       />,
     );
 
@@ -373,12 +373,12 @@ describe("given the odds-enhancer controls on the Score step", () => {
     render(
       <TradeForm
         form={baseForm()}
-        onChange={() => {}}
+        onChange={() => { }}
         step={4}
-        onBack={() => {}}
-        onNext={() => {}}
+        onBack={() => { }}
+        onNext={() => { }}
         showAdvanced={false}
-        onToggleAdvanced={() => {}}
+        onToggleAdvanced={() => { }}
       />,
     );
 
