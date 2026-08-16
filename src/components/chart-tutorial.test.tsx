@@ -19,44 +19,16 @@ function stubMatchMedia(matches: boolean) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-// The entry/target role sits in the same <g> as its zone name.
-function rolesForZone(container: HTMLElement, zone: string) {
-  const label = [...container.querySelectorAll("text")].find(
-    (t) => t.textContent === zone,
-  );
-  const group = label?.closest("g");
-  return [...(group?.querySelectorAll("text") ?? [])].map((t) => t.textContent);
-}
-
-function outlineWidth(container: HTMLElement, zone: string) {
-  const label = [...container.querySelectorAll("text")].find(
-    (t) => t.textContent === zone,
-  );
-  return label
-    ?.closest("g")
-    ?.querySelector("rect")
-    ?.getAttribute("stroke-width");
-}
-
 describe("given ChartTutorial", () => {
   beforeEach(() => stubMatchMedia(false));
 
-  test("for a long: demand is the entry with the bolder outline, supply the target", () => {
+  test("shows the supply and demand zones without entry or target labels", () => {
     const { container } = render(<ChartTutorial direction="long" />);
 
-    expect(rolesForZone(container, "Demand zone")).toContain("your entry");
-    expect(rolesForZone(container, "Supply zone")).toContain("your target");
-    expect(outlineWidth(container, "Demand zone")).toBe("2.25");
-    expect(outlineWidth(container, "Supply zone")).toBe("1");
-  });
-
-  test("for a short: supply is the entry with the bolder outline, demand the target", () => {
-    const { container } = render(<ChartTutorial direction="short" />);
-
-    expect(rolesForZone(container, "Supply zone")).toContain("your entry");
-    expect(rolesForZone(container, "Demand zone")).toContain("your target");
-    expect(outlineWidth(container, "Supply zone")).toBe("2.25");
-    expect(outlineWidth(container, "Demand zone")).toBe("1");
+    expect(container.textContent).toContain("Supply zone");
+    expect(container.textContent).toContain("Demand zone");
+    expect(container.textContent).not.toContain("your entry");
+    expect(container.textContent).not.toContain("your target");
   });
 
   test("exposes the four edge fields in the SVG's accessible name", () => {
@@ -72,6 +44,40 @@ describe("given ChartTutorial", () => {
     ]) {
       expect(label).toContain(field);
     }
+  });
+
+  test("displays the entered curve values and curve factor", () => {
+    const { container, getByText } = render(
+      <ChartTutorial
+        direction="long"
+        curveHigh="338.19"
+        curveLow="286.73"
+      />,
+    );
+
+    expect(getByText("$338.19")).toBeInTheDocument();
+    expect(getByText("$286.73")).toBeInTheDocument();
+    expect(getByText("$17.15")).toBeInTheDocument();
+    expect(container.querySelector('text')?.textContent).toBe("338.19");
+  });
+
+  test("truncates the curve factor instead of rounding it", () => {
+    const { getByText } = render(
+      <ChartTutorial direction="long" curveHigh="300" curveLow="198.852" />,
+    );
+
+    expect(getByText("$33.71")).toBeInTheDocument();
+  });
+
+  test("positions the curve boundaries from the curve factor", () => {
+    const { container } = render(
+      <ChartTutorial direction="long" curveHigh="338.19" curveLow="286.73" />,
+    );
+    const boundaryLabels = [...container.querySelectorAll("text")]
+      .map((text) => text.textContent)
+      .filter((text) => text === "321.03" || text === "303.88");
+
+    expect(boundaryLabels).toEqual(["321.03", "303.88"]);
   });
 
   test("under reduced motion: shows no animated cues and hides Replay", () => {

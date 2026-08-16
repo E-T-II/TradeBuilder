@@ -8,7 +8,15 @@ import { ChartTutorial } from "@/components/chart-tutorial";
 
 // A play button that opens a short animated walkthrough of which chart lines
 // map to the Zones-step fields.
-export function ChartTutorialButton({ direction }: { direction: Direction }) {
+export function ChartTutorialButton({
+  direction,
+  curveHigh,
+  curveLow,
+}: {
+  direction: Direction;
+  curveHigh?: string;
+  curveLow?: string;
+}) {
   return (
     <Dialog.Root>
       <Dialog.Trigger
@@ -35,7 +43,11 @@ export function ChartTutorialButton({ direction }: { direction: Direction }) {
             An animated walkthrough of the chart lines you enter on the Zones
             step: the curve high and low, and the demand and supply zones.
           </Dialog.Description>
-          <ChartTutorial direction={direction} />
+          <ChartTutorial
+            direction={direction}
+            curveHigh={curveHigh}
+            curveLow={curveLow}
+          />
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

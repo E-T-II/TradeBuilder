@@ -27,6 +27,7 @@ import { CurveVideoDialog } from "@/components/curve-video-dialog";
 import { TrendVideoDialog } from "@/components/trend-video-dialog";
 import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
 import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
+import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
 import { Analytics } from "@vercel/analytics/next"
 
@@ -549,22 +550,31 @@ export function TradeForm({
         ) : null}
 
         {step === 1 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <PriceField
-              id="curveHigh"
-              label="Curve high ($)"
-              hint="HTF supply zone distal line"
-              value={form.curveHigh}
-              onChange={(curveHigh) => onChange({ curveHigh })}
-            />
-            <PriceField
-              id="curveLow"
-              label="Curve low ($)"
-              hint="HTF demand zone distal line"
-              value={form.curveLow}
-              onChange={(curveLow) => onChange({ curveLow })}
-              error={zoneErrors.curveLow}
-            />
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PriceField
+                id="curveHigh"
+                label="Curve high ($)"
+                hint="HTF supply zone distal line"
+                value={form.curveHigh}
+                onChange={(curveHigh) => onChange({ curveHigh })}
+              />
+              <PriceField
+                id="curveLow"
+                label="Curve low ($)"
+                hint="HTF demand zone distal line"
+                value={form.curveLow}
+                onChange={(curveLow) => onChange({ curveLow })}
+                error={zoneErrors.curveLow}
+              />
+            </div>
+            <div className="flex justify-center">
+              <ChartTutorialButton
+                direction={form.direction}
+                curveHigh={form.curveHigh}
+                curveLow={form.curveLow}
+              />
+            </div>
           </div>
         ) : null}
 
