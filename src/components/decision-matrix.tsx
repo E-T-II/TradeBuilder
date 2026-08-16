@@ -14,12 +14,12 @@ const pulseStyles = `
   @keyframes pulse-ring {
     0%, 100% { 
       outline: 1px solid rgba(37, 99, 235, 1);
-      outline-offset: -1px;
+            outline-offset: -1px;
       box-shadow: inset 0 0 10px 3px rgba(37, 99, 235, 0.35);
     }
     50% { 
       outline: 1px solid rgba(37, 99, 235, 0);
-      outline-offset: -1px;
+            outline-offset: -1px;
       box-shadow: inset 0 0 0px 0px rgba(37, 99, 235, 0);
     }
   }
@@ -111,7 +111,7 @@ export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = 
                                 </td>
                                 <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-700">Short</span></td>
                                 <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-700">Short</span></td>
-                                <td className={cell(`${cellClasses} border-t border-slate-300 dark:border-slate-700`, isActive(0, 2))}>
+                                <td className={cell(cellClasses, isActive(0, 2))}>
                                     <div><span className="font-semibold text-rose-700">Short</span></div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
                                 </td>
