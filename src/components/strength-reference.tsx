@@ -11,7 +11,7 @@ export function StrengthReference({
 }) {
     const long = direction === "long";
     return (
-        <figure className="w-full rounded-lg border border-slate-700 bg-[#252b40] p-2">
+        <figure className="odds-reference-graphic w-full rounded-lg border border-slate-700 bg-[#252b40] p-2">
             <svg
                 viewBox="0 0 634 250"
                 role="img"
@@ -19,22 +19,22 @@ export function StrengthReference({
                 className="mx-auto block h-auto w-full text-slate-100 [shape-rendering:geometricPrecision]"
             >
                 <rect width="634" height="250" fill="#252b40" />
-                <text x="317" y="17" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="700">
+                <text x="317" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">
                     How did price leave the zone?
                 </text>
-                <text x="20" y="48" fill="#f8fafc" fontSize="14" fontWeight="700">Zone</text>
-                <text x="20" y="108" fill={long ? "#4ade80" : "#fb7185"} fontSize="13">{long ? "Demand" : "Supply"}</text>
-                <text x="20" y="123" fill={long ? "#4ade80" : "#fb7185"} fontSize="13">{long ? "Buy Setup" : "Sell Setup"}</text>
-                <text x="20" y="138" fill={long ? "#4ade80" : "#fb7185"} fontSize="13">{long ? "(Long)" : "(Short)"}</text>
+                <text x="20" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">Zone</text>
+                <text x="20" y="108" fill={long ? "#4ade80" : "#fb7185"} fontSize="16">{long ? "Demand" : "Supply"}</text>
+                <text x="20" y="123" fill={long ? "#4ade80" : "#fb7185"} fontSize="16">{long ? "Buy Setup" : "Sell Setup"}</text>
+                <text x="20" y="138" fill={long ? "#4ade80" : "#fb7185"} fontSize="16">{long ? "(Long)" : "(Short)"}</text>
 
                 <Panel x={95} title="Best" score="2" best direction={direction} selected={selected === 2} onSelect={onSelect} caption="Move out AND Breakout" />
                 <Panel x={253} title="Good" score="1" direction={direction} selected={selected === 1} onSelect={onSelect} caption="Move out ONLY OR Breakout ONLY" />
                 <Panel x={512} title="Poor" score="0" direction={direction} selected={selected === 0} onSelect={onSelect} caption="Neither" />
 
-                <text x="317" y="226" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="600">
+                <text x="317" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
                     The stronger the Move out from the zone, with Breakout,
                 </text>
-                <text x="317" y="243" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="600">
+                <text x="317" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
                     the more likely that supply and demand are out of balance.
                 </text>
             </svg>
@@ -134,7 +134,7 @@ function Panel({
             className={onSelect ? "cursor-pointer" : undefined}
         >
             <rect x={x} y={27} width={width} height={153} fill="none" stroke={selected ? "#fb744c" : "#394158"} />
-            <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="12" fontWeight="700">
+            <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="16" fontWeight="700">
                 {selected ? "✓ " : ""}{title} = {score}
             </text>
             <g transform={best ? "translate(0 -16)" : undefined}>
@@ -149,7 +149,7 @@ function Panel({
                         <line x1={chartLeft} y1={mirroredY(best ? 95 : 112, short)} x2={chartRight} y2={mirroredY(best ? 95 : 112, short)} stroke={short ? "#fb7185" : "#53d67b"} strokeWidth={best ? 0.75 : 1} />
                         <line x1={zoneX + (best ? 6 : 0)} y1={mirroredY(best ? 139 : 128, short)} x2={chartRight} y2={mirroredY(best ? 139 : 128, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={best ? 0.75 : 1} />
                         <line x1={zoneX + (best ? 6 : 0)} y1={mirroredY(best ? 154 : 157, short)} x2={chartRight} y2={mirroredY(best ? 154 : 157, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={best ? 0.75 : 1} />
-                        <text x={zoneX + zoneWidth / 2} y={mirroredY(169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
+                        <text x={zoneX + zoneWidth / 2} y={mirroredY(short ? 159 : 169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
                         <g transform={short ? `translate(0 ${MIRROR_AXIS}) scale(1 -1)` : undefined}>
                             <path d={best
                                 ? `M ${braceX - 14} 100 q 4 0 4 4 v 10 q 0 4 4 4 q -4 0 -4 4 v 10 q 0 4 -4 4`
@@ -239,7 +239,7 @@ function GoodExamples({ chartLeft, direction }: { chartLeft: number; direction: 
                         ))}
                         <line x1={example.zoneX - 4} y1={mirroredY(exampleIndex === 1 ? 128 : 136, short)} x2={miniRight} y2={mirroredY(exampleIndex === 1 ? 128 : 136, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={0.75} />
                         <line x1={example.zoneX - 4} y1={mirroredY(151, short)} x2={miniRight} y2={mirroredY(151, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={0.75} />
-                        <text x={example.zoneX + zoneWidth / 2} y={mirroredY(169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
+                        <text x={example.zoneX + zoneWidth / 2} y={mirroredY(short ? 159 : 169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
                         <g transform={short ? `translate(0 ${MIRROR_AXIS}) scale(1 -1)` : undefined}>
                             <path d={exampleIndex === 1
                                 ? `M ${braceX} 98 q 3 0 3 3 v 8 q 0 3 3 3 q -3 0 -3 3 v 8 q 0 3 -3 3`
@@ -282,7 +282,7 @@ function PoorExample({ chartLeft, chartRight, direction }: { chartLeft: number; 
             ))}
             <line x1={zoneX - 12} y1={mirroredY(128, short)} x2={chartRight} y2={mirroredY(128, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={0.75} />
             <line x1={zoneX - 12} y1={mirroredY(151, short)} x2={chartRight} y2={mirroredY(151, short)} stroke={short ? "#fb7185" : "#51d477"} strokeWidth={0.75} />
-            <text x={zoneX + zoneWidth / 2} y={mirroredY(169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
+            <text x={zoneX + zoneWidth / 2} y={mirroredY(short ? 159 : 169, short)} textAnchor="middle" fill={short ? "#fb7185" : "#51d477"} fontSize="11">{short ? "SZ" : "DZ"}</text>
             <g transform={short ? `translate(0 ${MIRROR_AXIS}) scale(1 -1)` : undefined}>
                 <path d={`M ${braceX} 98 q 3 0 3 3 v 8 q 0 3 3 3 q -3 0 -3 3 v 8 q 0 3 -3 3`} fill="none" stroke="#9ba2e9" strokeWidth="1" />
                 <text x={braceX + 10} y={upperNumberY} transform={uprightTextTransform(upperNumberY, short)} fill="#9ba2e9" fontSize="12">&lt;2:1</text>

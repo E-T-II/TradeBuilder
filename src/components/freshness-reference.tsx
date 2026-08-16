@@ -11,7 +11,7 @@ export function FreshnessReference({
 }) {
     const short = direction === "short";
     return (
-        <figure className="w-full rounded-lg border border-slate-700 bg-[#252b40] p-2">
+        <figure className="odds-reference-graphic w-full rounded-lg border border-slate-700 bg-[#252b40] p-2">
             <svg
                 viewBox="0 0 580 250"
                 role="img"
@@ -19,20 +19,20 @@ export function FreshnessReference({
                 className="mx-auto block h-auto w-full text-slate-100 [shape-rendering:geometricPrecision]"
             >
                 <rect width="580" height="250" fill="#252b40" />
-                <text x="290" y="17" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="700">
+                <text x="290" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">
                     Has price returned to the zone?
                 </text>
-                <text x="18" y="48" fill="#f8fafc" fontSize="14" fontWeight="700">Zone</text>
-                <text x="18" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="13">{short ? "Supply" : "Demand"}</text>
-                <text x="18" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="13">{short ? "Sell Setup" : "Buy Setup"}</text>
-                <text x="18" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="13">{short ? "(Short)" : "(Long)"}</text>
+                <text x="18" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">Zone</text>
+                <text x="18" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "Supply" : "Demand"}</text>
+                <text x="18" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "Sell Setup" : "Buy Setup"}</text>
+                <text x="18" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "(Short)" : "(Long)"}</text>
                 <FreshnessPanel direction={direction} x={95} width={138} title="Best" score="2" value={2} caption="Zone not Pierced" selected={selected === 2} onSelect={onSelect} />
                 <FreshnessPanel direction={direction} x={253} width={142} title="Good" score="1" value={1} caption="Pierced 50% or Less" selected={selected === 1} onSelect={onSelect} />
                 <FreshnessPanel direction={direction} x={415} width={145} title="Poor" score="0" value={0} caption="Pierced Greater Than 50%" selected={selected === 0} onSelect={onSelect} />
-                <text x="290" y="226" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="600">
+                <text x="290" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
                     Scoring Freshness is based on how far,
                 </text>
-                <text x="290" y="243" textAnchor="middle" fill="#f8fafc" fontSize="13" fontWeight="600">
+                <text x="290" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
                     if at all, price has pierced the zone.
                 </text>
             </svg>
@@ -85,7 +85,7 @@ function FreshnessPanel({
             className={onSelect ? "cursor-pointer" : undefined}
         >
             <rect x={x} y={27} width={width} height={153} fill="none" stroke={selected ? "#fb744c" : "#394158"} />
-            <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="12" fontWeight="700">
+            <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="16" fontWeight="700">
                 {selected ? "✓ " : ""}{title} = {score}
             </text>
             <g transform={short ? "translate(0 234) scale(1 -1)" : "translate(0 -16)"}>

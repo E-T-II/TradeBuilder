@@ -80,6 +80,13 @@
   }
 }
 
+@media (max-width: 380px) {
+  .odds-reference-graphic > svg {
+    transform: scale(1.1);
+    transform-origin: center;
+  }
+}
+
 /* The splash-hide rule is an inline <style> in layout.tsx; Tailwind strips
    it from this file. */
 @keyframes intro-pop {
