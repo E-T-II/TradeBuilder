@@ -30,7 +30,9 @@ export function ChartTutorial({
   const high = Number(curveHigh);
   const low = Number(curveLow);
   const hasCurve = Number.isFinite(high) && Number.isFinite(low) && high > low;
-  const curveFactor = hasCurve ? (high - low) / 3 : null;
+  const curveFactor = hasCurve
+    ? Math.floor(((high - low) / 3) * 100) / 100
+    : null;
   const highLabel = hasCurve ? high.toFixed(2) : "130.00";
   const lowLabel = hasCurve ? low.toFixed(2) : "100.00";
   const upperBoundary = hasCurve && curveFactor !== null ? high - curveFactor : 120;
@@ -42,56 +44,56 @@ export function ChartTutorial({
   const curveFactorLabel =
     curveFactor === null
       ? "Enter both prices"
-      : `$${Math.floor(curveFactor * 100) / 100}`;
+      : `$${curveFactor.toFixed(2)}`;
 
   return (
     <div className="space-y-3">
       {/* Inline so Tailwind's CSS build can't prune the keyframe as unused. */}
       <style>{`@keyframes tutorial-cue{0%{opacity:0;transform:translateX(6px)}100%{opacity:1;transform:none}}`}</style>
       <div className="overflow-x-auto">
-      <svg
-        key={runId}
-        viewBox="0 0 430 270"
-        className="w-full min-w-[400px] text-foreground"
-        role="img"
-        aria-label="A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal."
-      >
-        <text x="60" y="28" textAnchor="end" fontSize="11" className="fill-muted-foreground">{highLabel}</text>
-        <text x="60" y="252" textAnchor="end" fontSize="11" className="fill-muted-foreground">{lowLabel}</text>
-        <rect x="70" y="24" width="180" height="224" fill="none" className="stroke-border" />
-        <line x1="70" y1={upperBoundaryY} x2="250" y2={upperBoundaryY} className="stroke-border" strokeDasharray="3 3" />
-        <line x1="70" y1={lowerBoundaryY} x2="250" y2={lowerBoundaryY} className="stroke-border" strokeDasharray="3 3" />
-        <text x="60" y={upperBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(upperBoundary)}</text>
-        <text x="60" y={lowerBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(lowerBoundary)}</text>
-        <text x="78" y="68" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">retail</text>
-        <text x="78" y="139" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">equilibrium</text>
-        <text x="78" y="210" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">wholesale</text>
+        <svg
+          key={runId}
+          viewBox="0 0 430 270"
+          className="w-full min-w-[400px] text-foreground"
+          role="img"
+          aria-label="A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal."
+        >
+          <text x="60" y="28" textAnchor="end" fontSize="11" className="fill-muted-foreground">{highLabel}</text>
+          <text x="60" y="252" textAnchor="end" fontSize="11" className="fill-muted-foreground">{lowLabel}</text>
+          <rect x="70" y="24" width="180" height="224" fill="none" className="stroke-border" />
+          <line x1="70" y1={upperBoundaryY} x2="250" y2={upperBoundaryY} className="stroke-border" strokeDasharray="3 3" />
+          <line x1="70" y1={lowerBoundaryY} x2="250" y2={lowerBoundaryY} className="stroke-border" strokeDasharray="3 3" />
+          <text x="60" y={upperBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(upperBoundary)}</text>
+          <text x="60" y={lowerBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(lowerBoundary)}</text>
+          <text x="78" y="68" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">retail</text>
+          <text x="78" y="139" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">equilibrium</text>
+          <text x="78" y="210" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">wholesale</text>
 
-        <g style={cue(1.4)}>
-          <line x1="70" y1="24" x2="250" y2="24" className="stroke-red-700" strokeWidth="3" />
-          <circle cx="250" cy="24" r="3" className="fill-red-700" />
-          <line x1="250" y1="24" x2="266" y2="24" className="stroke-border" />
-          <text x="272" y="28" fontSize="12.5" className="fill-foreground">Curve high</text>
-        </g>
-        <g style={cue(2.2)}>
-          <line x1="70" y1="248" x2="250" y2="248" className="stroke-emerald-700" strokeWidth="3" />
-          <circle cx="250" cy="248" r="3" className="fill-emerald-700" />
-          <line x1="250" y1="248" x2="266" y2="248" className="stroke-border" />
-          <text x="272" y="252" fontSize="12.5" className="fill-foreground">Curve low</text>
-        </g>
-        <g style={cue(0.2)}>
-          <rect x="70" y="24" width="180" height="14.9" className="fill-red-500/15 stroke-red-600" />
-          <text x="160" y="20" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
-          <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
-          <text x="272" y="44" fontSize="12.5" className="fill-foreground">Supply zone</text>
-        </g>
-        <g style={cue(0.8)}>
-          <rect x="70" y="233.1" width="180" height="14.9" className="fill-emerald-500/18 stroke-emerald-600" />
-          <text x="160" y="229" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
-          <text x="160" y="264" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
-          <text x="272" y="237" fontSize="12.5" className="fill-foreground">Demand zone</text>
-        </g>
-      </svg>
+          <g style={cue(1.4)}>
+            <line x1="70" y1="24" x2="250" y2="24" className="stroke-red-700" strokeWidth="3" />
+            <circle cx="250" cy="24" r="3" className="fill-red-700" />
+            <line x1="250" y1="24" x2="266" y2="24" className="stroke-border" />
+            <text x="272" y="28" fontSize="12.5" className="fill-foreground">Curve high</text>
+          </g>
+          <g style={cue(2.2)}>
+            <line x1="70" y1="248" x2="250" y2="248" className="stroke-emerald-700" strokeWidth="3" />
+            <circle cx="250" cy="248" r="3" className="fill-emerald-700" />
+            <line x1="250" y1="248" x2="266" y2="248" className="stroke-border" />
+            <text x="272" y="252" fontSize="12.5" className="fill-foreground">Curve low</text>
+          </g>
+          <g style={cue(0.2)}>
+            <rect x="70" y="24" width="180" height="14.9" className="fill-red-500/15 stroke-red-600" />
+            <text x="160" y="20" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
+            <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
+            <text x="272" y="44" fontSize="12.5" className="fill-foreground">Supply zone</text>
+          </g>
+          <g style={cue(0.8)}>
+            <rect x="70" y="233.1" width="180" height="14.9" className="fill-emerald-500/18 stroke-emerald-600" />
+            <text x="160" y="229" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
+            <text x="160" y="264" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
+            <text x="272" y="237" fontSize="12.5" className="fill-foreground">Demand zone</text>
+          </g>
+        </svg>
       </div>
 
       <div className="grid gap-1 rounded-lg border bg-muted/30 px-3 py-2 text-sm sm:grid-cols-3">

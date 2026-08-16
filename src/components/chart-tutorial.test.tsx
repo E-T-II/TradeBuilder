@@ -9,10 +9,10 @@ function stubMatchMedia(matches: boolean) {
     matches,
     media: query,
     onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    addListener: () => {},
-    removeListener: () => {},
+    addEventListener: () => { },
+    removeEventListener: () => { },
+    addListener: () => { },
+    removeListener: () => { },
     dispatchEvent: () => false,
   }));
 }
@@ -75,9 +75,9 @@ describe("given ChartTutorial", () => {
     );
     const boundaryLabels = [...container.querySelectorAll("text")]
       .map((text) => text.textContent)
-      .filter((text) => text === "321.03" || text === "303.88");
+      .filter((text) => text === "321.04" || text === "303.88");
 
-    expect(boundaryLabels).toEqual(["321.03", "303.88"]);
+    expect(boundaryLabels).toEqual(["321.04", "303.88"]);
   });
 
   test("under reduced motion: shows no animated cues and hides Replay", () => {
