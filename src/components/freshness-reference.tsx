@@ -119,34 +119,36 @@ function FreshnessPanel({
                                                             ? title === "Good" ? 132 : 132
                                                             : !short && title === "Good" && candleNumber === 10
                                                                 ? 138
-                                                                : short && (title === "Good" || title === "Poor") && candleNumber === 10
-                                                                    ? 138
-                                                                    : !short && title === "Poor" && candleNumber === 10
-                                                                        ? 152
-                                                                        : short && (title === "Good" || title === "Poor") && candleNumber === 11
-                                                                            ? 110
-                                                                            : !short && (title === "Good" || title === "Poor") && candleNumber === 11
-                                                                                ? 117
-                                                                                : !short && title === "Poor" && candleNumber === 11
-                                                                                    ? 118
-                                                                                    : !short && title === "Poor" && candleNumber === 12
-                                                                                        ? 93
-                                                                                        : !short && title === "Good" && candleNumber === 12
+                                                                : short && title === "Poor" && candleNumber === 10
+                                                                    ? 132
+                                                                    : short && title === "Good" && candleNumber === 10
+                                                                        ? 134
+                                                                        : !short && title === "Poor" && candleNumber === 10
+                                                                            ? 146
+                                                                            : short && (title === "Good" || title === "Poor") && candleNumber === 11
+                                                                                ? 110
+                                                                                : !short && (title === "Good" || title === "Poor") && candleNumber === 11
+                                                                                    ? 117
+                                                                                    : !short && title === "Poor" && candleNumber === 11
+                                                                                        ? 118
+                                                                                        : !short && title === "Poor" && candleNumber === 12
                                                                                             ? 93
                                                                                             : !short && title === "Good" && candleNumber === 12
-                                                                                                ? 99
-                                                                                                : !short && (title === "Good" || title === "Poor") && candleNumber === 13
-                                                                                                    ? 89
-                                                                                                    : !short && (title === "Good" || title === "Poor") && candleNumber === 14
-                                                                                                        ? 93
-                                                                                                        : short && (title === "Good" || title === "Poor") && candleNumber === 12
-                                                                                                            ? 83
-                                                                                                            : short && (title === "Good" || title === "Poor") && candleNumber === 13
+                                                                                                ? 93
+                                                                                                : !short && title === "Good" && candleNumber === 12
+                                                                                                    ? 99
+                                                                                                    : !short && (title === "Good" || title === "Poor") && candleNumber === 13
+                                                                                                        ? 89
+                                                                                                        : !short && (title === "Good" || title === "Poor") && candleNumber === 14
+                                                                                                            ? 93
+                                                                                                            : short && (title === "Good" || title === "Poor") && candleNumber === 12
                                                                                                                 ? 83
-                                                                                                                : short && (title === "Good" || title === "Poor") && candleNumber === 14
-                                                                                                                    ? 87
-                                                                                                                    : 106 - Math.min(candleNumber - 1, 4) * 9 + (candleNumber > 5 ? (candleNumber - 5) * 5 : 0) + (short && candleNumber === 1 ? 40 : short && candleNumber === 2 ? 36 : short && candleNumber === 3 ? 24 : short && candleNumber === 4 ? 16 : short && candleNumber === 6 ? -5 : short && candleNumber === 8 ? 12 : 0);
-                        const height = !short && candleNumber === 1 ? 18 : !short && candleNumber === 2 ? 28 : !short && candleNumber === 4 ? 28 : !short && candleNumber === 8 ? 31 : !short && candleNumber === 9 && title === "Good" ? 27 : !short && candleNumber === 9 && title === "Poor" ? 41 : !short && candleNumber === 11 && title === "Poor" ? 31 : !short && candleNumber === 11 && title === "Good" ? 23 : !short && candleNumber === 12 && title === "Poor" ? 34 : !short && candleNumber === 12 && title === "Good" ? 32 : candleNumber === 5 ? 31 : short && candleNumber === 8 ? 36 : short && candleNumber === 10 && title === "Poor" ? 34 : short && candleNumber === 12 && (title === "Good" || title === "Poor") ? 28 : short && candleNumber === 9 && title === "Poor" ? 48 : short && candleNumber === 9 && title === "Good" ? 36 : short && candleNumber === 13 && (title === "Good" || title === "Poor") ? 16 : 20;
+                                                                                                                : short && (title === "Good" || title === "Poor") && candleNumber === 13
+                                                                                                                    ? 83
+                                                                                                                    : short && (title === "Good" || title === "Poor") && candleNumber === 14
+                                                                                                                        ? 87
+                                                                                                                        : 106 - Math.min(candleNumber - 1, 4) * 9 + (candleNumber > 5 ? (candleNumber - 5) * 5 : 0) + (short && candleNumber === 1 ? 40 : short && candleNumber === 2 ? 36 : short && candleNumber === 3 ? 24 : short && candleNumber === 4 ? 16 : short && candleNumber === 6 ? -5 : short && candleNumber === 8 ? 12 : 0);
+                        const height = !short && candleNumber === 1 ? 18 : !short && candleNumber === 2 ? 28 : !short && candleNumber === 4 ? 28 : !short && candleNumber === 8 ? 31 : !short && candleNumber === 9 && title === "Good" ? 27 : !short && candleNumber === 9 && title === "Poor" ? 41 : !short && candleNumber === 10 && title === "Poor" ? 25 : !short && candleNumber === 11 && title === "Poor" ? 31 : !short && candleNumber === 11 && title === "Good" ? 23 : !short && candleNumber === 12 && title === "Poor" ? 34 : !short && candleNumber === 12 && title === "Good" ? 32 : candleNumber === 5 ? 31 : short && candleNumber === 8 ? 36 : short && candleNumber === 10 && title === "Poor" ? 34 : short && candleNumber === 12 && (title === "Good" || title === "Poor") ? 28 : short && candleNumber === 9 && title === "Poor" ? 48 : short && candleNumber === 9 && title === "Good" ? 36 : short && candleNumber === 13 && (title === "Good" || title === "Poor") ? 16 : 20;
                         const mirroredColor = [5, 6].includes(index)
                             ? "#19c85a"
                             : ![0, 3, 4].includes(index)

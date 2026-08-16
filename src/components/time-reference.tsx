@@ -132,6 +132,9 @@ function BestTimeChart({
     const leftArrowX = arrowCenter - (poorGraphic ? 24 : duplicateGood ? 12 : 5);
     const rightArrowX = arrowCenter + (poorGraphic ? 28 : duplicateGood ? 16 : 1);
     const lineInset = poorGraphic ? 18 : title === "Good" ? 48 : !short ? 16 : 0;
+    const oppositeCandleColor = (color: string) => !short && duplicateGood
+        ? color === "#19c85a" ? "#ff263e" : "#19c85a"
+        : color;
 
     return (
         <>
@@ -139,31 +142,31 @@ function BestTimeChart({
             <line x1={chartLeft + lineInset} y1={bottomLine} x2={chartRight - lineInset} y2={bottomLine} stroke={short ? "#ff0000" : "#53d67b"} strokeWidth="1" />
             {!short && title === "Best" && <rect x={candleX[0] + 5} y={topLine} width={candleX[3] - candleX[0] - 5} height={bottomLine - topLine} fill="#fb744c" fillOpacity="0.45" />}
             {duplicateGood && <rect x={candleX[1] + 4} y={topLine} width={poorGraphic ? candleX[9] - candleX[1] - 4 : candleX[6] - candleX[1] - 3} height={bottomLine - topLine} fill="#fb744c" fillOpacity="0.45" />}
-            {duplicateGood && <rect x={candlePosition(1)} y={42} width="5" height="20" fill={candleColors[0]} />}
+            {duplicateGood && <rect x={candlePosition(1)} y={42} width="5" height="20" fill={oppositeCandleColor(candleColors[0])} />}
             {poorGraphic && [3, 4, 5, 6, 7].map((index) => (
                 <line key={index} x1={candleX[index] + 2.5} y1={index === 3 ? 76 : index === 4 ? 72 : index === 5 ? 75 : index === 6 ? 72 : 70} x2={candleX[index] + 2.5} y2={index === 3 ? 113 : index === 4 ? 109 : index === 5 ? 112 : index === 6 ? 109 : 107} stroke="#9ca3af" strokeWidth="1" />
             ))}
-            <rect x={candleX[duplicateGood ? 1 : 0]} y={duplicateGood ? 50 : 42} width="5" height="40" fill={candleColors[duplicateGood ? 1 : 0]} />
+            <rect x={candleX[duplicateGood ? 1 : 0]} y={duplicateGood ? 50 : 42} width="5" height="40" fill={oppositeCandleColor(candleColors[duplicateGood ? 1 : 0])} />
             <line x1={candleX[duplicateGood ? 2 : 1] + 2.5} y1={74} x2={candleX[duplicateGood ? 2 : 1] + 2.5} y2={title === "Best" && !short ? 112.75 : 114} stroke="#9ca3af" strokeWidth="1" />
-            <rect x={candleX[duplicateGood ? 2 : 1]} y={82} width="5" height="20" fill={candleColors[duplicateGood ? 2 : 1]} />
+            <rect x={candleX[duplicateGood ? 2 : 1]} y={82} width="5" height="20" fill={oppositeCandleColor(candleColors[duplicateGood ? 2 : 1])} />
             {duplicateGood && (
                 <>
-                    <rect x={candlePosition(4)} y={poorGraphic ? 88 : 82} width="5" height="20" fill={candleColors[3]} />
-                    {title === "Good" && <rect x={candlePosition(5)} y={82} width="5" height="20" fill={candleColors[4]} />}
+                    <rect x={candlePosition(4)} y={poorGraphic ? 88 : 82} width="5" height="20" fill={oppositeCandleColor(candleColors[3])} />
+                    {title === "Good" && <rect x={candlePosition(5)} y={82} width="5" height="20" fill={oppositeCandleColor(candleColors[4])} />}
                     {poorGraphic && (
                         <>
-                            <rect x={candlePosition(5)} y={poorGraphic ? 84 : 82} width="5" height="20" fill={candleColors[4]} />
-                            <rect x={candlePosition(6)} y={poorGraphic ? 87 : 82} width="5" height="20" fill={candleColors[5]} />
-                            <rect x={candlePosition(7)} y={poorGraphic ? 84 : 82} width="5" height="20" fill={candleColors[6]} />
-                            <rect x={candlePosition(8)} y={82} width="5" height="20" fill={candleColors[7]} />
+                            <rect x={candlePosition(5)} y={poorGraphic ? 84 : 82} width="5" height="20" fill={oppositeCandleColor(candleColors[4])} />
+                            <rect x={candlePosition(6)} y={poorGraphic ? 87 : 82} width="5" height="20" fill={oppositeCandleColor(candleColors[5])} />
+                            <rect x={candlePosition(7)} y={poorGraphic ? 84 : 82} width="5" height="20" fill={oppositeCandleColor(candleColors[6])} />
+                            <rect x={candlePosition(8)} y={82} width="5" height="20" fill={oppositeCandleColor(candleColors[7])} />
                         </>
                     )}
                 </>
             )}
             <line x1={candleX[poorGraphic ? 8 : duplicateGood ? 5 : 2] + 2.5} y1={poorGraphic ? 74 : 70} x2={candleX[poorGraphic ? 8 : duplicateGood ? 5 : 2] + 2.5} y2={poorGraphic ? 111 : 107} stroke="#9ca3af" strokeWidth="1" />
-            <rect x={candleX[poorGraphic ? 8 : duplicateGood ? 5 : 2]} y={poorGraphic ? 86 : 82} width="5" height="20" fill={candleColors[poorGraphic ? 8 : duplicateGood ? 5 : 2]} />
-            <rect x={candleX[poorGraphic ? 9 : duplicateGood ? 6 : 3]} y={duplicateGood ? 62 : 54} width="5" height="28" fill={candleColors[poorGraphic ? 9 : duplicateGood ? 6 : 3]} />
-            {duplicateGood && <rect x={candlePosition(poorGraphic ? 12 : 8)} y={38} width="5" height="28" fill={candleColors[poorGraphic ? 11 : 7]} />}
+            <rect x={candleX[poorGraphic ? 8 : duplicateGood ? 5 : 2]} y={poorGraphic ? 86 : 82} width="5" height="20" fill={oppositeCandleColor(candleColors[poorGraphic ? 8 : duplicateGood ? 5 : 2])} />
+            <rect x={candleX[poorGraphic ? 9 : duplicateGood ? 6 : 3]} y={duplicateGood ? 62 : 54} width="5" height="28" fill={oppositeCandleColor(candleColors[poorGraphic ? 9 : duplicateGood ? 6 : 3])} />
+            {duplicateGood && <rect x={candlePosition(poorGraphic ? 12 : 8)} y={38} width="5" height="28" fill={oppositeCandleColor(candleColors[poorGraphic ? 11 : 7])} />}
             <line x1={leftArrowX} y1={duplicateGood ? 30 : 42} x2={leftArrowX} y2={duplicateGood ? 52 : 64} stroke="#9ba2e9" strokeWidth="1" />
             <path d={`M ${leftArrowX - 3} ${duplicateGood ? 47 : 59} l 3 5 l 3 -5`} fill="none" stroke="#9ba2e9" />
             <line x1={rightArrowX} y1={52} x2={rightArrowX} y2={30} stroke="#9ba2e9" strokeWidth="1" />
