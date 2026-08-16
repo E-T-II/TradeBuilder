@@ -50,11 +50,11 @@ export function ChartTutorial({
     <div className="space-y-3">
       {/* Inline so Tailwind's CSS build can't prune the keyframe as unused. */}
       <style>{`@keyframes tutorial-cue{0%{opacity:0;transform:translateX(6px)}100%{opacity:1;transform:none}}`}</style>
-      <div className="overflow-x-auto">
+      <div className="w-full overflow-hidden">
         <svg
           key={runId}
           viewBox="0 0 430 270"
-          className="w-full min-w-[400px] text-foreground"
+          className="block h-auto w-full text-foreground"
           role="img"
           aria-label="A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal."
         >
