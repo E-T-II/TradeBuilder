@@ -96,7 +96,7 @@ export function ChartTutorial({
         </svg>
       </div>
 
-      <div className="grid gap-1 rounded-lg border bg-muted/30 px-3 py-2 text-sm sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-1 rounded-lg border bg-muted/30 px-2 py-2 text-xs sm:px-3 sm:text-sm">
         <div>
           <span className="text-muted-foreground">Curve high</span>
           <div className="font-mono tabular-nums">${highLabel}</div>
