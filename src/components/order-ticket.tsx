@@ -149,15 +149,15 @@ export function OrderTicket({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your order</CardTitle>
+        <CardTitle>Your S.E.T.S. order</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
+        <Line label="Stop loss" value={usd.format(o.stop)} strong />        
+        <Line label="Entry price" value={usd.format(o.entry)} strong />
+        <Line label="Target price" value={usd.format(o.target)} strong />
         <p className="text-sm font-medium">
           {verb} {o.positionSize} shares, {orderKind}
         </p>
-        <Line label="Entry price" value={usd.format(o.entry)} strong />
-        <Line label="Stop loss" value={usd.format(o.stop)} strong />
-        <Line label="Target price" value={usd.format(o.target)} strong />
         <div className="my-3 border-t" />
         <Line label="Risk per share" value={usd.format(o.riskPerShare)} />
         <Line label="Total trade risk" value={usd.format(o.totalTradeRisk)} />
