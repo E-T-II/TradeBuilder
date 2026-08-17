@@ -159,12 +159,12 @@ export function OrderTicket({
           {verb} {o.positionSize} shares, {orderKind}
         </p>
         <div className="my-3 border-t" />
-        <Line label="Risk per share" value={usd.format(o.riskPerShare)} />
-        <Line label="Total trade risk" value={usd.format(o.totalTradeRisk)} />
         <Line
           label="Capital required"
           value={usd.format(o.capitalRequirement)}
         />
+        <Line label="Risk per share" value={usd.format(o.riskPerShare)} />
+        <Line label="Total trade risk" value={usd.format(o.totalTradeRisk)} />
         <Line
           label="Reward : risk (needs 3:1)"
           value={`${ratio.format(o.rewardRisk)} : 1`}
