@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, RotateCcw } from "lucide-react";
+import { Blocks, Check, Copy, RotateCcw } from "lucide-react";
 import {
   buildTrade,
   deriveZoneLines,
@@ -12,6 +12,7 @@ import {
   type IncomeTimeframe,
   type TargetMode,
   type TradeInputs,
+  type TradeResult,
   type Trend,
 } from "@/lib/trade-builder";
 import {
@@ -233,10 +234,73 @@ export function toInputs(form: FormState): TradeInputs | null {
 
 const RESULTS_STEP = STEPS.length;
 
+const exportUsd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+const exportRatio = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+});
+
+function resultsTsv(result: TradeResult): string {
+  const score = result.scorecard;
+  const matrixDirection =
+    result.objective === "long"
+      ? "Long"
+      : result.objective === "short"
+        ? "Short"
+        : "No action";
+  const order = result.order;
+  const headers = [
+    "Strength",
+    "Time",
+    "Freshness",
+    "Trend",
+    "Curve",
+    "Profit zone",
+    "Total O.E. Score",
+    "Decision matrix",
+    "Stop loss",
+    "Entry price",
+    "Target price",
+    "Position size",
+    "Order type",
+    "Capital required",
+    "Risk per share",
+    "Total trade risk",
+    "Reward : risk",
+  ];
+  const values = [
+    score.strength,
+    score.time,
+    score.freshness,
+    score.trend,
+    score.curve,
+    score.profitZone,
+    `${score.total} / 10`,
+    matrixDirection,
+    order ? exportUsd.format(order.stop) : "",
+    order ? exportUsd.format(order.entry) : "",
+    order ? exportUsd.format(order.target) : "",
+    order?.positionSize ?? "",
+    order
+      ? result.entryType === "proximal"
+        ? "Limit order"
+        : "Stop limit order"
+      : "",
+    order ? exportUsd.format(order.capitalRequirement) : "",
+    order ? exportUsd.format(order.riskPerShare) : "",
+    order ? exportUsd.format(order.totalTradeRisk) : "",
+    order ? `${exportRatio.format(order.rewardRisk)}:1` : "",
+  ];
+  return `${headers.join("\t")}\n${values.join("\t")}`;
+}
+
 export function TradeBuilderApp() {
   const [form, setForm] = useState<FormState>(initialState);
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
 
   const firstPersist = useRef(true);
 
@@ -285,6 +349,17 @@ export function TradeBuilderApp() {
   const goToStep = (next: number) => {
     setStep(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const copyResults = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(resultsTsv(result));
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1800);
+    } catch {
+      setCopyState("error");
+    }
   };
 
   const reachable = firstIncompleteStep(form);
@@ -342,28 +417,40 @@ export function TradeBuilderApp() {
           ) : (
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
               {result ? (
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                  <div className="space-y-6">
-                    <Reveal>
-                      <Scorecard result={result} />
-                    </Reveal>
-                    <Reveal delay={360}>
-                      <DecisionMatrix
-                        zoneType={form.direction === "long" ? "demand" : "supply"}
-                        curve={result.scorecard.curveZone}
-                        trend={form.trend}
-                      />
-                    </Reveal>
+                <>
+                  <div className="flex justify-end">
+                    <Button className="w-full sm:w-auto" variant="outline" onClick={copyResults}>
+                      {copyState === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
+                      {copyState === "copied"
+                        ? "Copied"
+                        : copyState === "error"
+                          ? "Copy failed"
+                          : "Copy results"}
+                    </Button>
                   </div>
-                  <div className="flex flex-col gap-6">
-                    <Reveal delay={140}>
-                      <OrderTicket result={result} direction={form.direction} />
-                    </Reveal>
-                    <Reveal delay={240}>
-                      <RiskChecks result={result} />
-                    </Reveal>
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                    <div className="space-y-6">
+                      <Reveal>
+                        <Scorecard result={result} />
+                      </Reveal>
+                      <Reveal delay={360}>
+                        <DecisionMatrix
+                          zoneType={form.direction === "long" ? "demand" : "supply"}
+                          curve={result.scorecard.curveZone}
+                          trend={form.trend}
+                        />
+                      </Reveal>
+                    </div>
+                    <div className="flex flex-col gap-6">
+                      <Reveal delay={140}>
+                        <OrderTicket result={result} direction={form.direction} />
+                      </Reveal>
+                      <Reveal delay={240}>
+                        <RiskChecks result={result} />
+                      </Reveal>
+                    </div>
                   </div>
-                </div>
+                </>
               ) : (
                 <Card>
                   <CardContent className="py-10 text-center text-sm text-muted-foreground">
