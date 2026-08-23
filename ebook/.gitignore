@@ -1,0 +1,11 @@
+# Generated manuscript output
+build/
+
+# Pandoc/LaTeX intermediates
+*.aux
+*.log
+*.out
+*.toc
+
+# macOS
+.DS_Store

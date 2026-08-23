@@ -13,7 +13,7 @@ const itfHeaderCellClasses =
 const accentCellClasses =
     "border border-slate-300 bg-slate-100 px-2 py-2 text-center text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 
-const pulseStyles = `
+/*const pulseStyles = `
   @keyframes pulse-ring {
     0%, 100% { 
             outline: 1px solid rgba(37, 99, 235, 1);
@@ -27,6 +27,26 @@ const pulseStyles = `
     }
   }
   .animate-pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+`;*/
+
+const pulseStyles = `
+  @keyframes pulse-ring {
+    0%, 100% { 
+      box-shadow: inset 0 0 10px 3px rgba(37, 99, 235, 0.35);
+      border: 1px solid rgba(37, 99, 235, 1);
+    }
+    50% { 
+      box-shadow: inset 0 0 0px 0px rgba(37, 99, 235, 0);
+      border: 1px solid rgba(37, 99, 235, 0);
+    }
+  }
+  .animate-pulse-ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 `;

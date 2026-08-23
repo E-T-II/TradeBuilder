@@ -19,7 +19,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      b) a supply zone high on the curve in a sideways trend = Sell Short. 
 
-     c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is greater than or equal to 5:1. 
+     c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score meets XLT criteria. 
      ******
      d) a demand zone high on the curve in a downtrend = No trade. 
 
@@ -45,7 +45,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      o) a supply zone low on the curve in an uptrend = No trade. 
      ******
-     p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1. 
+     p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score meets XLT criteria. 
 
      q) a demand zone low on the curve in a sideways trend = Buy Long. 
 

@@ -106,7 +106,7 @@ const ScorePopupButton = forwardRef<HTMLButtonElement, {
         <span>{value}</span>
       </button>
       {popup ? (
-        <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-[100] w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
+        <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-100 w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
           {popup}
         </div>
       ) : null}
