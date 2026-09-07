@@ -88,4 +88,31 @@ describe("given Scorecard", () => {
 
     expect(screen.getByText(/7\.48:1/)).toBeInTheDocument();
   });
+
+  test("should show the 3:1 XLT profit-zone requirement for a conditional conservative setup", () => {
+    const result = buildTrade({
+      ...longTrade,
+      trend: "downtrend",
+      targetProximal: 114,
+      targetDistal: 116,
+    });
+
+    render(<Scorecard result={result} />);
+
+    expect(screen.getByText(/3:1 \(XLT requires 3:1\)/)).toBeInTheDocument();
+  });
+
+  test("should show the 5:1 XLT profit-zone requirement for an aggressive setup", () => {
+    const result = buildTrade({
+      ...longTrade,
+      curveLow: 90,
+      curveHigh: 110,
+      targetProximal: 114,
+      targetDistal: 116,
+    });
+
+    render(<Scorecard result={result} />);
+
+    expect(screen.getByText(/3:1 \(XLT requires 5:1\)/)).toBeInTheDocument();
+  });
 });

@@ -311,6 +311,26 @@ describe("given the odds-enhancer controls on the Score step", () => {
       .getAllByRole("radio")
       .map((r) => r.textContent);
 
+  test("should display the automatically calculated trend, curve, and profit-zone scores", () => {
+    render(
+      <TradeForm
+        form={baseForm()}
+        onChange={() => { }}
+        step={4}
+        onBack={() => { }}
+        onNext={() => { }}
+        showAdvanced={false}
+        onToggleAdvanced={() => { }}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Trend score" })).toHaveTextContent("2");
+    expect(screen.getByRole("status", { name: "Curve score" })).toHaveTextContent("1");
+    expect(screen.getByRole("status", { name: "Profit zone score" })).toHaveTextContent("2");
+    expect(screen.getByText("Auto-scored odds enhancers")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Total odds-enhancer score" })).toHaveTextContent("7.5");
+  });
+
   test("should offer a strength dropdown and rating chips for the other factors", () => {
     render(
       <TradeForm

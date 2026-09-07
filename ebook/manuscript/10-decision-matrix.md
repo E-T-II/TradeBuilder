@@ -13,7 +13,7 @@ and **the trend**.
 |---|---|---|---|---|
 | a | Supply | High | Downtrend | Sell short |
 | b | Supply | High | Sideways | Sell short |
-| c | Supply | High | Uptrend | Sell short **only if profit zone ≥ 5:1** |
+| c | Supply | High | Uptrend | Sell short **only if profit zone ≥ 3:1** |
 | d | Demand | High | Downtrend | No trade |
 | e | Demand | High | Sideways | No trade |
 | f | Demand | High | Uptrend | Buy long **only if profit zone ≥ 5:1** |
@@ -26,7 +26,7 @@ and **the trend**.
 | m | Supply | Low | Downtrend | Sell short **only if profit zone ≥ 5:1** |
 | n | Supply | Low | Sideways | No trade |
 | o | Supply | Low | Uptrend | No trade |
-| p | Demand | Low | Downtrend | Buy long **only if profit zone ≥ 5:1** |
+| p | Demand | Low | Downtrend | Buy long **only if profit zone ≥ 3:1** |
 | q | Demand | Low | Sideways | Buy long |
 | r | Demand | Low | Uptrend | Buy long |
 
@@ -35,8 +35,8 @@ and **the trend**.
 - [ ] How to read the table: find your zone, your curve third, your trend.
 - [ ] A demand zone always *aims* long; a supply zone always *aims* short. The
       matrix's only job is to veto that aim.
-- [ ] The three kinds of cell: unconditional trade, conditional on 5:1, and
-      outright no trade.
+- [ ] The four kinds of cell: unconditional trade, conditional on 3:1,
+      conditional on 5:1, and outright no trade.
 - [ ] Why the conditional cells exist — they are trading from the wrong end of
       the curve, or against the trend, and need extra room to justify the risk.
 - [ ] Walk at least four cells in prose, including one of each kind.

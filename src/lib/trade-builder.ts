@@ -129,9 +129,9 @@ export type ZoneType = "demand" | "supply";
 export type TradeObjective = Direction | "no-trade";
 
 // Decision Matrix (README step 3, rows a-r): the entry zone's type, where it
-// sits on the curve, and the trend resolve the objective. "needs-5to1" cells
-// only trade when the profit zone ratio is 5:1 or better; the rest are fixed.
-type MatrixVerdict = "trade" | "needs-5to1" | "no-trade";
+// sits on the curve, and the trend resolve the objective. Conditional cells
+// require either a 3:1 or 5:1 profit-zone ratio; the rest are fixed.
+type MatrixVerdict = "trade" | "needs-3to1" | "needs-5to1" | "no-trade";
 
 const DECISION_MATRIX: Record<
   ZoneType,
@@ -144,10 +144,10 @@ const DECISION_MATRIX: Record<
       uptrend: "needs-5to1",
     }, // d, e, f
     equilibrium: { downtrend: "no-trade", sideways: "trade", uptrend: "trade" }, // j, k, l
-    wholesale: { downtrend: "needs-5to1", sideways: "trade", uptrend: "trade" }, // p, q, r
+    wholesale: { downtrend: "needs-3to1", sideways: "trade", uptrend: "trade" }, // p, q, r
   },
   supply: {
-    retail: { downtrend: "trade", sideways: "trade", uptrend: "needs-5to1" }, // a, b, c
+    retail: { downtrend: "trade", sideways: "trade", uptrend: "needs-3to1" }, // a, b, c
     equilibrium: { downtrend: "trade", sideways: "trade", uptrend: "no-trade" }, // g, h, i
     wholesale: {
       downtrend: "needs-5to1",
@@ -159,8 +159,8 @@ const DECISION_MATRIX: Record<
 
 /**
  * Resolve the trade objective from the entry zone. A demand entry aims long, a
- * supply entry aims short, but the matrix can veto to no-trade, and the marginal
- * (counter-trend or awkward-curve) cells only trade with a 5:1 profit zone.
+ * supply entry aims short, but the matrix can veto to no-trade. Conditional
+ * cells require the specified 3:1 or 5:1 profit-zone threshold.
  */
 export function decisionMatrix(
   zoneType: ZoneType,
@@ -170,12 +170,17 @@ export function decisionMatrix(
 ): TradeObjective {
   const verdict = DECISION_MATRIX[zoneType][curve][trend];
   if (verdict === "no-trade") return "no-trade";
-  // "5:1 or better" is the same threshold as a 2-point profit zone score, so use
-  // the shared epsilon-aware check to stay consistent with profitZoneScore.
-  if (verdict === "needs-5to1" && !meetsProfitRatio(profitRatio, 5)) {
+  const requiredRatio = matrixProfitZoneRequirement(verdict);
+  if (requiredRatio !== null && !meetsProfitRatio(profitRatio, requiredRatio)) {
     return "no-trade";
   }
   return zoneType === "demand" ? "long" : "short";
+}
+
+function matrixProfitZoneRequirement(verdict: MatrixVerdict): number | null {
+  if (verdict === "needs-5to1") return 5;
+  if (verdict === "needs-3to1") return 3;
+  return null;
 }
 
 /** The user-judged factors and their maximums. Confirmed by Eugene. */
@@ -449,6 +454,8 @@ export interface TradeResult {
     trend: number;
     profitZoneRatio: number;
     profitZone: number;
+    /** XLT Decision Matrix requirement for this cell, if conditional. */
+    requiredProfitZoneRatio: number | null;
     strength: number;
     time: number;
     freshness: number;
@@ -558,6 +565,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   // trade at all. It can veto even a high-scoring setup.
   const zoneType: ZoneType = inputs.direction === "long" ? "demand" : "supply";
   const objective = decisionMatrix(zoneType, curveZone, inputs.trend, ratio);
+  const matrixVerdict = DECISION_MATRIX[zoneType][curveZone][inputs.trend];
 
   const scorecard = {
     curveZone,
@@ -565,6 +573,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     trend: trendScore(inputs.trend, inputs.direction),
     profitZoneRatio: ratio,
     profitZone: profitZoneScore(ratio),
+    requiredProfitZoneRatio: matrixProfitZoneRequirement(matrixVerdict),
     strength: inputs.strength,
     time: inputs.time,
     freshness: inputs.freshness,

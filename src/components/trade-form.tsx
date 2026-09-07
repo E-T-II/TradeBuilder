@@ -13,6 +13,12 @@ import type { FormState } from "@/components/trade-builder-app";
 import {
   TARGET_BUFFER_MAX_PCT,
   TARGET_BUFFER_MIN_PCT,
+  curveScore,
+  deriveZoneLines,
+  locateOnCurve,
+  profitZoneRatio,
+  profitZoneScore,
+  trendScore,
 } from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
@@ -346,6 +352,47 @@ export function TradeForm({
   showAdvanced,
   onToggleAdvanced,
 }: TradeFormProps) {
+  const computedScores = (() => {
+    const numbers = [
+      Number(form.curveLow),
+      Number(form.curveHigh),
+      Number(form.demandHigh),
+      Number(form.demandLow),
+      Number(form.supplyHigh),
+      Number(form.supplyLow),
+    ];
+    if (numbers.some((value) => !Number.isFinite(value))) return null;
+
+    const [curveLow, curveHigh, demandHigh, demandLow, supplyHigh, supplyLow] = numbers;
+    if (curveHigh <= curveLow) return null;
+    const lines = deriveZoneLines(
+      { demandHigh, demandLow, supplyHigh, supplyLow },
+      form.direction,
+    );
+    const curve = locateOnCurve(lines.entryProximal, curveLow, curveHigh);
+    const ratio = profitZoneRatio(
+      lines.entryProximal,
+      lines.entryDistal,
+      lines.targetProximal,
+    );
+    return {
+      trend: trendScore(form.trend, form.direction),
+      curve: curveScore(curve, form.direction),
+      profitZone: profitZoneScore(ratio),
+    };
+  })();
+  const allEnhancerScore = computedScores &&
+    form.strength !== "" &&
+    form.time !== "" &&
+    form.freshness !== ""
+    ? computedScores.trend +
+    computedScores.curve +
+    computedScores.profitZone +
+    Number(form.strength) +
+    Number(form.time) +
+    Number(form.freshness)
+    : null;
+
   const [showStrengthReference, setShowStrengthReference] = useState(false);
   const [showTimeReference, setShowTimeReference] = useState(false);
   const [showFreshnessReference, setShowFreshnessReference] = useState(false);
@@ -813,6 +860,36 @@ export function TradeForm({
                 popupRef={freshnessPopupRef}
               />
               <div className="text-center font-mono text-sm tabular-nums">2</div>
+
+              <div className="col-span-3 mt-1 border-t pt-3 text-xs font-medium text-muted-foreground">
+                Auto-scored odds enhancers
+              </div>
+
+              <span className="text-sm text-muted-foreground">Trend</span>
+              <output className="text-center font-mono text-sm tabular-nums" aria-label="Trend score">
+                {computedScores?.trend ?? "-"}
+              </output>
+              <div className="text-center font-mono text-sm tabular-nums">2</div>
+
+              <span className="text-sm text-muted-foreground">Curve</span>
+              <output className="text-center font-mono text-sm tabular-nums" aria-label="Curve score">
+                {computedScores?.curve ?? "-"}
+              </output>
+              <div className="text-center font-mono text-sm tabular-nums">1</div>
+
+              <span className="text-sm text-muted-foreground">Profit zone</span>
+              <output className="text-center font-mono text-sm tabular-nums" aria-label="Profit zone score">
+                {computedScores?.profitZone ?? "-"}
+              </output>
+              <div className="text-center font-mono text-sm tabular-nums">2</div>
+
+              <span className="col-span-3 mt-1 grid grid-cols-[minmax(0,1fr)_3rem_4rem] items-center gap-x-3 border-t pt-3 font-medium">
+                <span>Total score</span>
+                <output className="text-center font-mono text-sm tabular-nums" aria-label="Total odds-enhancer score">
+                  {allEnhancerScore ?? "-"}
+                </output>
+                <span className="text-center font-mono text-sm tabular-nums">10</span>
+              </span>
             </div>
           </>
         ) : null}

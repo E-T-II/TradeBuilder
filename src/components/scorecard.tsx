@@ -106,6 +106,13 @@ export function Scorecard({ result }: { result: TradeResult }) {
     s.profitZoneRatio >= 100
       ? Math.round(s.profitZoneRatio)
       : Math.round(s.profitZoneRatio * 100) / 100;
+  const profitZoneDetail = s.requiredProfitZoneRatio === null
+    ? s.profitZone === 2
+      ? `${ratio}:1 (5:1 or better)`
+      : s.profitZone === 1
+        ? `${ratio}:1 (meets 3:1)`
+        : `${ratio}:1 (below 3:1)`
+    : `${ratio}:1 (XLT requires ${s.requiredProfitZoneRatio}:1)`;
 
   const reduced = usePrefersReducedMotion();
   const [shown, setShown] = useState(false);
@@ -164,13 +171,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
       max={2}
       positive={s.profitZone === 2}
       negative={s.profitZone === 0}
-      detail={
-        s.profitZone === 2
-          ? `${ratio}:1 (5:1 or better)`
-          : s.profitZone === 1
-            ? `${ratio}:1 (meets 3:1)`
-            : `${ratio}:1 (below 3:1)`
-      }
+      detail={profitZoneDetail}
     />,
     //<Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
     //<Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
