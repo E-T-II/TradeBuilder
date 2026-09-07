@@ -179,7 +179,7 @@ export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = 
                     </table>
                     <div className="mt-4">
                         <p className="ml-4 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="text-xl">*</span> Only if Profit Zone ≥ 5:1.
+                            <span className="text-xl">*</span> Only if Profit Zone ≥ 5:1. Confirmation Entry only - regardless of total zone score.
                         </p>
                     </div>
                 </div>
