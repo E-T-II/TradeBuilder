@@ -294,7 +294,7 @@ const exportRatio = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-function resultsTsv(result: TradeResult): string {
+export function resultsTsv(result: TradeResult, ticker: string): string {
   const score = result.scorecard;
   const matrixDirection =
     result.objective === "long"
@@ -304,6 +304,7 @@ function resultsTsv(result: TradeResult): string {
         : "No action";
   const order = result.order;
   const headers = [
+    "Ticker",
     "Strength",
     "Time",
     "Freshness",
@@ -323,6 +324,7 @@ function resultsTsv(result: TradeResult): string {
     "Reward : risk",
   ];
   const values = [
+    ticker.trim() || "Unknown",
     score.strength,
     score.time,
     score.freshness,
@@ -414,7 +416,7 @@ export function TradeBuilderApp() {
   const copyResults = async () => {
     if (!result) return;
     try {
-      await navigator.clipboard.writeText(resultsTsv(result));
+      await navigator.clipboard.writeText(resultsTsv(result, form.ticker));
       setCopyState("copied");
       window.setTimeout(() => setCopyState("idle"), 1800);
     } catch {

@@ -7,10 +7,12 @@ import {
   hasNonPositiveRisk,
   loadStoredForm,
   loadTradeLog,
+  resultsTsv,
   snapStep,
   toInputs,
   type FormState,
 } from "@/components/trade-builder-app";
+import { buildTrade } from "@/lib/trade-builder";
 
 const KEY = "tradebuilder-form-v3";
 const TRADE_LOG_KEY = "tradebuilder-log-v1";
@@ -54,6 +56,23 @@ describe("given toInputs and the risk cap", () => {
 
   test("given a risk below 2%: should keep the lower value", () => {
     expect(toInputs(form({ riskTolerance: "1" }))?.riskTolerancePct).toBe(0.01);
+  });
+});
+
+describe("given resultsTsv", () => {
+  const result = buildTrade(toInputs(form())!);
+
+  test("given a ticker: should include it in copied results", () => {
+    const [headers, values] = resultsTsv(result, "NVDA").split("\n");
+
+    expect(headers.split("\t")[0]).toBe("Ticker");
+    expect(values.split("\t")[0]).toBe("NVDA");
+  });
+
+  test("given a blank ticker: should copy Unknown", () => {
+    const [, values] = resultsTsv(result, "  ").split("\n");
+
+    expect(values.split("\t")[0]).toBe("Unknown");
   });
 });
 
