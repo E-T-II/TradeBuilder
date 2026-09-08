@@ -594,6 +594,10 @@ export function TradeBuilderApp() {
                           ))}
                         </div>
                       )}
+                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                        Not shared between browsers or devices. Can be lost when
+                        browser site data is cleared.
+                      </p>
                     </CardContent>
                   </Card>
                 </>

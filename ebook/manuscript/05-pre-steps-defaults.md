@@ -7,6 +7,14 @@ trade.
 
 ## Must cover
 
+### Ticker symbol
+
+- [ ] Enter the asset's ticker symbol before sizing the trade.
+- [ ] The app uses the ticker to identify the entry in the Trade log and in
+      copied results.
+- [ ] Use the broker or chart's symbol, such as **NVDA**. If it is unavailable,
+      copied results identify the asset as **Unknown**.
+
 ### Account balance
 
 - [ ] What counts as the balance for sizing purposes (available, not notional).

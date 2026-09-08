@@ -9,7 +9,7 @@ explanation, only the rules and the arithmetic.
 
 ### Before the chart
 
-- [ ] Risk tolerance ≤ 2% · Target buffer 75–80% · Stop buffer 2% or 10% of ATR
+- [ ] Ticker symbol · Risk tolerance ≤ 2% · Target buffer 75–80% · Stop buffer 2% or 10% of ATR
 
 ### The six steps
 
@@ -19,6 +19,7 @@ explanation, only the rules and the arithmetic.
 - [ ] 4. Decision Matrix → long / short / no trade
 - [ ] 5. Score → six enhancers out of 10
 - [ ] 6. S.E.T.S. → stop, entry, target, size → place the order
+- [ ] After an order: Log trade for local review · Copy results for an external backup
 
 ### Scoring at a glance
 

@@ -22,13 +22,31 @@
 ### Logging
 
 - [ ] Log every trade, including the score that justified it.
-- [ ] What to record: date, ticker, the six enhancer scores, total, matrix cell,
-      S.E.T.S. figures, outcome.
+- [ ] On a completed order, select **Log trade** to save the trade in the app.
+- [ ] Each logged entry records the date and time, ticker, direction, entry,
+      stop, target, position size, capital requirement, total trade risk,
+      reward:risk, and odds-enhancer total.
+- [ ] The Trade log is stored only in the browser on the device being used. It
+      remains when the current trade is reset, but it is not shared between
+      browsers or devices and can be lost when browser site data is cleared.
+- [ ] Use **Delete logged trade** to remove one entry, or **Clear log** to
+      remove the complete local log.
 - [ ] Why the log matters: it is the only way to find out whether your judged
       scores — strength, time, freshness — are honest.
 - [ ] Reviewing the log: look for scores you inflated to clear the 7-point bar.
 
+### Copying results
+
+- [ ] Select **Copy results** to copy the completed trade as a tab-separated
+      row that can be pasted into a spreadsheet or external journal.
+- [ ] The export includes ticker, all six enhancer scores, total score, Decision
+      Matrix direction, stop, entry, target, position size, order type, capital
+      requirement, risk per share, total trade risk, and reward:risk.
+- [ ] A blank ticker exports as **Unknown** so external records are not left
+      without an asset identifier.
+
 ## Notes
 
-The app's results screen produces exactly these figures and can copy them as a
-spreadsheet row, which is a natural feed for the log.
+The app's results screen supports both a local Trade log and a tab-separated
+Copy results export. The local log is convenient for review; use the copied
+export as the durable record outside the browser.
