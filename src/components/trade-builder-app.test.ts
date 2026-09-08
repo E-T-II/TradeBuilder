@@ -10,7 +10,9 @@ import {
   resultsTsv,
   snapStep,
   toInputs,
+  tradeLogTsv,
   type FormState,
+  type TradeLogEntry,
 } from "@/components/trade-builder-app";
 import { buildTrade } from "@/lib/trade-builder";
 
@@ -73,6 +75,59 @@ describe("given resultsTsv", () => {
     const [, values] = resultsTsv(result, "  ").split("\n");
 
     expect(values.split("\t")[0]).toBe("Unknown");
+  });
+});
+
+describe("given tradeLogTsv", () => {
+  const entry: TradeLogEntry = {
+    id: "entry-1",
+    createdAt: "2026-09-07T12:00:00.000Z",
+    ticker: "NVDA",
+    direction: "long",
+    entry: 108,
+    stop: 105.92,
+    target: 120,
+    positionSize: 11,
+    capitalRequirement: 1188,
+    totalTradeRisk: 22.88,
+    rewardRisk: 5.77,
+    score: 8.5,
+    isOpen: true,
+  };
+
+  test("given a logged trade: should copy it as a header row plus a data row", () => {
+    const [headers, values] = tradeLogTsv([entry]).split("\n");
+
+    expect(headers.split("\t")).toEqual([
+      "Date",
+      "Ticker",
+      "Direction",
+      "Entry",
+      "Stop",
+      "Target",
+      "Position size",
+      "Capital required",
+      "Total trade risk",
+      "Reward : risk",
+      "Score",
+      "Status",
+    ]);
+    const cells = values.split("\t");
+    expect(cells[1]).toBe("NVDA");
+    expect(cells[2]).toBe("Buy");
+    expect(cells[cells.length - 1]).toBe("Open");
+  });
+
+  test("given a closed trade: should report its status as Closed", () => {
+    const [, values] = tradeLogTsv([{ ...entry, isOpen: false }]).split("\n");
+
+    expect(values.split("\t").at(-1)).toBe("Closed");
+  });
+
+  test("given no logged trades: should copy only the header row", () => {
+    expect(tradeLogTsv([])).toBe(
+      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus",
+    );
   });
 });
 
@@ -230,10 +285,31 @@ describe("given loadTradeLog", () => {
       totalTradeRisk: 22.88,
       rewardRisk: 5.77,
       score: 8.5,
+      isOpen: false,
     };
     window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([entry]));
 
     expect(loadTradeLog()).toEqual([entry]);
+  });
+
+  test("given a saved entry from before isOpen existed: should default it to open", () => {
+    const legacyEntry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      ticker: "NVDA",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([legacyEntry]));
+
+    expect(loadTradeLog()).toEqual([{ ...legacyEntry, isOpen: true }]);
   });
 
   test("given a log saved before tickers existed: should retain it as Unknown", () => {
@@ -252,7 +328,7 @@ describe("given loadTradeLog", () => {
     };
     window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([legacyEntry]));
 
-    expect(loadTradeLog()).toEqual([{ ...legacyEntry, ticker: "Unknown" }]);
+    expect(loadTradeLog()).toEqual([{ ...legacyEntry, ticker: "Unknown", isOpen: true }]);
   });
 
   test("given malformed saved entries: should discard them", () => {

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, Check, Copy, NotebookPen, RotateCcw, Trash2 } from "lucide-react";
+import { Blocks, Check, ChevronDown, ChevronUp, Copy, NotebookPen, RotateCcw, Trash2 } from "lucide-react";
 import {
   buildTrade,
   deriveZoneLines,
   JUDGED_MAX,
+  roundToCent,
   TARGET_BUFFER_MAX_PCT,
   TARGET_BUFFER_MIN_PCT,
   type Direction,
@@ -103,6 +104,8 @@ export interface TradeLogEntry {
   totalTradeRisk: number;
   rewardRisk: number;
   score: number;
+  /** Whether this order is still open in the market. */
+  isOpen: boolean;
 }
 
 export function loadTradeLog(): TradeLogEntry[] {
@@ -122,7 +125,12 @@ export function loadTradeLog(): TradeLogEntry[] {
           (key) => typeof candidate[key] === "number" && Number.isFinite(candidate[key]),
         );
       if (!valid) return [];
-      return [{ ...candidate, ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown" } as TradeLogEntry];
+      return [{
+        ...candidate,
+        ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown",
+        // Older saves predate this field; assume still open until marked otherwise.
+        isOpen: typeof candidate.isOpen === "boolean" ? candidate.isOpen : true,
+      } as TradeLogEntry];
     });
   } catch {
     return [];
@@ -350,12 +358,49 @@ export function resultsTsv(result: TradeResult, ticker: string): string {
   return `${headers.join("\t")}\n${values.join("\t")}`;
 }
 
+export function tradeLogTsv(entries: TradeLogEntry[]): string {
+  const headers = [
+    "Date",
+    "Ticker",
+    "Direction",
+    "Entry",
+    "Stop",
+    "Target",
+    "Position size",
+    "Capital required",
+    "Total trade risk",
+    "Reward : risk",
+    "Score",
+    "Status",
+  ];
+  const rows = entries.map((entry) =>
+    [
+      new Date(entry.createdAt).toLocaleString(),
+      entry.ticker,
+      entry.direction === "long" ? "Buy" : "Sell short",
+      exportUsd.format(entry.entry),
+      exportUsd.format(entry.stop),
+      exportUsd.format(entry.target),
+      entry.positionSize,
+      exportUsd.format(entry.capitalRequirement),
+      exportUsd.format(entry.totalTradeRisk),
+      `${exportRatio.format(entry.rewardRisk)}:1`,
+      `${entry.score} / 10`,
+      entry.isOpen ? "Open" : "Closed",
+    ].join("\t"),
+  );
+  return [headers.join("\t"), ...rows].join("\n");
+}
+
 export function TradeBuilderApp() {
   const [form, setForm] = useState<FormState>(initialState);
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [copyLogState, setCopyLogState] = useState<"idle" | "copied" | "error">("idle");
   const [tradeLog, setTradeLog] = useState<TradeLogEntry[]>([]);
+  const [showTradeLog, setShowTradeLog] = useState(true);
+  const [autoOpenTradeRisk, setAutoOpenTradeRisk] = useState(false);
 
   const firstPersist = useRef(true);
 
@@ -405,6 +450,24 @@ export function TradeBuilderApp() {
     setForm((f) => ({ ...f, ...patch }));
   };
 
+  const openTradeRiskFromLog = useMemo(
+    () =>
+      roundToCent(
+        tradeLog
+          .filter((entry) => entry.isOpen)
+          .reduce((sum, entry) => sum + entry.totalTradeRisk, 0),
+      ),
+    [tradeLog],
+  );
+
+  // Keeps the field in sync with the log while the toggle is on, rather than
+  // stamping a value once, so closing or deleting an open trade updates it too.
+  useEffect(() => {
+    if (!autoOpenTradeRisk) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs from the trade log, an external store
+    setForm((f) => ({ ...f, openTradeRisk: openTradeRiskFromLog.toFixed(2) }));
+  }, [autoOpenTradeRisk, openTradeRiskFromLog]);
+
   const inputs = useMemo(() => toInputs(form), [form]);
   const result = useMemo(() => (inputs ? buildTrade(inputs) : null), [inputs]);
 
@@ -424,6 +487,17 @@ export function TradeBuilderApp() {
     }
   };
 
+  const copyTradeLog = async () => {
+    if (tradeLog.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(tradeLogTsv(tradeLog));
+      setCopyLogState("copied");
+      window.setTimeout(() => setCopyLogState("idle"), 1800);
+    } catch {
+      setCopyLogState("error");
+    }
+  };
+
   const logTrade = () => {
     if (!result?.order) return;
     const entry: TradeLogEntry = {
@@ -439,6 +513,7 @@ export function TradeBuilderApp() {
       totalTradeRisk: result.order.totalTradeRisk,
       rewardRisk: result.order.rewardRisk,
       score: result.scorecard.total,
+      isOpen: true,
     };
     setTradeLog((entries) => {
       const updated = [entry, ...entries];
@@ -450,6 +525,16 @@ export function TradeBuilderApp() {
   const deleteLogEntry = (id: string) => {
     setTradeLog((entries) => {
       const updated = entries.filter((entry) => entry.id !== id);
+      saveTradeLog(updated);
+      return updated;
+    });
+  };
+
+  const setLogEntryOpen = (id: string, isOpen: boolean) => {
+    setTradeLog((entries) => {
+      const updated = entries.map((entry) =>
+        entry.id === id ? { ...entry, isOpen } : entry,
+      );
       saveTradeLog(updated);
       return updated;
     });
@@ -510,6 +595,8 @@ export function TradeBuilderApp() {
                 onNext={() => goToStep(step + 1)}
                 showAdvanced={showAdvanced}
                 onToggleAdvanced={() => setShowAdvanced((s) => !s)}
+                autoOpenTradeRisk={autoOpenTradeRisk}
+                onToggleAutoOpenTradeRisk={() => setAutoOpenTradeRisk((s) => !s)}
               />
             </div>
           ) : (
@@ -555,46 +642,95 @@ export function TradeBuilderApp() {
                     </div>
                   </div>
                   <Card>
-                    <CardHeader className="flex-row items-center justify-between space-y-0">
-                      <CardTitle>Trade log</CardTitle>
-                      {tradeLog.length > 0 ? (
-                        <Button variant="ghost" size="sm" onClick={clearTradeLog}>
-                          <Trash2 aria-hidden />
-                          Clear log
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                      <div className="flex items-center gap-1">
+                        <CardTitle>Trade log</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-expanded={showTradeLog}
+                          aria-label={showTradeLog ? "Hide trade log" : "Show trade log"}
+                          onClick={() => setShowTradeLog((s) => !s)}
+                        >
+                          {showTradeLog ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
                         </Button>
+                      </div>
+                      {tradeLog.length > 0 && showTradeLog ? (
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={copyTradeLog}>
+                            {copyLogState === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
+                            {copyLogState === "copied"
+                              ? "Copied"
+                              : copyLogState === "error"
+                                ? "Copy failed"
+                                : "Copy log"}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={clearTradeLog}>
+                            <Trash2 aria-hidden />
+                            Clear log
+                          </Button>
+                        </div>
                       ) : null}
                     </CardHeader>
-                    <CardContent>
-                      {tradeLog.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No trades logged yet.</p>
-                      ) : (
-                        <div className="divide-y">
-                          {tradeLog.map((entry) => (
-                            <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                              <div className="min-w-0">
-                                <p className="font-medium">
-                                  {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
-                                </p>
-                                <p className="font-mono text-xs tabular-nums text-muted-foreground">
-                                  Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
-                                </p>
+                    {showTradeLog ? (
+                      <CardContent>
+                        {tradeLog.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No trades logged yet.</p>
+                        ) : (
+                          <div className="divide-y">
+                            {tradeLog.map((entry) => (
+                              <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                                <div className="min-w-0">
+                                  <p className="font-medium">
+                                    {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
+                                  </p>
+                                  <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                                    Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
+                                  </p>
+                                </div>
+                                <div
+                                  role="radiogroup"
+                                  aria-label={`${entry.ticker} trade status`}
+                                  className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
+                                >
+                                  <label className="flex items-center gap-1">
+                                    <input
+                                      type="radio"
+                                      name={`trade-status-${entry.id}`}
+                                      checked={entry.isOpen}
+                                      onChange={() => setLogEntryOpen(entry.id, true)}
+                                    />
+                                    Open
+                                  </label>
+                                  <label className="flex items-center gap-1">
+                                    <input
+                                      type="radio"
+                                      name={`trade-status-${entry.id}`}
+                                      checked={!entry.isOpen}
+                                      onChange={() => setLogEntryOpen(entry.id, false)}
+                                    />
+                                    Closed
+                                  </label>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label="Delete logged trade"
+                                  onClick={() => deleteLogEntry(entry.id)}
+                                >
+                                  <Trash2 aria-hidden />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label="Delete logged trade"
-                                onClick={() => deleteLogEntry(entry.id)}
-                              >
-                                <Trash2 aria-hidden />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    ) : null}
+                    <CardContent className={showTradeLog ? "pt-0" : undefined}>
+                      <p className="text-center text-xs text-muted-foreground">
                         Not shared between browsers or devices. Can be lost when
                         browser site data is cleared.
                       </p>

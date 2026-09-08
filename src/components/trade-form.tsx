@@ -46,6 +46,8 @@ interface TradeFormProps {
   onNext: () => void;
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
+  autoOpenTradeRisk: boolean;
+  onToggleAutoOpenTradeRisk: () => void;
 }
 
 export const STEPS = [
@@ -205,6 +207,8 @@ function NumberInput({
   placeholder,
   invalid,
   allowNegative,
+  disabled,
+  formatOnBlur,
 }: {
   id: string;
   value: string;
@@ -212,6 +216,9 @@ function NumberInput({
   placeholder?: string;
   invalid?: boolean;
   allowNegative?: boolean;
+  disabled?: boolean;
+  /** Rewrites the value to two decimal places on blur, e.g. "22" -> "22.00". */
+  formatOnBlur?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingCaret = useRef<number | null>(null);
@@ -245,12 +252,21 @@ function NumberInput({
       aria-describedby={invalid ? `${id}-error` : undefined}
       placeholder={placeholder}
       value={display}
+      disabled={disabled}
       onChange={(e) => {
         const caret = e.target.selectionStart ?? e.target.value.length;
         pendingCaret.current = nonCommaCountBefore(e.target.value, caret);
         setEditCount((n) => n + 1);
         onChange(sanitizeNumber(e.target.value, allowNegative));
       }}
+      onBlur={
+        formatOnBlur
+          ? () => {
+            const n = Number(value);
+            if (Number.isFinite(n)) onChange(n.toFixed(2));
+          }
+          : undefined
+      }
     />
   );
 }
@@ -351,6 +367,8 @@ export function TradeForm({
   onNext,
   showAdvanced,
   onToggleAdvanced,
+  autoOpenTradeRisk,
+  onToggleAutoOpenTradeRisk,
 }: TradeFormProps) {
   const computedScores = (() => {
     const numbers = [
@@ -710,15 +728,30 @@ export function TradeForm({
                   <Field
                     id="openRisk"
                     label="Risk in open trades ($)"
-                    hint="For the 6% rule. Leave 0 if this is your only trade"
+                    hint={
+                      autoOpenTradeRisk
+                        ? "Auto-filled from open trades in the Trade log"
+                        : "For the 6% rule. Leave 0 if this is your only trade"
+                    }
                   >
                     <NumberInput
                       id="openRisk"
                       value={form.openTradeRisk}
                       onChange={(openTradeRisk) => onChange({ openTradeRisk })}
+                      disabled={autoOpenTradeRisk}
+                      formatOnBlur
                     />
                   </Field>
                 </div>
+                <Label className="items-center text-sm font-normal">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={autoOpenTradeRisk}
+                    onChange={onToggleAutoOpenTradeRisk}
+                  />
+                  Auto-fill open trade risk from the Trade log
+                </Label>
               </>
             ) : null}
           </>

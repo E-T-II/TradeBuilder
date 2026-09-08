@@ -45,6 +45,8 @@ function ZonesStep({ initial }: { initial: FormState }) {
       onNext={() => setStep((s) => s + 1)}
       showAdvanced={false}
       onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
     />
   );
 }
@@ -62,6 +64,8 @@ function AccountStep({ initial }: { initial: FormState }) {
       onNext={() => { }}
       showAdvanced={false}
       onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
     />
   );
 }
@@ -79,6 +83,8 @@ function AdvancedSettings({ initial }: { initial: FormState }) {
       onNext={() => { }}
       showAdvanced={true}
       onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
     />
   );
 }
@@ -170,6 +176,18 @@ describe("given the advanced settings caps", () => {
     await user.click(within(group).getByRole("radio", { name: "Percentage" }));
     expect(screen.getByLabelText("Target buffer (%)")).toBeInTheDocument();
   });
+
+  test("given an open-trade risk without cents: should pad to two decimals on blur", async () => {
+    const user = userEvent.setup();
+    render(<AdvancedSettings initial={baseForm({ openTradeRisk: "0" })} />);
+    const openRisk = screen.getByLabelText("Risk in open trades ($)");
+
+    await user.clear(openRisk);
+    await user.type(openRisk, "22");
+    await user.tab();
+
+    expect(openRisk).toHaveValue("22.00");
+  });
 });
 
 describe("given the comma-formatted account balance field", () => {
@@ -223,6 +241,8 @@ function CurveStep({ initial }: { initial: FormState }) {
       onNext={() => { }}
       showAdvanced={false}
       onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
     />
   );
 }
@@ -348,6 +368,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
         onNext={() => { }}
         showAdvanced={false}
         onToggleAdvanced={() => { }}
+        autoOpenTradeRisk={false}
+        onToggleAutoOpenTradeRisk={() => { }}
       />,
     );
 
@@ -368,6 +390,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
         onNext={() => { }}
         showAdvanced={false}
         onToggleAdvanced={() => { }}
+        autoOpenTradeRisk={false}
+        onToggleAutoOpenTradeRisk={() => { }}
       />,
     );
 
@@ -407,6 +431,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
         onNext={() => { }}
         showAdvanced={false}
         onToggleAdvanced={() => { }}
+        autoOpenTradeRisk={false}
+        onToggleAutoOpenTradeRisk={() => { }}
       />,
     );
 
@@ -426,6 +452,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
         onNext={() => { }}
         showAdvanced={false}
         onToggleAdvanced={() => { }}
+        autoOpenTradeRisk={false}
+        onToggleAutoOpenTradeRisk={() => { }}
       />,
     );
 
