@@ -37,7 +37,6 @@ import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog
 import { StrengthReference } from "@/components/strength-reference";
 import { TimeReference } from "@/components/time-reference";
 import { FreshnessReference } from "@/components/freshness-reference";
-import { Analytics } from "@vercel/analytics/next";
 
 interface TradeFormProps {
   form: FormState;
@@ -746,7 +745,6 @@ export function TradeForm({
             </div>
             <div className="flex justify-center">
               <ChartTutorialButton
-                direction={form.direction}
                 curveHigh={form.curveHigh}
                 curveLow={form.curveLow}
               />

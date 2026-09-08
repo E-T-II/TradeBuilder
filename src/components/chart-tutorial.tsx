@@ -2,18 +2,15 @@
 
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
-import type { Direction } from "@/lib/trade-builder";
 import { usePrefersReducedMotion } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 
 // The four things the user reads off their own chart, revealed in order.
 // Direction decides which zone is the entry and which is the target.
 export function ChartTutorial({
-  direction,
   curveHigh,
   curveLow,
 }: {
-  direction: Direction;
   curveHigh?: string;
   curveLow?: string;
 }) {
@@ -21,7 +18,6 @@ export function ChartTutorial({
   // first render to avoid a flash of motion for reduced-motion users.
   const reduced = usePrefersReducedMotion(true);
   const [runId, setRunId] = useState(0);
-  const long = direction === "long";
 
   // Each callout fades in after its delay; reduced motion shows them at once.
   const cue = (delay: number) =>

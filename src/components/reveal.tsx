@@ -46,7 +46,7 @@ export function Reveal({
   return (
     <div
       className={cn(
-        "transition-all duration-500 ease-out motion-reduce:!transition-none motion-reduce:!transform-none",
+        "transition-all duration-500 ease-out motion-reduce:transition-none! motion-reduce:transform-none!",
         className,
       )}
       style={{

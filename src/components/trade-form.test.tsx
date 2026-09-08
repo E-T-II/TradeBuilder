@@ -338,11 +338,6 @@ describe("given the direction control on the Zones step", () => {
 });
 
 describe("given the odds-enhancer controls on the Score step", () => {
-  const optionsFor = (name: string) =>
-    within(screen.getByRole("radiogroup", { name }))
-      .getAllByRole("radio")
-      .map((r) => r.textContent);
-
   test("should display the automatically calculated trend, curve, and profit-zone scores", () => {
     render(
       <TradeForm

@@ -196,7 +196,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
         <CardTitle>Odds enhancers</CardTitle>
         <div className="flex min-w-0 items-center justify-end gap-2">
           <Badge
-            className={`${badgeClasses} shrink-0 origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
+            className={`${badgeClasses} shrink-0 origin-right transition-all duration-500 ease-out motion-reduce:transition-none! ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
               }`}
           >
             {badgeLabel}

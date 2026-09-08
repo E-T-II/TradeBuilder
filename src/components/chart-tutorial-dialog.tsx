@@ -2,18 +2,15 @@
 
 import { Dialog } from "@base-ui/react/dialog";
 import { CirclePlay, X } from "lucide-react";
-import type { Direction } from "@/lib/trade-builder";
 import { Button } from "@/components/ui/button";
 import { ChartTutorial } from "@/components/chart-tutorial";
 
 // A play button that opens a short animated walkthrough of which chart lines
 // map to the Zones-step fields.
 export function ChartTutorialButton({
-  direction,
   curveHigh,
   curveLow,
 }: {
-  direction: Direction;
   curveHigh?: string;
   curveLow?: string;
 }) {
@@ -27,8 +24,8 @@ export function ChartTutorialButton({
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(34rem,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none transition-all data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
+        <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(34rem,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none transition-all data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
           <div className="mb-3 flex items-center justify-between">
             <Dialog.Title className="text-sm font-medium">
               How to read your chart
@@ -44,7 +41,6 @@ export function ChartTutorialButton({
             step: the curve high and low, and the demand and supply zones.
           </Dialog.Description>
           <ChartTutorial
-            direction={direction}
             curveHigh={curveHigh}
             curveLow={curveLow}
           />

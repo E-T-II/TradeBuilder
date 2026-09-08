@@ -21,7 +21,7 @@ export function SplashIntro() {
     try {
       played = sessionStorage.getItem(SESSION_KEY) === "1";
       sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {}
+    } catch { }
 
     if (played || reduced) {
       // The pre-paint CSS already hid it; just unmount.
@@ -42,9 +42,8 @@ export function SplashIntro() {
   return (
     <div
       aria-hidden
-      className={`intro-splash fixed inset-0 z-[60] flex items-center justify-center bg-background transition-opacity ease-out ${
-        leaving ? "opacity-0" : "opacity-100"
-      }`}
+      className={`intro-splash fixed inset-0 z-60 flex items-center justify-center bg-background transition-opacity ease-out ${leaving ? "opacity-0" : "opacity-100"
+        }`}
       style={{ transitionDuration: `${FADE}ms` }}
     >
       <div className="flex items-center gap-3">

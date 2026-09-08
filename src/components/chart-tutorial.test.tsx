@@ -23,7 +23,7 @@ describe("given ChartTutorial", () => {
   beforeEach(() => stubMatchMedia(false));
 
   test("shows the supply and demand zones without entry or target labels", () => {
-    const { container } = render(<ChartTutorial direction="long" />);
+    const { container } = render(<ChartTutorial />);
 
     expect(container.textContent).toContain("Supply zone");
     expect(container.textContent).toContain("Demand zone");
@@ -34,7 +34,7 @@ describe("given ChartTutorial", () => {
   test("exposes the four edge fields in the SVG's accessible name", () => {
     // role="img" means assistive tech reads only the label, not the inner text,
     // so the distal/proximal edge mapping has to live in the aria-label.
-    const { getByRole } = render(<ChartTutorial direction="long" />);
+    const { getByRole } = render(<ChartTutorial />);
     const label = getByRole("img").getAttribute("aria-label") ?? "";
     for (const field of [
       "Demand proximal",
@@ -49,7 +49,6 @@ describe("given ChartTutorial", () => {
   test("displays the entered curve values and curve factor", () => {
     const { container, getByText } = render(
       <ChartTutorial
-        direction="long"
         curveHigh="338.19"
         curveLow="286.73"
       />,
@@ -63,7 +62,7 @@ describe("given ChartTutorial", () => {
 
   test("truncates the curve factor instead of rounding it", () => {
     const { getByText } = render(
-      <ChartTutorial direction="long" curveHigh="300" curveLow="198.852" />,
+      <ChartTutorial curveHigh="300" curveLow="198.852" />,
     );
 
     expect(getByText("$33.71")).toBeInTheDocument();
@@ -71,7 +70,7 @@ describe("given ChartTutorial", () => {
 
   test("positions the curve boundaries from the curve factor", () => {
     const { container } = render(
-      <ChartTutorial direction="long" curveHigh="338.19" curveLow="286.73" />,
+      <ChartTutorial curveHigh="338.19" curveLow="286.73" />,
     );
     const boundaryLabels = [...container.querySelectorAll("text")]
       .map((text) => text.textContent)
@@ -83,7 +82,7 @@ describe("given ChartTutorial", () => {
   test("under reduced motion: shows no animated cues and hides Replay", () => {
     stubMatchMedia(true);
     const { container, queryByRole } = render(
-      <ChartTutorial direction="long" />,
+      <ChartTutorial />,
     );
 
     expect(queryByRole("button", { name: /replay/i })).toBeNull();
