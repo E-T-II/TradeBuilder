@@ -194,12 +194,20 @@ export function Scorecard({ result }: { result: TradeResult }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Odds enhancers</CardTitle>
-        <Badge
-          className={`${badgeClasses} origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
-        >
-          {badgeLabel}
-        </Badge>
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <Badge
+            className={`${badgeClasses} shrink-0 origin-right transition-all duration-500 ease-out motion-reduce:!transition-none ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
+          >
+            {badgeLabel}
+          </Badge>
+          {result.scorecard.confirmationRequiredByXlt ? (
+            <p className="text-left text-xs text-muted-foreground">
+              XLT requires this confirmation entry. Your 8.5+ odds-enhancer
+              score qualified the setup; it did not select the order type.
+            </p>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.map((row, i) => (

@@ -10,6 +10,7 @@ const KEY = "tradebuilder-form-v3";
 // A complete, geometrically valid form so Next isn't blocked on the way to the
 // judged-factors step, plus a stale half-point strength that's no longer an option.
 const savedForm = {
+  ticker: "NVDA",
   accountBalance: "2500",
   riskTolerance: "2",
   targetBuffer: "75",

@@ -73,6 +73,22 @@ describe("given Scorecard", () => {
     expect(screen.queryByText("No valid trade")).not.toBeInTheDocument();
   });
 
+  test("given an aggressive XLT confirmation: should explain it was not score-selected", () => {
+    const result = buildTrade({
+      ...longTrade,
+      curveLow: 90,
+      curveHigh: 110,
+      strength: 2,
+      time: 1,
+      freshness: 2,
+    });
+    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+
+    render(<Scorecard result={result} />);
+    expect(screen.getByText(/xlt requires this confirmation entry/i)).toBeInTheDocument();
+    expect(screen.getByText(/did not select the order type/i)).toBeInTheDocument();
+  });
+
   test("should show the profit-zone ratio to two decimal places", () => {
     const result = buildTrade({
       ...longTrade,

@@ -482,6 +482,8 @@ export interface TradeResult {
     profitZone: number;
     /** XLT Decision Matrix requirement for this cell, if conditional. */
     requiredProfitZoneRatio: number | null;
+    /** XLT overrides a qualifying proximal score with confirmation execution. */
+    confirmationRequiredByXlt: boolean;
     strength: number;
     time: number;
     freshness: number;
@@ -602,6 +604,11 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     profitZoneRatio: ratio,
     profitZone: profitZoneScore(ratio),
     requiredProfitZoneRatio: matrixProfitZoneRequirement(matrixVerdict),
+    confirmationRequiredByXlt: requiresXltProximalScore(
+      zoneType,
+      curveZone,
+      inputs.trend,
+    ),
     strength: inputs.strength,
     time: inputs.time,
     freshness: inputs.freshness,
@@ -610,11 +617,7 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   scorecard.total = totalScore(scorecard);
 
   const scoreType = entryType(scorecard.total);
-  const requiresProximalScore = requiresXltProximalScore(
-    zoneType,
-    curveZone,
-    inputs.trend,
-  );
+  const requiresProximalScore = scorecard.confirmationRequiredByXlt;
   const type = scoreType === "no-trade" || (requiresProximalScore && scoreType !== "proximal")
     ? "no-trade"
     : requiresProximalScore

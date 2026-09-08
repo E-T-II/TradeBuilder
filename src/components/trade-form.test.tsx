@@ -8,6 +8,7 @@ import type { FormState } from "@/components/trade-builder-app";
 import { TradeForm } from "@/components/trade-form";
 
 const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
+  ticker: "NVDA",
   accountBalance: "600",
   riskTolerance: "2",
   targetBuffer: "75",
@@ -172,6 +173,16 @@ describe("given the advanced settings caps", () => {
 });
 
 describe("given the comma-formatted account balance field", () => {
+  test("given a ticker: should normalize it to uppercase log-safe characters", async () => {
+    const user = userEvent.setup();
+    render(<AccountStep initial={baseForm({ ticker: "" })} />);
+    const ticker = screen.getByLabelText("Ticker symbol");
+
+    await user.type(ticker, "xau/usd");
+
+    expect(ticker).toHaveValue("XAUUSD");
+  });
+
   test("given deleting the comma directly: should keep the caret in place, not jump to the end", () => {
     render(<AccountStep initial={baseForm({ accountBalance: "1234" })} />);
     const input = screen.getByLabelText(

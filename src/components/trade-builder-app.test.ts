@@ -6,18 +6,21 @@ import {
   hasNonPositiveBalance,
   hasNonPositiveRisk,
   loadStoredForm,
+  loadTradeLog,
   snapStep,
   toInputs,
   type FormState,
 } from "@/components/trade-builder-app";
 
 const KEY = "tradebuilder-form-v3";
+const TRADE_LOG_KEY = "tradebuilder-log-v1";
 
 // Go through window.localStorage: on Node 25 the bare `localStorage` global is
 // Node's own Web Storage, which isn't backed here and shadows the jsdom one.
 afterEach(() => window.localStorage.clear());
 
 const form = (overrides: Partial<FormState> = {}): FormState => ({
+  ticker: "NVDA",
   accountBalance: "600",
   riskTolerance: "2",
   targetBuffer: "75",
@@ -190,5 +193,55 @@ describe("given loadStoredForm", () => {
       JSON.stringify({ accountBalance: "600", direction: "invalid", hacked: "x" }),
     );
     expect(loadStoredForm()).toEqual({ accountBalance: "600" });
+  });
+});
+
+describe("given loadTradeLog", () => {
+  test("given a valid saved log: should return its completed trade", () => {
+    const entry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      ticker: "NVDA",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([entry]));
+
+    expect(loadTradeLog()).toEqual([entry]);
+  });
+
+  test("given a log saved before tickers existed: should retain it as Unknown", () => {
+    const legacyEntry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([legacyEntry]));
+
+    expect(loadTradeLog()).toEqual([{ ...legacyEntry, ticker: "Unknown" }]);
+  });
+
+  test("given malformed saved entries: should discard them", () => {
+    window.localStorage.setItem(
+      TRADE_LOG_KEY,
+      JSON.stringify([{ id: "missing-order-values" }, "not an entry"]),
+    );
+
+    expect(loadTradeLog()).toEqual([]);
   });
 });

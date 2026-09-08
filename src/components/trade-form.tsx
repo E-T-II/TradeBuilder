@@ -58,7 +58,7 @@ export const STEPS = [
 ] as const;
 
 const STEP_FIELDS: (keyof FormState)[][] = [
-  ["accountBalance", "atr"],
+  ["ticker", "accountBalance", "atr"],
   ["curveLow", "curveHigh"],
   [],
   ["demandHigh", "demandLow", "supplyHigh", "supplyLow"],
@@ -555,6 +555,25 @@ export function TradeForm({
       <div className="mt-8 flex-1 space-y-5">
         {step === 0 ? (
           <>
+            <Field
+              id="ticker"
+              label="Ticker symbol"
+              hint="The asset symbol to identify this trade in your log"
+            >
+              <Input
+                id="ticker"
+                type="text"
+                autoCapitalize="characters"
+                autoComplete="off"
+                placeholder="NVDA"
+                value={form.ticker}
+                onChange={(event) =>
+                  onChange({
+                    ticker: event.target.value.toUpperCase().replace(/[^A-Z0-9.-]/g, ""),
+                  })
+                }
+              />
+            </Field>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 id="balance"

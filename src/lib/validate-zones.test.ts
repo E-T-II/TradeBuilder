@@ -6,6 +6,7 @@ import { validateZones } from "./validate-zones";
 // A valid setup: demand below, supply above. Works for either direction, since
 // direction only decides which zone is the entry. Override fields per test.
 const form = (overrides: Partial<FormState> = {}): FormState => ({
+  ticker: "NVDA",
   accountBalance: "600",
   riskTolerance: "2",
   targetBuffer: "75",

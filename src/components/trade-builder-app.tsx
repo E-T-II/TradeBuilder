@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, Check, Copy, RotateCcw } from "lucide-react";
+import { Blocks, Check, Copy, NotebookPen, RotateCcw, Trash2 } from "lucide-react";
 import {
   buildTrade,
   deriveZoneLines,
@@ -28,10 +28,11 @@ import { RiskChecks } from "@/components/risk-checks";
 import { Reveal } from "@/components/reveal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DecisionMatrix } from "@/components/decision-matrix";
 
 export interface FormState {
+  ticker: string;
   accountBalance: string;
   riskTolerance: string; // percent, e.g. "2"
   targetBuffer: string; // percent, e.g. "75"
@@ -58,6 +59,7 @@ export interface FormState {
 }
 
 const initialState: FormState = {
+  ticker: "",
   accountBalance: "",
   riskTolerance: "2",
   targetBuffer: String(TARGET_BUFFER_MIN_PCT),
@@ -86,8 +88,55 @@ const initialState: FormState = {
 // load as a deliberate zero the user never chose, so bump the key and let
 // old saves fall back to the new defaults instead.
 const STORAGE_KEY = "tradebuilder-form-v3";
+const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
+
+export interface TradeLogEntry {
+  id: string;
+  createdAt: string;
+  ticker: string;
+  direction: Direction;
+  entry: number;
+  stop: number;
+  target: number;
+  positionSize: number;
+  capitalRequirement: number;
+  totalTradeRisk: number;
+  rewardRisk: number;
+  score: number;
+}
+
+export function loadTradeLog(): TradeLogEntry[] {
+  try {
+    const raw = window.localStorage.getItem(TRADE_LOG_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((entry): TradeLogEntry[] => {
+      if (typeof entry !== "object" || entry === null) return [];
+      const candidate = entry as Record<string, unknown>;
+      const valid =
+        typeof candidate.id === "string" &&
+        typeof candidate.createdAt === "string" &&
+        (candidate.direction === "long" || candidate.direction === "short") &&
+        ["entry", "stop", "target", "positionSize", "capitalRequirement", "totalTradeRisk", "rewardRisk", "score"].every(
+          (key) => typeof candidate[key] === "number" && Number.isFinite(candidate[key]),
+        );
+      if (!valid) return [];
+      return [{ ...candidate, ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown" } as TradeLogEntry];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function saveTradeLog(entries: TradeLogEntry[]) {
+  try {
+    window.localStorage.setItem(TRADE_LOG_STORAGE_KEY, JSON.stringify(entries));
+  } catch { }
+}
 
 const REQUIRED: (keyof FormState)[] = [
+  "ticker",
   "accountBalance",
   "atr",
   "curveLow",
@@ -304,6 +353,7 @@ export function TradeBuilderApp() {
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [tradeLog, setTradeLog] = useState<TradeLogEntry[]>([]);
 
   const firstPersist = useRef(true);
 
@@ -328,6 +378,13 @@ export function TradeBuilderApp() {
     );
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
     setForm(merged);
+  }, []);
+
+  useEffect(() => {
+    // The log is independent of the in-progress form, so Reset never reads,
+    // writes, or clears it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+    setTradeLog(loadTradeLog());
   }, []);
 
   // Persist on change. Skip the first run so we don't overwrite the stored
@@ -363,6 +420,42 @@ export function TradeBuilderApp() {
     } catch {
       setCopyState("error");
     }
+  };
+
+  const logTrade = () => {
+    if (!result?.order) return;
+    const entry: TradeLogEntry = {
+      id: window.crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      ticker: form.ticker,
+      direction: form.direction,
+      entry: result.order.entry,
+      stop: result.order.stop,
+      target: result.order.target,
+      positionSize: result.order.positionSize,
+      capitalRequirement: result.order.capitalRequirement,
+      totalTradeRisk: result.order.totalTradeRisk,
+      rewardRisk: result.order.rewardRisk,
+      score: result.scorecard.total,
+    };
+    setTradeLog((entries) => {
+      const updated = [entry, ...entries];
+      saveTradeLog(updated);
+      return updated;
+    });
+  };
+
+  const deleteLogEntry = (id: string) => {
+    setTradeLog((entries) => {
+      const updated = entries.filter((entry) => entry.id !== id);
+      saveTradeLog(updated);
+      return updated;
+    });
+  };
+
+  const clearTradeLog = () => {
+    setTradeLog([]);
+    saveTradeLog([]);
   };
 
   const reachable = firstIncompleteStep(form);
@@ -421,7 +514,13 @@ export function TradeBuilderApp() {
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
               {result ? (
                 <>
-                  <div className="flex justify-end">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    {result.order ? (
+                      <Button className="w-full sm:w-auto" onClick={logTrade}>
+                        <NotebookPen aria-hidden />
+                        Log trade
+                      </Button>
+                    ) : null}
                     <Button className="w-full sm:w-auto" variant="outline" onClick={copyResults}>
                       {copyState === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
                       {copyState === "copied"
@@ -453,6 +552,48 @@ export function TradeBuilderApp() {
                       </Reveal>
                     </div>
                   </div>
+                  <Card>
+                    <CardHeader className="flex-row items-center justify-between space-y-0">
+                      <CardTitle>Trade log</CardTitle>
+                      {tradeLog.length > 0 ? (
+                        <Button variant="ghost" size="sm" onClick={clearTradeLog}>
+                          <Trash2 aria-hidden />
+                          Clear log
+                        </Button>
+                      ) : null}
+                    </CardHeader>
+                    <CardContent>
+                      {tradeLog.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No trades logged yet.</p>
+                      ) : (
+                        <div className="divide-y">
+                          {tradeLog.map((entry) => (
+                            <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                              <div className="min-w-0">
+                                <p className="font-medium">
+                                  {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
+                                </p>
+                                <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                                  Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label="Delete logged trade"
+                                onClick={() => deleteLogEntry(entry.id)}
+                              >
+                                <Trash2 aria-hidden />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </>
               ) : (
                 <Card>
