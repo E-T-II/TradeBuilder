@@ -20,6 +20,7 @@ import {
   buildTrade,
   decisionMatrix,
   isXltMatrixCell,
+  requiresXltProximalScore,
   deriveZoneLines,
   roundToCent,
   type TradeInputs,
@@ -238,6 +239,12 @@ describe("given decisionMatrix", () => {
     expect(isXltMatrixCell("supply", "wholesale", "downtrend")).toBe(true);
     expect(isXltMatrixCell("demand", "wholesale", "uptrend")).toBe(false);
   });
+
+  test("should require a proximal score only for aggressive XLT setups", () => {
+    expect(requiresXltProximalScore("supply", "wholesale", "downtrend")).toBe(true);
+    expect(requiresXltProximalScore("demand", "retail", "uptrend")).toBe(true);
+    expect(requiresXltProximalScore("demand", "wholesale", "downtrend")).toBe(false);
+  });
 });
 
 describe("given entryType", () => {
@@ -257,6 +264,82 @@ describe("given entryType", () => {
   test("given a score below 7: should call no trade", () => {
     expect(entryType(6.9)).toBe("no-trade");
     expect(entryType(0)).toBe("no-trade");
+  });
+});
+
+describe("given the supply-low/downtrend XLT entry rule", () => {
+  const aggressiveShort: TradeInputs = {
+    accountBalance: 2_500,
+    riskTolerancePct: 0.02,
+    targetBufferPct: 0.75,
+    targetMode: "percent",
+    direction: "short",
+    trend: "downtrend",
+    timeframe: "daily",
+    atr: 4,
+    curveLow: 100,
+    curveHigh: 190,
+    entryProximal: 122,
+    entryDistal: 124,
+    targetProximal: 106,
+    targetDistal: 104,
+    strength: 1,
+    time: 0.5,
+    freshness: 2,
+  };
+
+  test("given a confirmation-band score: should reject the XLT setup", () => {
+    const result = buildTrade(aggressiveShort);
+
+    expect(result.scorecard.total).toBe(7.5);
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("xlt-proximal-score");
+  });
+
+  test("given an 8.5 proximal score: should issue a confirmation entry", () => {
+    const result = buildTrade({ ...aggressiveShort, strength: 2 });
+
+    expect(result.scorecard.total).toBe(8.5);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.order?.entry).toBe(121.9);
+  });
+});
+
+describe("given the demand-high/uptrend XLT entry rule", () => {
+  const aggressiveLong: TradeInputs = {
+    accountBalance: 2_500,
+    riskTolerancePct: 0.02,
+    targetBufferPct: 0.75,
+    targetMode: "percent",
+    direction: "long",
+    trend: "uptrend",
+    timeframe: "daily",
+    atr: 4,
+    curveLow: 90,
+    curveHigh: 110,
+    entryProximal: 108,
+    entryDistal: 106,
+    targetProximal: 124,
+    targetDistal: 126,
+    strength: 1,
+    time: 0.5,
+    freshness: 2,
+  };
+
+  test("given a confirmation-band score: should reject the XLT setup", () => {
+    const result = buildTrade(aggressiveLong);
+
+    expect(result.scorecard.total).toBe(7.5);
+    expect(result.order).toBeNull();
+    expect(result.blockedReason).toBe("xlt-proximal-score");
+  });
+
+  test("given an 8.5 proximal score: should issue a confirmation entry", () => {
+    const result = buildTrade({ ...aggressiveLong, strength: 2 });
+
+    expect(result.scorecard.total).toBe(8.5);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.order?.entry).toBe(108.1);
   });
 });
 

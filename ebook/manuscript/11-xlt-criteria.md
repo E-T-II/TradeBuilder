@@ -56,16 +56,20 @@ require both a fresh, high-quality zone and a profit-zone score of at least
 ### Long: demand high on the curve, uptrend
 
 The ITF is bullish, but the asset is already expensive near higher-timeframe
-supply. Do not use a passive limit order. Wait for price to enter the demand
-zone, fail to continue lower, and confirm with a bullish reversal out of the
-zone before entering.
+supply. The setup must first earn a **proximal score of 8.5 or higher** from
+the full odds-enhancer scorecard. It is then entered with a **confirmation
+entry**, not a passive proximal limit. Wait for price to enter the demand zone,
+fail to continue lower, and confirm with a bullish reversal out of the zone
+before entering.
 
 ### Short: supply low on the curve, downtrend
 
 The ITF is bearish, but the asset is already cheap near higher-timeframe
-demand. Require a confirmation entry and an unusually clear path to the first
-opposing fresh demand zone. If that zone is reached before a 5:1 profit-zone
-score is available, pass on the trade.
+demand. The setup must first earn a **proximal score of 8.5 or higher** from
+the full odds-enhancer scorecard. It is then entered with a **confirmation
+entry**, not a passive proximal limit. Require an unusually clear path to the
+first opposing fresh demand zone. If that zone is reached before a 5:1
+profit-zone score is available, pass on the trade.
 
 ## Equilibrium continuation setups
 
@@ -89,10 +93,10 @@ score or a compelling-looking candle pattern.
 | Scenario | Curve / trend / zone | Entry | Minimum profit-zone score |
 |---|---|---|---|
 | Conservative long | Low / downtrend / demand | Passive limit at proximal | 3:1 |
-| Aggressive long | High / uptrend / demand | Confirmation only | 5:1 |
+| Aggressive long | High / uptrend / demand | 8.5+ score, then confirmation only | 5:1 |
 | Continuation long | Equilibrium / uptrend / demand | Passive limit at proximal | 3:1 |
 | Conservative short | High / uptrend / supply | Passive limit at proximal | 3:1 |
-| Aggressive short | Low / downtrend / supply | Confirmation only | 5:1 |
+| Aggressive short | Low / downtrend / supply | 8.5+ score, then confirmation only | 5:1 |
 | Continuation short | Equilibrium / downtrend / supply | Passive limit at proximal | 3:1 |
 
 The matrix thresholds are implemented in `decisionMatrix()` in

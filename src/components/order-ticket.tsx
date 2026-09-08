@@ -84,6 +84,9 @@ export function OrderTicket({
     if (result.objective === "no-trade") {
       reason =
         "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade. The opposite direction may qualify.";
+    } else if (result.blockedReason === "xlt-proximal-score") {
+      reason =
+        "This aggressive XLT setup must first score 8.5 or higher (a proximal score) before a confirmation entry is allowed.";
     } else if (result.entryType === "no-trade") {
       reason =
         "The score is below 7, so this setup doesn't qualify. If the trade score is not probable, we will not take the trade.";
@@ -152,7 +155,7 @@ export function OrderTicket({
         <CardTitle>Your S.E.T.S. order</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Line label="Stop loss" value={usd.format(o.stop)} strong />        
+        <Line label="Stop loss" value={usd.format(o.stop)} strong />
         <Line label="Entry price" value={usd.format(o.entry)} strong />
         <Line label="Target price" value={usd.format(o.target)} strong />
         <p className="text-sm font-medium">

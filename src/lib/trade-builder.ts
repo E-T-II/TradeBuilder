@@ -168,6 +168,22 @@ export function isXltMatrixCell(
 }
 
 /**
+ * Aggressive XLT setups must earn a proximal score before they may be entered.
+ * Their execution is still confirmation-only, so the engine converts a
+ * qualifying proximal score into a confirmation order.
+ */
+export function requiresXltProximalScore(
+  zoneType: ZoneType,
+  curve: CurveZone,
+  trend: Trend,
+): boolean {
+  return (
+    (zoneType === "demand" && curve === "retail" && trend === "uptrend") ||
+    (zoneType === "supply" && curve === "wholesale" && trend === "downtrend")
+  );
+}
+
+/**
  * Resolve the trade objective from the entry zone. A demand entry aims long, a
  * supply entry aims short, but the matrix can veto to no-trade. Conditional
  * cells require the specified 3:1 or 5:1 profit-zone threshold.
@@ -481,6 +497,7 @@ export interface TradeResult {
    * - "tight-zones": the buffered target lands on the wrong side of the entry.
    * - "risk-too-small": the risk budget can't cover even one share's risk.
    * - "capital-too-large": one share costs more than the 50% capital cap allows.
+  * - "xlt-proximal-score": this XLT setup requires an 8.5+ proximal score.
    * - "reward-risk": the best achievable reward:risk is below the 3:1 minimum.
    * - "over-6pct": this trade's risk plus open risk exceeds 6% of the balance.
    */
@@ -488,6 +505,7 @@ export interface TradeResult {
   | "tight-zones"
   | "risk-too-small"
   | "capital-too-large"
+  | "xlt-proximal-score"
   | "reward-risk"
   | "over-6pct";
   /**
@@ -591,7 +609,17 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   };
   scorecard.total = totalScore(scorecard);
 
-  const type = entryType(scorecard.total);
+  const scoreType = entryType(scorecard.total);
+  const requiresProximalScore = requiresXltProximalScore(
+    zoneType,
+    curveZone,
+    inputs.trend,
+  );
+  const type = scoreType === "no-trade" || (requiresProximalScore && scoreType !== "proximal")
+    ? "no-trade"
+    : requiresProximalScore
+      ? "confirmation"
+      : scoreType;
   const entry = type === "no-trade"
     ? null
     : entryPrice(inputs.entryProximal, type, inputs.direction);
@@ -631,6 +659,9 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       scorecard,
       entryType: type,
       objective,
+      blockedReason: requiresProximalScore && scoreType !== "proximal"
+        ? "xlt-proximal-score"
+        : undefined,
       math,
       order: null,
       checks: null,
