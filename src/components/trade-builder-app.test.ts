@@ -37,6 +37,7 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   freshness: "1",
   openTradeRisk: "0",
   ...overrides,
+  xltAcknowledgement: overrides.xltAcknowledgement ?? "",
 });
 
 describe("given toInputs and the risk cap", () => {

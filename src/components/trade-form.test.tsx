@@ -27,6 +27,7 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   freshness: "1",
   openTradeRisk: "0",
   ...overrides,
+  xltAcknowledgement: overrides.xltAcknowledgement ?? "",
 });
 
 // Renders the wizard parked on the Zones step, holding real form state so
@@ -299,9 +300,29 @@ describe("given the direction control on the Zones step", () => {
       screen.getByText(/you enter at the supply zone/i),
     ).toBeInTheDocument();
 
-    // Geometry is unchanged: the valid demand-below-supply zones still pass, so
-    // no error surfaces and the step stays advanceable.
+    // Geometry is unchanged, but the selected retail-supply/uptrend cell is an
+    // XLT setup, so it requires its explicit acknowledgement before advancing.
+    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
     expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+  });
+
+  test("given an XLT matrix cell: should require an acknowledgement before advancing", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+
+    const acknowledgement = screen.getByRole("checkbox", {
+      name: /verified the xlt criteria/i,
+    });
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
+
+    await user.click(acknowledgement);
+    expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+  });
+
+  test("given a non-XLT matrix cell: should not show an acknowledgement", () => {
+    render(<ZonesStep initial={baseForm()} />);
+
+    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
   });
 });
 

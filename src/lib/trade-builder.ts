@@ -157,6 +157,16 @@ const DECISION_MATRIX: Record<
   },
 };
 
+/** Whether this matrix cell has additional XLT chart-validation criteria. */
+export function isXltMatrixCell(
+  zoneType: ZoneType,
+  curve: CurveZone,
+  trend: Trend,
+): boolean {
+  const verdict = DECISION_MATRIX[zoneType][curve][trend];
+  return verdict === "needs-3to1" || verdict === "needs-5to1";
+}
+
 /**
  * Resolve the trade objective from the entry zone. A demand entry aims long, a
  * supply entry aims short, but the matrix can veto to no-trade. Conditional

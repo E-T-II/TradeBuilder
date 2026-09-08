@@ -15,6 +15,7 @@ import {
   TARGET_BUFFER_MIN_PCT,
   curveScore,
   deriveZoneLines,
+  isXltMatrixCell,
   locateOnCurve,
   profitZoneRatio,
   profitZoneScore,
@@ -460,11 +461,36 @@ export function TradeForm({
     zoneErrors.supplyHigh ||
     zoneErrors.supplyLow
   );
+  const xltCellKey = (() => {
+    if (hasZoneErrors) return null;
+    const curveLow = Number(form.curveLow);
+    const curveHigh = Number(form.curveHigh);
+    const entryProximal = Number(
+      form.direction === "long" ? form.demandHigh : form.supplyLow,
+    );
+    if (
+      !Number.isFinite(curveLow) ||
+      !Number.isFinite(curveHigh) ||
+      !Number.isFinite(entryProximal) ||
+      curveHigh <= curveLow
+    ) {
+      return null;
+    }
+    const zoneType = form.direction === "long" ? "demand" : "supply";
+    const curve = locateOnCurve(entryProximal, curveLow, curveHigh);
+    return isXltMatrixCell(zoneType, curve, form.trend)
+      ? `${zoneType}:${curve}:${form.trend}`
+      : null;
+  })();
+  const missingXltAcknowledgement =
+    step === 3 &&
+    xltCellKey !== null &&
+    form.xltAcknowledgement !== xltCellKey;
   const blockedByZones =
     (step === 1 && curveStepError) ||
     (step === 3 && zoneStepError) ||
     (isLast && hasZoneErrors);
-  const disableNext = remaining > 0 || blockedByZones;
+  const disableNext = remaining > 0 || blockedByZones || missingXltAcknowledgement;
   // Name the step(s) that actually hold the error, so the last-step notice
   // points where the highlighted field really is.
   const errorSteps = [
@@ -814,6 +840,21 @@ export function TradeForm({
                 ? "You enter at the demand zone and target the supply zone."
                 : "You enter at the supply zone and target the demand zone."}
             </p>
+            {xltCellKey ? (
+              <Label className="items-start rounded-lg border p-3 leading-snug">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0 accent-primary"
+                  checked={form.xltAcknowledgement === xltCellKey}
+                  onChange={(event) =>
+                    onChange({
+                      xltAcknowledgement: event.target.checked ? xltCellKey : "",
+                    })
+                  }
+                />
+                <span>I verified the XLT criteria for this setup.</span>
+              </Label>
+            ) : null}
           </>
         ) : null}
 
@@ -934,9 +975,11 @@ export function TradeForm({
             ? `${remaining} field${remaining === 1 ? "" : "s"} left`
             : blockedByZones
               ? "Check the highlighted values"
-              : isLast
-                ? "See my trade"
-                : "Next"}
+              : missingXltAcknowledgement
+                ? "Confirm XLT criteria"
+                : isLast
+                  ? "See my trade"
+                  : "Next"}
           {!disableNext ? <ArrowRight aria-hidden /> : null}
         </Button>
       </div>

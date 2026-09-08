@@ -53,6 +53,8 @@ export interface FormState {
   time: string;
   freshness: string;
   openTradeRisk: string;
+  /** The XLT matrix cell the trader has explicitly acknowledged. */
+  xltAcknowledgement: string;
 }
 
 const initialState: FormState = {
@@ -76,6 +78,7 @@ const initialState: FormState = {
   time: "",
   freshness: "",
   openTradeRisk: "0",
+  xltAcknowledgement: "",
 };
 
 // v3: strength/time/freshness now default to "" (unanswered) instead of "0"

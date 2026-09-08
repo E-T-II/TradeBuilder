@@ -19,6 +19,7 @@ import {
   rewardRiskRatio,
   buildTrade,
   decisionMatrix,
+  isXltMatrixCell,
   deriveZoneLines,
   roundToCent,
   type TradeInputs,
@@ -228,6 +229,14 @@ describe("given decisionMatrix", () => {
 
   test("given a needs-3to1 cell exactly at 3:1: should take the trade", () => {
     expect(decisionMatrix("demand", "wholesale", "downtrend", 3)).toBe("long");
+  });
+
+  test("should identify only conditional cells as XLT cells", () => {
+    expect(isXltMatrixCell("demand", "wholesale", "downtrend")).toBe(true);
+    expect(isXltMatrixCell("demand", "retail", "uptrend")).toBe(true);
+    expect(isXltMatrixCell("supply", "retail", "uptrend")).toBe(true);
+    expect(isXltMatrixCell("supply", "wholesale", "downtrend")).toBe(true);
+    expect(isXltMatrixCell("demand", "wholesale", "uptrend")).toBe(false);
   });
 });
 
