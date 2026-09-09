@@ -355,6 +355,23 @@ describe("given the direction control on the Zones step", () => {
 
     expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
   });
+
+  test("changing a zone-driving field should clear the XLT acknowledgement", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+
+    const acknowledgement = screen.getByRole("checkbox", {
+      name: /verified the xlt criteria/i,
+    });
+    await user.click(acknowledgement);
+    expect(acknowledgement).toBeChecked();
+
+    const supply = screen.getByLabelText("Supply distal ($)");
+    await user.clear(supply);
+    await user.type(supply, "128");
+
+    expect(acknowledgement).not.toBeChecked();
+  });
 });
 
 describe("given the odds-enhancer controls on the Score step", () => {

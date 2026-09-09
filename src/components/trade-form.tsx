@@ -370,6 +370,24 @@ export function TradeForm({
   autoOpenTradeRisk,
   onToggleAutoOpenTradeRisk,
 }: TradeFormProps) {
+  const updateForm = (patch: Partial<FormState>) => {
+    const xltResetFields = new Set([
+      "curveLow",
+      "curveHigh",
+      "trend",
+      "direction",
+      "demandHigh",
+      "demandLow",
+      "supplyHigh",
+      "supplyLow",
+    ]);
+    const shouldResetXlt = Object.keys(patch).some((key) =>
+      xltResetFields.has(key) && key !== "xltAcknowledgement",
+    );
+
+    onChange(shouldResetXlt ? { ...patch, xltAcknowledgement: "" } : patch);
+  };
+
   const computedScores = (() => {
     const numbers = [
       Number(form.curveLow),
@@ -765,14 +783,14 @@ export function TradeForm({
                 label="Curve high ($)"
                 hint="HTF supply zone distal line"
                 value={form.curveHigh}
-                onChange={(curveHigh) => onChange({ curveHigh })}
+                onChange={(curveHigh) => updateForm({ curveHigh })}
               />
               <PriceField
                 id="curveLow"
                 label="Curve low ($)"
                 hint="HTF demand zone distal line"
                 value={form.curveLow}
-                onChange={(curveLow) => onChange({ curveLow })}
+                onChange={(curveLow) => updateForm({ curveLow })}
                 error={zoneErrors.curveLow}
               />
             </div>
@@ -805,7 +823,7 @@ export function TradeForm({
                   accent: "red",
                 },
               ]}
-              onChange={(trend) => onChange({ trend })}
+              onChange={(trend) => updateForm({ trend })}
             />
           </Field>
         ) : null}
@@ -823,7 +841,7 @@ export function TradeForm({
                 label="Supply distal ($)"
                 hint="Top edge of the supply zone"
                 value={form.supplyHigh}
-                onChange={(supplyHigh) => onChange({ supplyHigh })}
+                onChange={(supplyHigh) => updateForm({ supplyHigh })}
                 error={zoneErrors.supplyHigh}
               />
               <PriceField
@@ -831,7 +849,7 @@ export function TradeForm({
                 label="Supply proximal ($)"
                 hint="Bottom edge of the supply zone"
                 value={form.supplyLow}
-                onChange={(supplyLow) => onChange({ supplyLow })}
+                onChange={(supplyLow) => updateForm({ supplyLow })}
                 error={zoneErrors.supplyLow}
               />
             </div>
@@ -841,7 +859,7 @@ export function TradeForm({
                 label="Demand proximal ($)"
                 hint="Top edge of the demand zone"
                 value={form.demandHigh}
-                onChange={(demandHigh) => onChange({ demandHigh })}
+                onChange={(demandHigh) => updateForm({ demandHigh })}
                 error={zoneErrors.demandHigh}
               />
               <PriceField
@@ -849,7 +867,7 @@ export function TradeForm({
                 label="Demand distal ($)"
                 hint="Bottom edge of the demand zone"
                 value={form.demandLow}
-                onChange={(demandLow) => onChange({ demandLow })}
+                onChange={(demandLow) => updateForm({ demandLow })}
                 error={zoneErrors.demandLow}
               />
             </div>
@@ -882,7 +900,7 @@ export function TradeForm({
                     accent: "red",
                   },
                 ]}
-                onChange={(direction) => onChange({ direction })}
+                onChange={(direction) => updateForm({ direction })}
               />
             </Field>
             <p className="text-xs text-muted-foreground">

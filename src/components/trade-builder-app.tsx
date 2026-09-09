@@ -447,7 +447,25 @@ export function TradeBuilderApp() {
   }, [form]);
 
   const update = (patch: Partial<FormState>) => {
-    setForm((f) => ({ ...f, ...patch }));
+    setForm((f) => {
+      const xltResetFields = new Set([
+        "curveLow",
+        "curveHigh",
+        "trend",
+        "direction",
+        "demandHigh",
+        "demandLow",
+        "supplyHigh",
+        "supplyLow",
+      ]);
+      const shouldResetXlt = Object.keys(patch).some((key) =>
+        xltResetFields.has(key) && key !== "xltAcknowledgement",
+      );
+
+      return shouldResetXlt
+        ? { ...f, ...patch, xltAcknowledgement: "" }
+        : { ...f, ...patch };
+    });
   };
 
   const openTradeRiskFromLog = useMemo(
