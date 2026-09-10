@@ -252,7 +252,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
               />
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              9+ proximal · 7 to 8.5 confirmation · below 7 no trade
+              8.5+ proximal · 7 to 8 confirmation · below 7 no trade
             </p>
           </div>
         </Reveal>
