@@ -73,7 +73,26 @@ describe("given Scorecard", () => {
     expect(screen.queryByText("No valid trade")).not.toBeInTheDocument();
   });
 
-  test("given an aggressive XLT confirmation: should explain it was not score-selected", () => {
+  test("given a long high-on-curve uptrend below 9: should show the no-trade XLT requirement text", () => {
+    const result = buildTrade({
+      ...longTrade,
+      curveLow: 90,
+      curveHigh: 110,
+      strength: 1,
+      time: 0.5,
+      freshness: 1,
+    });
+    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+    expect(result.order).toBeNull();
+    expect(result.entryType).toBe("no-trade");
+
+    render(<Scorecard result={result} />);
+    expect(
+      screen.getByText(/xlt requires this confirmation entry to earn a 9\+ odds-enhancer score to qualify the setup/i),
+    ).toBeInTheDocument();
+  });
+
+  test("given a long high-on-curve uptrend at 9 or more: should show the confirmation XLT qualification text", () => {
     const result = buildTrade({
       ...longTrade,
       curveLow: 90,
@@ -83,10 +102,13 @@ describe("given Scorecard", () => {
       freshness: 2,
     });
     expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.scorecard.total).toBeGreaterThanOrEqual(9);
 
     render(<Scorecard result={result} />);
-    expect(screen.getByText(/xlt requires this confirmation entry/i)).toBeInTheDocument();
-    expect(screen.getByText(/did not select the order type/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/xlt requires this confirmation entry\. your 9\+ odds-enhancer score qualified the setup; it did not select the order type\./i),
+    ).toBeInTheDocument();
   });
 
   test("should show the profit-zone ratio to two decimal places", () => {

@@ -189,6 +189,19 @@ export function Scorecard({ result }: { result: TradeResult }) {
   const badgeClasses = noValidTrade
     ? "bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
     : entryTypeClasses[result.entryType];
+  const xltMessages: string[] = [];
+
+  if (result.scorecard.confirmationRequiredByXlt && result.entryType === "confirmation") {
+    xltMessages.push(
+      "XLT requires this confirmation entry. Your 9+ odds-enhancer score qualified the setup; it did not select the order type.",
+    );
+  }
+
+  if (result.scorecard.confirmationRequiredByXlt && result.entryType === "no-trade") {
+    xltMessages.push(
+      "XLT requires this confirmation entry to earn a 9+ odds-enhancer score to qualify the setup",
+    );
+  }
 
   return (
     <Card>
@@ -201,11 +214,12 @@ export function Scorecard({ result }: { result: TradeResult }) {
           >
             {badgeLabel}
           </Badge>
-          {result.scorecard.confirmationRequiredByXlt ? (
-            <p className="text-left text-xs text-muted-foreground">
-              XLT requires this confirmation entry. Your 8.5+ odds-enhancer
-              score qualified the setup; it did not select the order type.
-            </p>
+          {xltMessages.length > 0 ? (
+            <div className="flex max-w-md flex-col gap-1 text-left text-xs text-muted-foreground">
+              {xltMessages.map((message, index) => (
+                <p key={`${message}-${index}`}>{message}</p>
+              ))}
+            </div>
           ) : null}
         </div>
       </CardHeader>
