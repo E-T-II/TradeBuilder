@@ -90,6 +90,8 @@ const initialState: FormState = {
 // old saves fall back to the new defaults instead.
 const STORAGE_KEY = "tradebuilder-form-v3";
 const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
+const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback.git";
+const REPORT_EMAIL_URL = "mailto:tradebuilderfeedback@protonmail.com?subject=Trade%20Builder%20Report";
 
 export interface TradeLogEntry {
   id: string;
@@ -786,6 +788,26 @@ export function TradeBuilderApp() {
           )}
         </div>
       </div>
+
+      <footer className="border-t border-border/60 bg-background/80 px-5 py-3 text-center text-[11px] text-muted-foreground lg:px-8">
+        <div className="flex flex-col items-center justify-center gap-1 sm:flex-row sm:gap-3">
+          <a
+            href={REPORT_ISSUE_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="underline-offset-2 hover:underline"
+          >
+            Report a problem
+          </a>
+          <span aria-hidden="true">•</span>
+          <a
+            href={REPORT_EMAIL_URL}
+            className="underline-offset-2 hover:underline"
+          >
+            Email backup
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
