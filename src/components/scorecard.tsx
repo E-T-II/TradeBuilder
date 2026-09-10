@@ -193,13 +193,13 @@ export function Scorecard({ result }: { result: TradeResult }) {
 
   if (result.scorecard.confirmationRequiredByXlt && result.entryType === "confirmation") {
     xltMessages.push(
-      "XLT requires this confirmation entry. Your 9+ odds-enhancer score qualified the setup; it did not select the order type.",
+      "XLT requires this confirmation entry. Your 8.5+ odds-enhancer score qualified the setup; it did not select the order type.",
     );
   }
 
   if (result.scorecard.confirmationRequiredByXlt && result.entryType === "no-trade") {
     xltMessages.push(
-      "XLT requires this confirmation entry to earn a 9+ odds-enhancer score to qualify the setup",
+      "XLT requires this confirmation entry to earn a 8.5+ odds-enhancer score to qualify the setup",
     );
   }
 
