@@ -52,7 +52,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
 
-         XLT Criteria
+      XLT Criteria
          Conservative | Aggressive
          (data pending)
 
