@@ -90,7 +90,7 @@ const initialState: FormState = {
 // old saves fall back to the new defaults instead.
 const STORAGE_KEY = "tradebuilder-form-v3";
 const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
-const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback.git";
+const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback/issues/new/choose";
 const REPORT_EMAIL_URL = "mailto:tradebuilderfeedback@protonmail.com?subject=Trade%20Builder%20Report";
 
 export interface TradeLogEntry {
@@ -569,7 +569,7 @@ export function TradeBuilderApp() {
   const inForm = step < RESULTS_STEP;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col pb-16 lg:pb-6">
       {/* Mobile: brand left, actions right (the center stepper is hidden, so a
           two-end flex keeps the icons flush right). Desktop: 3-column grid with
           the stepper centered. */}
@@ -789,7 +789,7 @@ export function TradeBuilderApp() {
         </div>
       </div>
 
-      <footer className="border-t border-border/60 bg-background/80 px-5 py-3 text-center text-[11px] text-muted-foreground lg:px-8">
+      <footer className="shrink-0 border-t border-border/60 bg-background/80 px-5 py-3 text-center text-[11px] text-muted-foreground lg:px-8">
         <div className="flex flex-col items-center justify-center gap-1 sm:flex-row sm:gap-3">
           <a
             href={REPORT_ISSUE_URL}
@@ -804,7 +804,7 @@ export function TradeBuilderApp() {
             href={REPORT_EMAIL_URL}
             className="underline-offset-2 hover:underline"
           >
-            Email backup
+            Email feedback
           </a>
         </div>
       </footer>
