@@ -6,7 +6,7 @@ the user defines their income objective/trading purpose. will the High Time Fram
 
 pre-steps:
 
-input asset daily ATR and account balance
+input  ticker symbol, asset daily ATR and account balance
 
 Six-Step Process Flowchart: trade builder takes basic input the user identifies from the chart using trade methodology in six steps
   1) Set the Curve on the HTF: identify high time frame supply and demand zones using the five step zoning process and using the distal lines, divides the area into thirds to define the curve; retail, equalibrium, and wholesale price ranges.
@@ -19,13 +19,13 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      b) a supply zone high on the curve in a sideways trend = Sell Short. 
 
-     c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score meets XLT criteria. 
+     c) a supply zone high on the curve in an uptrend = Sell Short ONLY if the profit zone score is equal to or greater than 3:1 and meets XLT criteria. 
      ******
      d) a demand zone high on the curve in a downtrend = No trade. 
 
      e) a demand zone high on the curve in a sideways trend = No trade. 
 
-     f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1. 
+     f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria. Confirmation entry only, with 8.5+ odds enhancer score.
      ******
      g) a supply zone in the middle of the curve in a downtrend = Sell Short. 
 
@@ -39,18 +39,24 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      l) a demand zone in the middle of the curve in an uptrend = Buy Long. 
      ******
-     m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1. 
+     m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria. Confirmation entry only, with 8.5+ odds enhancer score. 
 
      n) a supply zone low on the curve in a sideways trend = No trade. 
 
      o) a supply zone low on the curve in an uptrend = No trade. 
      ******
-     p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score meets XLT criteria. 
+     p) a demand zone low on the curve in a downtrend = Buy Long ONLY if the profit zone score is equal to or greater than 3:1 and meets XLT criteria. 
 
      q) a demand zone low on the curve in a sideways trend = Buy Long. 
 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
+
+   XLT Criteria
+   Conservative | Aggressive
+
+
+
   4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 
      a) Strength 	2, 1, or 0 	points	(how did price leave the zone? user must determine from chart).
