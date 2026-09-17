@@ -67,9 +67,14 @@ before entering.
 The ITF is bearish, but the asset is already cheap near higher-timeframe
 demand. The setup must first earn a **proximal score of 8.5 or higher** from
 the full odds-enhancer scorecard. It is then entered with a **confirmation
-entry**, not a passive proximal limit. Require an unusually clear path to the
-first opposing fresh demand zone. If that zone is reached before a 5:1
-profit-zone score is available, pass on the trade.
+entry**, not a passive proximal limit. Unlike a typical confirmation entry,
+there is no 10-cent offset anticipating the touch: wait for the reversal
+candle to print and close below the supply proximal line, then enter at the
+price the candle closes at. The stop is not the usual ATR-scaled buffer:
+place it a fixed **3 cents** behind the supply distal line. Require an
+unusually clear path to the first opposing fresh demand
+zone, which must yield at least a **5:1** reward-to-risk ratio. If that zone
+is reached before a 5:1 profit-zone score is available, pass on the trade.
 
 ## Equilibrium continuation setups
 
@@ -96,7 +101,7 @@ score or a compelling-looking candle pattern.
 | Aggressive long | High / uptrend / demand | 8.5+ score, then confirmation only | 5:1 |
 | Continuation long | Equilibrium / uptrend / demand | Passive limit at proximal | 3:1 |
 | Conservative short | High / uptrend / supply | Passive limit at proximal | 3:1 |
-| Aggressive short | Low / downtrend / supply | 8.5+ score, then confirmation only | 5:1 |
+| Aggressive short | Low / downtrend / supply | 8.5+ score, then confirmation only, stop fixed 3¢ behind distal | 5:1 |
 | Continuation short | Equilibrium / downtrend / supply | Passive limit at proximal | 3:1 |
 
 The matrix thresholds are implemented in `decisionMatrix()` in

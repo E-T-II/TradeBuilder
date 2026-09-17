@@ -38,6 +38,8 @@ import {
   decisionMatrix,
   isXltMatrixCell,
   requiresXltProximalScore,
+  usesFixedXltStopBuffer,
+  XLT_FIXED_STOP_BUFFER,
   deriveZoneLines,
   roundToCent,
   type TradeInputs,
@@ -261,6 +263,20 @@ describe("given decisionMatrix", () => {
     expect(requiresXltProximalScore("supply", "wholesale", "downtrend")).toBe(true);
     expect(requiresXltProximalScore("demand", "retail", "uptrend")).toBe(true);
     expect(requiresXltProximalScore("demand", "wholesale", "downtrend")).toBe(false);
+    // The conservative short cell (supply, high on the curve, uptrend) is an
+    // XLT cell too, but doesn't gate execution behind an 8.5+ score.
+    expect(requiresXltProximalScore("supply", "retail", "uptrend")).toBe(false);
+  });
+
+  test("should use the fixed stop buffer only for the aggressive short XLT cell", () => {
+    expect(usesFixedXltStopBuffer("supply", "wholesale", "downtrend")).toBe(true);
+    // The aggressive long cell also requires a proximal score, but keeps the
+    // ATR-based stop; only the short case gets the fixed 3 cents.
+    expect(usesFixedXltStopBuffer("demand", "retail", "uptrend")).toBe(false);
+    expect(usesFixedXltStopBuffer("demand", "wholesale", "downtrend")).toBe(false);
+    // The conservative short cell (supply, high on the curve, uptrend) is an
+    // XLT cell too, but keeps the standard ATR-based stop.
+    expect(usesFixedXltStopBuffer("supply", "retail", "uptrend")).toBe(false);
   });
 });
 
@@ -313,12 +329,72 @@ describe("given the supply-low/downtrend XLT entry rule", () => {
     expect(result.blockedReason).toBe("xlt-proximal-score");
   });
 
-  test("given an 8.5 proximal score: should issue a confirmation entry", () => {
+  test("given an 8.5 proximal score: should issue a confirmation entry at the proximal line, not 10 cents beyond it", () => {
     const result = buildTrade({ ...aggressiveShort, strength: 2 });
 
     expect(result.scorecard.total).toBe(8.5);
     expect(result.entryType).toBe("confirmation");
-    expect(result.order?.entry).toBe(121.9);
+    // No 10-cent anticipation offset here: the trader waits for the candle
+    // to actually close beyond the proximal line before entering there.
+    expect(result.order?.entry).toBe(122);
+  });
+
+  test("given a qualifying score: should place the stop a fixed 3 cents behind the distal, not the ATR buffer", () => {
+    const result = buildTrade({ ...aggressiveShort, strength: 2 });
+
+    // The ATR buffer (4 x 2%) would put the stop at 124.08; the fixed rule
+    // instead sits 3 cents behind the 124 distal line.
+    expect(result.order?.stop).toBe(124.03);
+    expect(result.math.stopBufferDollar).toBe(XLT_FIXED_STOP_BUFFER);
+    expect(result.math.stopBufferPct).toBeNull();
+  });
+});
+
+describe("given the supply-high/uptrend XLT entry rule (conservative)", () => {
+  // Retail curve for a supply zone: rows c/c< in the matrix. Only needs 3:1,
+  // and doesn't gate execution behind an 8.5+ score or swap in a fixed stop.
+  const conservativeShort: TradeInputs = {
+    accountBalance: 2_500,
+    riskTolerancePct: 0.02,
+    targetBufferPct: 0.75,
+    targetMode: "percent",
+    direction: "short",
+    trend: "uptrend",
+    timeframe: "daily",
+    atr: 4,
+    curveLow: 100,
+    curveHigh: 130,
+    entryProximal: 125,
+    entryDistal: 127,
+    targetProximal: 115,
+    targetDistal: 113,
+    strength: 2,
+    time: 1,
+    freshness: 2,
+  };
+
+  test("given a confirmation-band score: should still build the order, not reject it", () => {
+    const result = buildTrade(conservativeShort);
+
+    expect(result.scorecard.total).toBe(8);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.objective).toBe("short");
+    expect(result.order).not.toBeNull();
+    expect(result.blockedReason).toBeUndefined();
+  });
+
+  test("given a confirmation entry: should use the standard 10-cent offset, not enter at the proximal line", () => {
+    const result = buildTrade(conservativeShort);
+
+    expect(result.order?.entry).toBe(124.9);
+  });
+
+  test("given a qualifying score: should use the standard ATR-based stop, not the fixed 3 cents", () => {
+    const result = buildTrade(conservativeShort);
+
+    expect(result.order?.stop).toBe(127.08);
+    expect(result.math.stopBufferPct).toBe(2);
+    expect(result.math.stopBufferDollar).toBe(0.08);
   });
 });
 

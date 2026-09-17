@@ -18,7 +18,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, Check, ChevronDown, ChevronUp, Copy, NotebookPen, RotateCcw, Trash2 } from "lucide-react";
+import { Blocks, Check, ChevronDown, ChevronUp, Copy, NotebookPen, RotateCcw, Trash2, Upload } from "lucide-react";
 import {
   buildTrade,
   deriveZoneLines,
@@ -125,6 +125,8 @@ export interface TradeLogEntry {
   score: number;
   /** Whether this order is still open in the market. */
   isOpen: boolean;
+  /** The builder inputs that produced this entry, so it can be reloaded later. Absent on pre-v2 saves. */
+  form?: Partial<FormState>;
 }
 
 export function loadTradeLog(): TradeLogEntry[] {
@@ -149,6 +151,7 @@ export function loadTradeLog(): TradeLogEntry[] {
         ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown",
         // Older saves predate this field; assume still open until marked otherwise.
         isOpen: typeof candidate.isOpen === "boolean" ? candidate.isOpen : true,
+        form: sanitizeFormPatch(candidate.form) ?? undefined,
       } as TradeLogEntry];
     });
   } catch {
@@ -197,30 +200,52 @@ const ENUM_VALUES: { [K in keyof FormState]?: readonly string[] } = {
   targetMode: ["percent", "ratio", "auto"] satisfies TargetMode[],
 };
 
-// Read the saved form, keeping only the fields that match the shape we persist:
-// known keys with string values, and enum fields whose value is in range. A
-// number where a string is expected would otherwise crash later on `.trim()`,
-// and a bad enum would skew the results, so those fields are dropped and fall
-// back to their initialState default rather than discarding the whole save.
-// Returns null when nothing usable remains.
+// Keep only the fields that match the shape we persist: known keys with
+// string values, and enum fields whose value is in range. A number where a
+// string is expected would otherwise crash later on `.trim()`, and a bad enum
+// would skew the results, so those fields are dropped and fall back to their
+// initialState default rather than discarding the whole save. Returns null
+// when nothing usable remains. Shared by the form autosave and the trade log's
+// per-entry setup snapshot, which persist through the same untyped JSON path.
+function sanitizeFormPatch(parsed: unknown): Partial<FormState> | null {
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const clean: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!Object.hasOwn(initialState, key)) continue;
+    if (typeof value !== "string") continue;
+    const allowed = ENUM_VALUES[key as keyof FormState];
+    if (allowed && !allowed.includes(value)) continue;
+    clean[key] = value;
+  }
+  return Object.keys(clean).length > 0 ? (clean as Partial<FormState>) : null;
+}
+
 export function loadStoredForm(): Partial<FormState> | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return null;
-    const clean: Record<string, string> = {};
-    for (const [key, value] of Object.entries(parsed)) {
-      if (!Object.hasOwn(initialState, key)) continue;
-      if (typeof value !== "string") continue;
-      const allowed = ENUM_VALUES[key as keyof FormState];
-      if (allowed && !allowed.includes(value)) continue;
-      clean[key] = value;
-    }
-    return Object.keys(clean).length > 0 ? (clean as Partial<FormState>) : null;
+    return sanitizeFormPatch(parsed);
   } catch {
     return null;
   }
+}
+
+// Merge a partial save (autosave or a logged setup) onto the defaults and
+// snap/clamp the judged and advanced fields, so a value from before those
+// limits existed can't render out of sync with the clamped order math.
+export function normalizeForm(stored: Partial<FormState>): FormState {
+  const merged = { ...initialState, ...stored };
+  merged.strength = snapStep(merged.strength, 1, JUDGED_MAX.strength);
+  merged.freshness = snapStep(merged.freshness, 1, JUDGED_MAX.freshness);
+  merged.time = snapStep(merged.time, 0.5, JUDGED_MAX.time);
+  merged.riskTolerance = clampNumericString(merged.riskTolerance, 0, 2);
+  merged.targetBuffer = clampNumericString(
+    merged.targetBuffer,
+    TARGET_BUFFER_MIN_PCT,
+    TARGET_BUFFER_MAX_PCT,
+  );
+  return merged;
 }
 
 // Empty or non-positive percents fall back to the default. The strategy's
@@ -428,22 +453,8 @@ export function TradeBuilderApp() {
   useEffect(() => {
     const stored = loadStoredForm();
     if (!stored) return;
-    const merged = { ...initialState, ...stored };
-    merged.strength = snapStep(merged.strength, 1, JUDGED_MAX.strength);
-    merged.freshness = snapStep(merged.freshness, 1, JUDGED_MAX.freshness);
-    merged.time = snapStep(merged.time, 0.5, JUDGED_MAX.time);
-    // Older saves may hold a risk/buffer outside the caps introduced with the
-    // advanced-settings limits; normalize on load so the field can't render out
-    // of sync with the clamped order math (the blur handler only runs if the
-    // user opens advanced settings and edits the field).
-    merged.riskTolerance = clampNumericString(merged.riskTolerance, 0, 2);
-    merged.targetBuffer = clampNumericString(
-      merged.targetBuffer,
-      TARGET_BUFFER_MIN_PCT,
-      TARGET_BUFFER_MAX_PCT,
-    );
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
-    setForm(merged);
+    setForm(normalizeForm(stored));
   }, []);
 
   useEffect(() => {
@@ -551,12 +562,25 @@ export function TradeBuilderApp() {
       rewardRisk: result.order.rewardRisk,
       score: result.scorecard.total,
       isOpen: true,
+      form: { ...form },
     };
     setTradeLog((entries) => {
       const updated = [entry, ...entries];
       saveTradeLog(updated);
       return updated;
     });
+  };
+
+  // Reload a logged setup's original inputs back into the builder, so the
+  // trader can review or re-run it. Pre-v2 entries predate the full snapshot,
+  // so fall back to the ticker/direction they do carry rather than nothing.
+  const loadLogEntry = (entry: TradeLogEntry) => {
+    const patch: Partial<FormState> = entry.form ?? {
+      ticker: entry.ticker,
+      direction: entry.direction,
+    };
+    setForm(normalizeForm(patch));
+    goToStep(0);
   };
 
   const deleteLogEntry = (id: string) => {
@@ -752,6 +776,15 @@ export function TradeBuilderApp() {
                                     Closed
                                   </label>
                                 </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  title="Load setup"
+                                  aria-label={`Load ${entry.ticker} setup into builder`}
+                                  onClick={() => loadLogEntry(entry)}
+                                >
+                                  <Upload aria-hidden />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon-sm"

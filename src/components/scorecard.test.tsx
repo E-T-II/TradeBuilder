@@ -105,11 +105,11 @@ describe("given Scorecard", () => {
 
     render(<Scorecard result={result} />);
     expect(
-      screen.getByText(/xlt requires this confirmation entry to earn a 9\+ odds-enhancer score to qualify the setup/i),
+      screen.getByText(/xlt requires this confirmation entry to earn a 8\.5\+ odds-enhancer score to qualify the setup/i),
     ).toBeInTheDocument();
   });
 
-  test("given a long high-on-curve uptrend at 9 or more: should show the confirmation XLT qualification text", () => {
+  test("given a long high-on-curve uptrend at 8.5 or more: should show the confirmation XLT qualification text", () => {
     const result = buildTrade({
       ...longTrade,
       curveLow: 90,
@@ -120,11 +120,41 @@ describe("given Scorecard", () => {
     });
     expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
     expect(result.entryType).toBe("confirmation");
-    expect(result.scorecard.total).toBeGreaterThanOrEqual(9);
+    expect(result.scorecard.total).toBeGreaterThanOrEqual(8.5);
 
     render(<Scorecard result={result} />);
     expect(
-      screen.getByText(/xlt requires this confirmation entry\. your 9\+ odds-enhancer score qualified the setup; it did not select the order type\./i),
+      screen.getByText(/xlt requires this confirmation entry\. your 8\.5\+ odds-enhancer score qualified the setup; it did not select the order type\./i),
+    ).toBeInTheDocument();
+  });
+
+  test("given an aggressive short XLT setup (supply, low on the curve, downtrend): should show the candle-close and fixed-stop guidance", () => {
+    const result = buildTrade({
+      accountBalance: 2500,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      targetMode: "percent",
+      direction: "short",
+      trend: "downtrend",
+      timeframe: "daily",
+      atr: 4,
+      curveLow: 100,
+      curveHigh: 190,
+      entryProximal: 122,
+      entryDistal: 124,
+      targetProximal: 106,
+      targetDistal: 104,
+      strength: 2,
+      time: 0.5,
+      freshness: 2,
+    });
+    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.objective).toBe("short");
+
+    render(<Scorecard result={result} />);
+    expect(
+      screen.getByText(/wait for the reversal candle to close below the supply proximal line before entering/i),
     ).toBeInTheDocument();
   });
 

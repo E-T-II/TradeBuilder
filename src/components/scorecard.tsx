@@ -212,6 +212,11 @@ export function Scorecard({ result }: { result: TradeResult }) {
     xltMessages.push(
       "XLT requires this confirmation entry. Your 8.5+ odds-enhancer score qualified the setup; it did not select the order type.",
     );
+    if (result.objective === "short") {
+      xltMessages.push(
+        "Wait for the reversal candle to close below the supply proximal line before entering. The stop sits a fixed 3¢ behind the supply distal line here, not the usual ATR-based buffer.",
+      );
+    }
   }
 
   if (result.scorecard.confirmationRequiredByXlt && result.entryType === "no-trade") {

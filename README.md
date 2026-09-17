@@ -54,7 +54,29 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
       XLT Criteria - Conservative | Aggressive
 
-         (data pending)
+         XLT Rule Variant: Short Trade - Scenario 1 (Conservative)
+            LTF Zone: Supply | HTF Curve: Retail | ITF Trend: Uptrend
+
+               1) Drop-Base-Drop or Rally-Base-Drop Structural Quality: The LTF Supply zone must feature a clean, tight base (no more than 3 to 4 tightly packed candles) followed immediately by a severe, swift drop. This structural footprint identifies pure institutional distribution. Confirm zone strength beyond the odds enhancers by locating overlapping zones on multiple timeframes.
+
+               2) Clear Path to Profit (Unfilled Liquidity Vacuum): Because the ITF trend is up, there will be minor pivot points built on the way up to our supply zone. The trader must confirm that these local pivots are "weak structures" or already exhausted, leaving a clear vacuum of unfilled space of at least 3:1 back down to a major opposing demand zone.
+
+               3) Retail Liquidity Absorption: The XLT trader looks for specific retail buying traps immediately preceding the supply zone (such as breakout buyers purchasing psychological resistance levels). The target trade is confirmed if it absorbs that frantic retail buying momentum into institutional limit orders.
+
+               4) Execution Trigger: To buy into this trade, a sell limit order is configured directly on the Proximal Line (the bottom edge of the supply zone) with the protective buy-stop-loss set just above the Distal Line (the absolute high of the supply base) as a percentage of the daily ATR. 
+
+         XLT Rule Variant: Short Trade - Scenario 2 (Aggressive)
+            LTF Zone: Supply | HTF Curve: Wholesale | ITF Trend: Downtrend
+
+               1) Confirmation Entry with an 8.5+ score from the odds enhancers.
+
+               2) You must wait until the reversal candle is “printed” and the candle closes below the supply proximal line before entry.
+
+               3) The stop is not calculated as a percentage of the daily ATR but is placed a few cents (three) behind the distal line.
+
+               4) Your target must be the first opposing zone, which must yield a 5:1 reward to risk ratio.
+
+         (remaining data pending)
 
 
   4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard

@@ -201,6 +201,22 @@ export function requiresXltProximalScore(
 }
 
 /**
+ * The aggressive short XLT case (supply zone, low on the curve, downtrend)
+ * places its stop a fixed distance behind the distal line instead of the
+ * usual ATR-scaled buffer.
+ */
+export function usesFixedXltStopBuffer(
+  zoneType: ZoneType,
+  curve: CurveZone,
+  trend: Trend,
+): boolean {
+  return zoneType === "supply" && curve === "wholesale" && trend === "downtrend";
+}
+
+/** The fixed stop buffer for the aggressive short XLT case, in dollars (3 cents). */
+export const XLT_FIXED_STOP_BUFFER = 0.03;
+
+/**
  * Resolve the trade objective from the entry zone. A demand entry aims long, a
  * supply entry aims short, but the matrix can veto to no-trade. Conditional
  * cells require the specified 3:1 or 5:1 profit-zone threshold.
@@ -281,14 +297,20 @@ export const TARGET_BUFFER_MAX_PCT = 80;
  * side, before the zone starts: above proximal for a long demand zone, below it
  * for a short supply zone (README step 5). "Before" the line, not "past" it,
  * is Eugene's wording for that side.
+ *
+ * The aggressive short XLT case is the exception: there's no 10-cent offset
+ * to anticipate the touch. The real entry is wherever the reversal candle
+ * actually closes once that close is beyond the proximal line — a price the
+ * math can't know in advance — so the proximal line stands in for it here.
  */
 export function entryPrice(
   entryProximal: number,
   type: EntryType,
   direction: Direction,
+  entersAtProximal = false,
 ): number | null {
   if (type === "no-trade") return null;
-  if (type === "proximal") return roundToCent(entryProximal);
+  if (type === "proximal" || entersAtProximal) return roundToCent(entryProximal);
   return roundToCent(
     direction === "long"
       ? entryProximal + CONFIRMATION_OFFSET
@@ -568,7 +590,8 @@ export interface TradeResult {
    */
   math: {
     dailyAtr: number;
-    stopBufferPct: number;
+    /** null when the aggressive short XLT case uses the fixed 3¢ stop buffer instead of an ATR percentage. */
+    stopBufferPct: number | null;
     stopBufferDollar: number;
     targetMode: TargetMode;
     targetBufferPct: number | null;
@@ -642,7 +665,12 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       : scoreType;
   const entry = type === "no-trade"
     ? null
-    : entryPrice(inputs.entryProximal, type, inputs.direction);
+    : entryPrice(
+      inputs.entryProximal,
+      type,
+      inputs.direction,
+      usesFixedXltStopBuffer(zoneType, curveZone, inputs.trend),
+    );
 
   // The "show the math" figures (per Eugene), computed straight from the inputs
   // so they're available on every return — the results screen shows them in gray
@@ -651,10 +679,11 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   // comparison runs, so it starts pending and the comparison clears the flag.
   // Pending-until-proven that way, any return that fires before the comparison
   // reports the buffer as unsettled without having to know it's early.
+  const fixedStopBuffer = usesFixedXltStopBuffer(zoneType, curveZone, inputs.trend);
   const math = {
     dailyAtr: inputs.atr,
-    stopBufferPct: rateToPercent(stopBufferRate(inputs.timeframe)),
-    stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
+    stopBufferPct: fixedStopBuffer ? null : rateToPercent(stopBufferRate(inputs.timeframe)),
+    stopBufferDollar: fixedStopBuffer ? XLT_FIXED_STOP_BUFFER : stopBuffer(inputs.atr, inputs.timeframe),
     targetMode: inputs.targetMode,
     // A percent to two decimals, so roundToCent's float-noise guard is the one
     // this needs: a typed 75.045% is 7504.4999999… raw, which a plain round

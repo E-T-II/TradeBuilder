@@ -24,6 +24,7 @@ import {
   hasNonPositiveRisk,
   loadStoredForm,
   loadTradeLog,
+  normalizeForm,
   resultsTsv,
   snapStep,
   toInputs,
@@ -355,5 +356,73 @@ describe("given loadTradeLog", () => {
     );
 
     expect(loadTradeLog()).toEqual([]);
+  });
+
+  test("given a saved entry with a setup snapshot: should sanitize and keep it", () => {
+    const { direction: _direction, ...withoutDirection } = form();
+    const entry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      ticker: "NVDA",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+      isOpen: true,
+      // An out-of-range enum and an unknown key, mixed in with an otherwise
+      // valid snapshot: only the bad fields should be dropped.
+      form: { ...withoutDirection, direction: "invalid", hacked: "x" },
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([entry]));
+
+    const [loaded] = loadTradeLog();
+    expect(loaded.form).toEqual(withoutDirection);
+  });
+
+  test("given a saved entry with no setup snapshot (pre-v2): should have no form to reload", () => {
+    const legacyEntry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      ticker: "NVDA",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+      isOpen: true,
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([legacyEntry]));
+
+    expect(loadTradeLog()[0].form).toBeUndefined();
+  });
+});
+
+describe("given normalizeForm", () => {
+  test("given a partial setup snapshot: should fill in the rest from defaults", () => {
+    const merged = normalizeForm({ ticker: "NVDA", accountBalance: "600" });
+
+    expect(merged.ticker).toBe("NVDA");
+    expect(merged.accountBalance).toBe("600");
+    expect(merged.direction).toBe("long"); // initialState default
+  });
+
+  test("given a stale half-point strength: should snap it to a valid step", () => {
+    expect(normalizeForm({ strength: "1.5" }).strength).toBe("2");
+  });
+
+  test("given a risk/buffer beyond the caps: should clamp to the limits", () => {
+    const merged = normalizeForm({ riskTolerance: "5", targetBuffer: "90" });
+
+    expect(merged.riskTolerance).toBe("2");
+    expect(merged.targetBuffer).toBe("80");
   });
 });

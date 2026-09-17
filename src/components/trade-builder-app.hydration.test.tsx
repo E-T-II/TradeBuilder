@@ -23,6 +23,7 @@ import userEvent from "@testing-library/user-event";
 import { TradeBuilderApp } from "@/components/trade-builder-app";
 
 const KEY = "tradebuilder-form-v3";
+const TRADE_LOG_KEY = "tradebuilder-log-v1";
 
 // A complete, geometrically valid form so Next isn't blocked on the way to the
 // judged-factors step, plus a stale half-point strength that's no longer an option.
@@ -94,4 +95,76 @@ test("hydrating a save from before target modes existed: defaults to the percent
 
   const group = screen.getByRole("radiogroup", { name: "Target mode" });
   expect(within(group).getByRole("radio", { name: "Percentage" })).toBeChecked();
+});
+
+test("loading a logged setup: repopulates the builder with that entry's inputs", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  window.localStorage.setItem(
+    TRADE_LOG_KEY,
+    JSON.stringify([
+      {
+        id: "entry-1",
+        createdAt: "2026-09-07T12:00:00.000Z",
+        ticker: "AAPL",
+        direction: "long",
+        entry: 108,
+        stop: 105.92,
+        target: 120,
+        positionSize: 11,
+        capitalRequirement: 1188,
+        totalTradeRisk: 22.88,
+        rewardRisk: 5.77,
+        score: 8.5,
+        isOpen: true,
+        form: { ...savedForm, ticker: "AAPL" },
+      },
+    ]),
+  );
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /next/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+
+  await user.click(screen.getByRole("button", { name: "Load AAPL setup into builder" }));
+
+  expect(screen.getByLabelText("Ticker symbol")).toHaveValue("AAPL");
+});
+
+test("loading a pre-existing (pre-snapshot) logged trade: still populates its ticker and direction", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  window.localStorage.setItem(
+    TRADE_LOG_KEY,
+    JSON.stringify([
+      {
+        id: "entry-1",
+        createdAt: "2026-09-07T12:00:00.000Z",
+        ticker: "MSFT",
+        direction: "short",
+        entry: 108,
+        stop: 105.92,
+        target: 120,
+        positionSize: 11,
+        capitalRequirement: 1188,
+        totalTradeRisk: 22.88,
+        rewardRisk: 5.77,
+        score: 8.5,
+        isOpen: true,
+        // no `form` field: a save from before the snapshot feature existed
+      },
+    ]),
+  );
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /next/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+
+  await user.click(screen.getByRole("button", { name: "Load MSFT setup into builder" }));
+
+  expect(screen.getByLabelText("Ticker symbol")).toHaveValue("MSFT");
 });
