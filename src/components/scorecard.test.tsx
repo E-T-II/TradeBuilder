@@ -158,6 +158,36 @@ describe("given Scorecard", () => {
     ).toBeInTheDocument();
   });
 
+  test("given an aggressive long XLT setup (demand, high on the curve, uptrend): should show the candle-close and fixed-stop guidance", () => {
+    const result = buildTrade({
+      accountBalance: 2500,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      targetMode: "percent",
+      direction: "long",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 4,
+      curveLow: 90,
+      curveHigh: 110,
+      entryProximal: 108,
+      entryDistal: 106,
+      targetProximal: 124,
+      targetDistal: 126,
+      strength: 2,
+      time: 0.5,
+      freshness: 2,
+    });
+    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+    expect(result.entryType).toBe("confirmation");
+    expect(result.objective).toBe("long");
+
+    render(<Scorecard result={result} />);
+    expect(
+      screen.getByText(/wait for the reversal candle to close above the demand proximal line before entering/i),
+    ).toBeInTheDocument();
+  });
+
   test("should show the profit-zone ratio to two decimal places", () => {
     const result = buildTrade({
       ...longTrade,

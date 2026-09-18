@@ -58,9 +58,12 @@ require both a fresh, high-quality zone and a profit-zone score of at least
 The ITF is bullish, but the asset is already expensive near higher-timeframe
 supply. The setup must first earn a **proximal score of 8.5 or higher** from
 the full odds-enhancer scorecard. It is then entered with a **confirmation
-entry**, not a passive proximal limit. Wait for price to enter the demand zone,
-fail to continue lower, and confirm with a bullish reversal out of the zone
-before entering.
+entry**, not a passive proximal limit. As with the mirrored short case below,
+there is no 10-cent offset anticipating the touch: wait for price to enter the
+demand zone, fail to continue lower, print a reversal candle, and enter at the
+price that candle closes at once it closes above the demand proximal line.
+The stop is not the usual ATR-scaled buffer: place it a fixed **3 cents**
+behind the demand distal line.
 
 ### Short: supply low on the curve, downtrend
 
@@ -98,7 +101,7 @@ score or a compelling-looking candle pattern.
 | Scenario | Curve / trend / zone | Entry | Minimum profit-zone score |
 |---|---|---|---|
 | Conservative long | Low / downtrend / demand | Passive limit at proximal | 3:1 |
-| Aggressive long | High / uptrend / demand | 8.5+ score, then confirmation only | 5:1 |
+| Aggressive long | High / uptrend / demand | 8.5+ score, then confirmation only, stop fixed 3¢ behind distal | 5:1 |
 | Continuation long | Equilibrium / uptrend / demand | Passive limit at proximal | 3:1 |
 | Conservative short | High / uptrend / supply | Passive limit at proximal | 3:1 |
 | Aggressive short | Low / downtrend / supply | 8.5+ score, then confirmation only, stop fixed 3¢ behind distal | 5:1 |

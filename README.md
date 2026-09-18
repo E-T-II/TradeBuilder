@@ -70,14 +70,53 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
                1) Confirmation Entry with an 8.5+ score from the odds enhancers.
 
-               2) You must wait until the reversal candle is “printed” and the candle closes below the supply proximal line before entry.
+               2) You must wait until the reversal candle is “printed” and the candle closes below the supply proximal line before entry at the candle's closing price.
 
                3) The stop is not calculated as a percentage of the daily ATR but is placed a few cents (three) behind the distal line.
 
                4) Your target must be the first opposing zone, which must yield a 5:1 reward to risk ratio.
 
-         (remaining data pending)
+         XLT Rule Variant: Long Trade - Scenario 1 (Conservative)
+            LTF Zone: Demand | HTF Curve: Wholesale | ITF Trend: Downtrend
 
+               1) Institutional Imbalance Verification (The "Freshness" Rule): The Low Timeframe (LTF) Demand zone must be fresh and completely untested. It must exhibit a rapid, explosive move away from the origin base (large bullish candles/strong green bars), proving significant institutional buy orders are left behind waiting to be filled. Therefore, the zone must be completely fresh, with no retests.
+
+               2) Profit Zone Validation (Odds-Enhancers Score ≥ 3:1): Although the decision matrix requires a 5:1 ratio for aggressive/high-curve counter-trend trades, standard XLT confirmation requires verifying that the target area—the nearest opposing fresh LTF supply zone—allows a clean, unrestricted move of at least 3:1 risk-to-reward ratio before encountering any structural resistance from sellers. 
+
+               3) The Odd Enhancer Checklist (Arrival Score): The trader must ensure that price is returning to the LTF demand zone impulsively and quickly (sharp red candles). Slow, grinding, or choppy consolidated structures moving back toward a demand zone will invalidate the setup because they indicate structural institutional redistribution rather than a simple retest. A valid Daily confirmation structure consists of a three-step structural shift.
+                  
+                  a) The Clean Sweep (The Arrival)
+                        What happens: Price aggressively slices downward with large red Daily candles, piercing into the Monthly demand zone.
+                        The Key Detail: This move must take out a recent Daily swing low (Liquidity Sweep). This triggers stop-losses and tricks retail traders into shorting right before the reversal.
+
+                  b) The Change of Character (CHoCH)
+                        What happens: Almost immediately after the sweep, a massive, impulsive green Daily candle surges upward.
+                        The Key Detail: This green surge must close completely above the most recent Daily swing high (the last lower high that led to the final drop). This structural break is your CHoCH—it proves the bears have lost control and institutional buyers have taken over.
+
+                  c) The Displacement & Fair Value Gap (FVG)
+                        What happens: The Daily candle that broke the structure must leave behind a Fair Value Gap (FVG) or an aggressive Daily demand block.
+                        The Key Detail: This shows "displacement." If the market just barely creeps past the old high and leaves tiny candles, the reversal is fake. You want to see explosive upward momentum.
+
+               4) Execution Trigger: The order must be executed via an institutional limit order placed at the "Proximal Line" (the top edge of the demand zone) with the protective stop-loss mathematically set just below the "Distal Line" (the absolute bottom edge of the zone plus an allowance for market spread).
+
+         XLT Rule Variant: Long Trade - Scenario 2 (Aggressive)
+            LTF Zone: Demand | HTF Curve: Retail | ITF Trend: Uptrend
+
+               1) The Trap: In this scenario, you are on the other side of the trade from a seller in an XLT Short trade scenario 1 who is seeking a short, high on the curve in an uptrend. They will enter the trade with a proximal entry at the supply zone. Even though the intermediate trend is bullish, the asset has expanded deep into higher timeframe sell orders. If you buy a minor low-timeframe demand pullback here, you are purchasing at the absolute ceiling of the market cycle.
+
+               2) Profit zone must yield a 5:1 ratio or greater. You are also strictly forbidden from using a proximal limit order here. XLT rules require switching to a Confirmation Entry Type with a proximal entry score no different than a short trade in an aggressive scenario. You must wait for price to hit the zone, fail to break lower, and visually print a green reversal candle back out of the zone before executing. “Print” means, you cannot execute the trade while the candle is a live, fluctuating bar and the candle must close above the proximal line and enter the trade at the candles closing price. If the candle closes inside the depth of the zone, it has not officially "printed" a valid reversal trigger yet, and you must wait for the next candle to close. The closed bar must visually prove that demand absorbed all selling pressure inside the zone and print as one of two structural footprints:
+
+                  a) A Bullish Engulfing Bar: The body of the green candle must completely cover (engulf) the body of the previous red candle that entered the zone.
+                     * The Visual: A red candle drops down into the demand zone. The next candle opens, completely reverses direction, and closes as a green candle.
+                     * The Rule: The physical real body (the solid box part) of the green candle must be taller than and completely cover the body of the previous red candle.
+                     * The Meaning: It shows an immediate, aggressive shift in power. Sellers pushed down, but buyers instantly overwhelmed them with massive volume, erasing the sellers' entire progress in a single candle.
+
+                  b) A Hammer / Long Lower Wick: The candle can have a smaller body, but it must feature a long lower tail poking through the proximal line, proving that prices tried to break lower, failed, and buyers pushed it back up before the close.
+                     * The Visual: A candle opens, plummets deep into the demand zone, but then magically gets sucked back up before it closes, leaving a tiny candle body at the top with a long, thin tail sticking out the bottom.
+                     * The Rule: The long lower tail must poke deeply into or through the proximal line, but the candle body must close up high, outside of the zone's depth.
+                     * The Meaning: This is a visual "fake out." It proves that institutional sellers tried to break the market lower, ran out of gas, and aggressive buyers stepped in, absorbed all the supply, and violently slammed the price back up before the candle interval ended.
+
+               3) The stop is not calculated as a percentage of the daily ATR but is placed a few cents (three) behind the distal line
 
   4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 
@@ -87,8 +126,8 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      c) Freshness	2, 1, or 0	points	(has price returned to the zone? user must determine from chart).
 
-     d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short.
-
+     d) Trend		2, 1, or 0 	points	(scored automatically based on identified trend and trade objective. buying long in an uptrend, 2 points. buying long in a sideways trend, 1 point. buying long in a downtrend, 0 points. reverse for selling short).
+     
      e) Curve		1, 0.5, or 0	points	(how high or low is the zone located on the curve? if buying long in wholesale, 1 point. if buying long in equalibrium .5 points. if buying long in retail, 0 points. reverse for selling short).
 
      f) Profit Zone	2, 1, or 0 points	(how far is the opposing fresh zone? evaluates the height of the entry zone and measures how many times the entry zone divides into the distance between the entry zone proximal and the target zone proximal to establish the profit zone score. a profit zone score equal to or greater than 5:1 is 2 points. a score of greater than or equal to 3:1 is 1 point. less than 3:1 is 0 points).

@@ -358,6 +358,36 @@ describe("given OrderTicket", () => {
     expect(screen.getByText(/\(estimated\) shares/i)).toBeInTheDocument();
   });
 
+  test("given an aggressive long XLT setup: should also enter at the candle's close and use the fixed stop", () => {
+    const result = buildTrade({
+      accountBalance: 2500,
+      riskTolerancePct: 0.02,
+      targetBufferPct: 0.75,
+      targetMode: "percent",
+      direction: "long",
+      trend: "uptrend",
+      timeframe: "daily",
+      atr: 4,
+      curveLow: 90,
+      curveHigh: 110,
+      entryProximal: 108,
+      entryDistal: 106,
+      targetProximal: 124,
+      targetDistal: 126,
+      strength: 2,
+      time: 0.5,
+      freshness: 2,
+    });
+    expect(result.entryType).toBe("confirmation");
+    expect(result.order?.entry).toBe(108);
+    expect(result.order?.stop).toBe(105.97);
+    render(<OrderTicket result={result} direction="long" />);
+    expect(
+      screen.getByText("Entry price and share count are estimates"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fixed (XLT)")).toBeInTheDocument();
+  });
+
   test("given a regular confirmation entry: should not flag the entry or share count as estimates", () => {
     const result = buildTrade(longTrade);
     render(<OrderTicket result={result} direction="long" />);

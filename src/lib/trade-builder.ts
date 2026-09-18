@@ -201,19 +201,19 @@ export function requiresXltProximalScore(
 }
 
 /**
- * The aggressive short XLT case (supply zone, low on the curve, downtrend)
- * places its stop a fixed distance behind the distal line instead of the
- * usual ATR-scaled buffer.
+ * Both aggressive XLT cases enter at the reversal candle's actual close
+ * (no 10-cent anticipation offset) and place their stop a fixed distance
+ * behind the distal line instead of the usual ATR-scaled buffer.
  */
 export function usesFixedXltStopBuffer(
   zoneType: ZoneType,
   curve: CurveZone,
   trend: Trend,
 ): boolean {
-  return zoneType === "supply" && curve === "wholesale" && trend === "downtrend";
+  return requiresXltProximalScore(zoneType, curve, trend);
 }
 
-/** The fixed stop buffer for the aggressive short XLT case, in dollars (3 cents). */
+/** The fixed stop buffer for the aggressive XLT cases, in dollars (3 cents). */
 export const XLT_FIXED_STOP_BUFFER = 0.03;
 
 /**

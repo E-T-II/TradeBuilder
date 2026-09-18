@@ -165,14 +165,13 @@ export function OrderTicket({
 
   const o = result.order;
   const verb = direction === "long" ? "Buy" : "Sell short";
-  // The aggressive short XLT case isn't a resting order: entry is wherever the
+  // Both aggressive XLT cases aren't a resting order: entry is wherever the
   // reversal candle actually closes, once that close is beyond the proximal
   // line. The proximal line stands in for that unknowable close price so the
   // rest of the math (stop, target, size) has something to work from — but
   // that means the entry price, and everything sized off it, is only an
   // estimate until the candle actually closes.
-  const entersAtReversalClose =
-    result.scorecard.confirmationRequiredByXlt && result.objective === "short";
+  const entersAtReversalClose = result.scorecard.confirmationRequiredByXlt;
   const orderKind =
     result.entryType === "proximal"
       ? "limit order at the proximal line."
