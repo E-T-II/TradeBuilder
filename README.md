@@ -1,5 +1,7 @@
 # TradeBuilder - Engineered Risk Strategy
 
+Trade Builder helps traders engineer the trade before risking capital. It converts market structure, supply and demand, trend, zone quality and account risk into a rules-based trade plan—then calculates the stop, entry, target and position size or rejects the setup when it fails to meet the strategy’s requirements. The key distinction is that it is not a trade-prediction or brokerage-execution tool. It is a decision-support and rule-enforcement system designed to promote consistency, discipline and measurable risk.
+
 Trade Plan Defaults:
 users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
 the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.

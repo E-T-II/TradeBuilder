@@ -22,8 +22,8 @@ import { Blocks } from "lucide-react";
 
 // Once per session (sessionStorage clears when the session ends).
 const SESSION_KEY = "tradebuilder-intro-shown";
-const HOLD = 1600; // wordmark on screen before it steps aside
-const FADE = 600; // overlay fade-out
+const HOLD = 2600; // wordmark and subtitle on screen before it steps aside
+const FADE = 700; // overlay fade-out
 
 export function SplashIntro() {
   const [hidden, setHidden] = useState(false);
@@ -63,18 +63,26 @@ export function SplashIntro() {
         }`}
       style={{ transitionDuration: `${FADE}ms` }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <Blocks
-          className="size-9 text-primary"
+          className="mt-1 size-9 shrink-0 text-primary"
           style={{ animation: "intro-pop 800ms cubic-bezier(.2,.7,.3,1) both" }}
           aria-hidden
         />
-        <span
-          className="text-3xl font-semibold tracking-tight"
-          style={{ animation: "intro-rise 800ms ease-out 200ms both" }}
-        >
-          Trade Builder
-        </span>
+        <div className="flex flex-col">
+          <span
+            className="text-3xl font-semibold tracking-tight"
+            style={{ animation: "intro-rise 800ms ease-out 200ms both" }}
+          >
+            Trade Builder
+          </span>
+          <span
+            className="mt-1 text-sm text-muted-foreground"
+            style={{ animation: "intro-rise 800ms ease-out 420ms both" }}
+          >
+            Build the trade. Validate the risk. Follow the plan.
+          </span>
+        </div>
       </div>
     </div>
   );
