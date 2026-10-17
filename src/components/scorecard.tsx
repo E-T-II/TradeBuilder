@@ -208,21 +208,17 @@ export function Scorecard({ result }: { result: TradeResult }) {
     : entryTypeClasses[result.entryType];
   const xltMessages: string[] = [];
 
-  if (result.scorecard.confirmationRequiredByXlt && result.entryType === "confirmation") {
-    xltMessages.push(
-      "XLT requires this confirmation entry. Your 8.5+ odds-enhancer score qualified the setup; it did not select the order type.",
-    );
-    xltMessages.push(
-      result.objective === "short"
-        ? "Wait for the reversal candle to close below the supply proximal line before entering. The stop sits a fixed 3¢ behind the supply distal line here, not the usual ATR-based buffer."
-        : "Wait for the reversal candle to close above the demand proximal line before entering. The stop sits a fixed 3¢ behind the demand distal line here, not the usual ATR-based buffer.",
-    );
-  }
-
-  if (result.scorecard.confirmationRequiredByXlt && result.entryType === "no-trade") {
-    xltMessages.push(
-      "XLT requires this confirmation entry to earn a 8.5+ odds-enhancer score to qualify the setup",
-    );
+  // XLT cells only add a profit-zone threshold; the entry type is still the
+  // scorecard's. Curve and trend are fixed by the cell, so spell out the best
+  // total it can reach — a counter-trend cell tops out at 8 (confirmation only).
+  if (s.requiredProfitZoneRatio !== null && result.objective !== "no-trade") {
+    const maxScore =
+      s.curve + s.trend + 2 + JUDGED_MAX.strength + JUDGED_MAX.time + JUDGED_MAX.freshness;
+    if (maxScore < 8.5) {
+      xltMessages.push(
+        `XLT setup: the entry type follows the scorecard. This setup can score at most ${formatScore(maxScore)}, so it can only be a confirmation entry (7 to 8).`,
+      );
+    }
   }
 
   return (

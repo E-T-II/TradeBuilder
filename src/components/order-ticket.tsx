@@ -80,11 +80,7 @@ function MathLines({ math }: { math: TradeResult["math"] }) {
         <Line label="Target buffer $" value={usd.format(math.targetBufferDollar)} />
       ) : null}
       <Line label="Daily ATR" value={usd.format(math.dailyAtr)} />
-      {math.stopBufferPct !== null ? (
-        <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} />
-      ) : (
-        <Line label="Stop buffer" value="Fixed (XLT)" />
-      )}
+      <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} />
       <Line label="Stop buffer $" value={usd.format(math.stopBufferDollar)} />
     </>
   );
@@ -105,9 +101,6 @@ export function OrderTicket({
     if (result.objective === "no-trade") {
       reason =
         "This zone isn't a valid setup for the current trend and curve position, so the strategy calls no trade. The opposite direction may qualify.";
-    } else if (result.blockedReason === "xlt-proximal-score") {
-      reason =
-        "This aggressive XLT setup must first score 8.5 or higher (a proximal score) before a confirmation entry is allowed.";
     } else if (result.entryType === "no-trade") {
       reason =
         "The score is below 7, so this setup doesn't qualify. If the trade score is not probable, we will not take the trade.";
@@ -165,19 +158,10 @@ export function OrderTicket({
 
   const o = result.order;
   const verb = direction === "long" ? "Buy" : "Sell short";
-  // Both aggressive XLT cases aren't a resting order: entry is wherever the
-  // reversal candle actually closes, once that close is beyond the proximal
-  // line. The proximal line stands in for that unknowable close price so the
-  // rest of the math (stop, target, size) has something to work from — but
-  // that means the entry price, and everything sized off it, is only an
-  // estimate until the candle actually closes.
-  const entersAtReversalClose = result.scorecard.confirmationRequiredByXlt;
   const orderKind =
     result.entryType === "proximal"
       ? "limit order at the proximal line."
-      : entersAtReversalClose
-        ? "entry at the reversal candle's closing price beyond the proximal line."
-        : "stop limit order 10¢ before the proximal line.";
+      : "stop limit order 10¢ before the proximal line.";
 
   return (
     <Card>
@@ -185,26 +169,11 @@ export function OrderTicket({
         <CardTitle>Your S.E.T.S. order</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {entersAtReversalClose ? (
-          <Alert>
-            <AlertTitle>Entry price and share count are estimates</AlertTitle>
-            <AlertDescription>
-              This XLT setup isn&apos;t entered until the reversal candle closes,
-              so its actual price isn&apos;t known yet. The figures below use the
-              proximal line as a stand-in; recalculate the entry, share count,
-              and everything sized off them once the candle closes.
-            </AlertDescription>
-          </Alert>
-        ) : null}
         <Line label="Stop loss" value={usd.format(o.stop)} strong />
-        <Line
-          label={entersAtReversalClose ? "Entry price (estimate)" : "Entry price"}
-          value={usd.format(o.entry)}
-          strong
-        />
+        <Line label="Entry price" value={usd.format(o.entry)} strong />
         <Line label="Target price" value={usd.format(o.target)} strong />
         <p className="text-sm font-medium">
-          {verb} {o.positionSize}{entersAtReversalClose ? " (estimated)" : ""} shares, {orderKind}
+          {verb} {o.positionSize} shares, {orderKind}
         </p>
         <div className="my-3 border-t" />
         <Line

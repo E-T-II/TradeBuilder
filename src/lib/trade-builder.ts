@@ -185,41 +185,10 @@ export function isXltMatrixCell(
 }
 
 /**
- * Aggressive XLT setups must earn a proximal score before they may be entered.
- * Their execution is still confirmation-only, so the engine converts a
- * qualifying proximal score into a confirmation order.
- */
-export function requiresXltProximalScore(
-  zoneType: ZoneType,
-  curve: CurveZone,
-  trend: Trend,
-): boolean {
-  return (
-    (zoneType === "demand" && curve === "retail" && trend === "uptrend") ||
-    (zoneType === "supply" && curve === "wholesale" && trend === "downtrend")
-  );
-}
-
-/**
- * Both aggressive XLT cases enter at the reversal candle's actual close
- * (no 10-cent anticipation offset) and place their stop a fixed distance
- * behind the distal line instead of the usual ATR-scaled buffer.
- */
-export function usesFixedXltStopBuffer(
-  zoneType: ZoneType,
-  curve: CurveZone,
-  trend: Trend,
-): boolean {
-  return requiresXltProximalScore(zoneType, curve, trend);
-}
-
-/** The fixed stop buffer for the aggressive XLT cases, in dollars (3 cents). */
-export const XLT_FIXED_STOP_BUFFER = 0.03;
-
-/**
  * Resolve the trade objective from the entry zone. A demand entry aims long, a
  * supply entry aims short, but the matrix can veto to no-trade. Conditional
- * cells require the specified 3:1 or 5:1 profit-zone threshold.
+ * (XLT) cells require the specified 3:1 or 5:1 profit-zone threshold; they
+ * never change the entry type, which always follows the scorecard total.
  */
 export function decisionMatrix(
   zoneType: ZoneType,
@@ -297,20 +266,14 @@ export const TARGET_BUFFER_MAX_PCT = 80;
  * side, before the zone starts: above proximal for a long demand zone, below it
  * for a short supply zone (README step 5). "Before" the line, not "past" it,
  * is Eugene's wording for that side.
- *
- * The aggressive short XLT case is the exception: there's no 10-cent offset
- * to anticipate the touch. The real entry is wherever the reversal candle
- * actually closes once that close is beyond the proximal line — a price the
- * math can't know in advance — so the proximal line stands in for it here.
  */
 export function entryPrice(
   entryProximal: number,
   type: EntryType,
   direction: Direction,
-  entersAtProximal = false,
 ): number | null {
   if (type === "no-trade") return null;
-  if (type === "proximal" || entersAtProximal) return roundToCent(entryProximal);
+  if (type === "proximal") return roundToCent(entryProximal);
   return roundToCent(
     direction === "long"
       ? entryProximal + CONFIRMATION_OFFSET
@@ -521,8 +484,6 @@ export interface TradeResult {
     profitZone: number;
     /** XLT Decision Matrix requirement for this cell, if conditional. */
     requiredProfitZoneRatio: number | null;
-    /** XLT overrides a qualifying proximal score with confirmation execution. */
-    confirmationRequiredByXlt: boolean;
     strength: number;
     time: number;
     freshness: number;
@@ -538,7 +499,6 @@ export interface TradeResult {
    * - "tight-zones": the buffered target lands on the wrong side of the entry.
    * - "risk-too-small": the risk budget can't cover even one share's risk.
    * - "capital-too-large": one share costs more than the 50% capital cap allows.
-  * - "xlt-proximal-score": this XLT setup requires an 8.5+ proximal score.
    * - "reward-risk": the best achievable reward:risk is below the 3:1 minimum.
    * - "over-6pct": this trade's risk plus open risk exceeds 6% of the balance.
    */
@@ -546,7 +506,6 @@ export interface TradeResult {
   | "tight-zones"
   | "risk-too-small"
   | "capital-too-large"
-  | "xlt-proximal-score"
   | "reward-risk"
   | "over-6pct";
   /**
@@ -590,8 +549,7 @@ export interface TradeResult {
    */
   math: {
     dailyAtr: number;
-    /** null when the aggressive short XLT case uses the fixed 3¢ stop buffer instead of an ATR percentage. */
-    stopBufferPct: number | null;
+    stopBufferPct: number;
     stopBufferDollar: number;
     targetMode: TargetMode;
     targetBufferPct: number | null;
@@ -644,11 +602,6 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
     profitZoneRatio: ratio,
     profitZone: profitZoneScore(ratio),
     requiredProfitZoneRatio: matrixProfitZoneRequirement(matrixVerdict),
-    confirmationRequiredByXlt: requiresXltProximalScore(
-      zoneType,
-      curveZone,
-      inputs.trend,
-    ),
     strength: inputs.strength,
     time: inputs.time,
     freshness: inputs.freshness,
@@ -656,21 +609,10 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   };
   scorecard.total = totalScore(scorecard);
 
-  const scoreType = entryType(scorecard.total);
-  const requiresProximalScore = scorecard.confirmationRequiredByXlt;
-  const type = scoreType === "no-trade" || (requiresProximalScore && scoreType !== "proximal")
-    ? "no-trade"
-    : requiresProximalScore
-      ? "confirmation"
-      : scoreType;
-  const entry = type === "no-trade"
-    ? null
-    : entryPrice(
-      inputs.entryProximal,
-      type,
-      inputs.direction,
-      usesFixedXltStopBuffer(zoneType, curveZone, inputs.trend),
-    );
+  // The scorecard alone picks the entry type, XLT cells included: the matrix
+  // can veto a setup, but never upgrade or downgrade how it's entered.
+  const type = entryType(scorecard.total);
+  const entry = entryPrice(inputs.entryProximal, type, inputs.direction);
 
   // The "show the math" figures (per Eugene), computed straight from the inputs
   // so they're available on every return — the results screen shows them in gray
@@ -679,11 +621,10 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
   // comparison runs, so it starts pending and the comparison clears the flag.
   // Pending-until-proven that way, any return that fires before the comparison
   // reports the buffer as unsettled without having to know it's early.
-  const fixedStopBuffer = usesFixedXltStopBuffer(zoneType, curveZone, inputs.trend);
   const math = {
     dailyAtr: inputs.atr,
-    stopBufferPct: fixedStopBuffer ? null : rateToPercent(stopBufferRate(inputs.timeframe)),
-    stopBufferDollar: fixedStopBuffer ? XLT_FIXED_STOP_BUFFER : stopBuffer(inputs.atr, inputs.timeframe),
+    stopBufferPct: rateToPercent(stopBufferRate(inputs.timeframe)),
+    stopBufferDollar: stopBuffer(inputs.atr, inputs.timeframe),
     targetMode: inputs.targetMode,
     // A percent to two decimals, so roundToCent's float-noise guard is the one
     // this needs: a typed 75.045% is 7504.4999999… raw, which a plain round
@@ -708,9 +649,6 @@ export function buildTrade(inputs: TradeInputs): TradeResult {
       scorecard,
       entryType: type,
       objective,
-      blockedReason: requiresProximalScore && scoreType !== "proximal"
-        ? "xlt-proximal-score"
-        : undefined,
       math,
       order: null,
       checks: null,

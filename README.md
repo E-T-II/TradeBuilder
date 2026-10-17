@@ -27,7 +27,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      e) a demand zone high on the curve in a sideways trend = No trade. 
 
-     f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria. Confirmation entry only, with 8.5+ odds enhancer score.
+     f) a demand zone high on the curve in an uptrend = Buy Long ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria.
      ******
      g) a supply zone in the middle of the curve in a downtrend = Sell Short. 
 
@@ -41,7 +41,7 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
      l) a demand zone in the middle of the curve in an uptrend = Buy Long. 
      ******
-     m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria. Confirmation entry only, with 8.5+ odds enhancer score. 
+     m) a supply zone low on the curve in a downtrend = Sell Short ONLY if the profit zone score is equal to or greater than 5:1 and meets XLT criteria. 
 
      n) a supply zone low on the curve in a sideways trend = No trade. 
 
@@ -54,6 +54,8 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
 
+     XLT cells add only a profit zone requirement (3:1 or 5:1) and chart criteria. They never change the entry type: the odds enhancer score is taken at face value (8.5+ proximal, 7 to 8 confirmation, below 7 no trade), and the stop always uses the daily ATR buffer. Curve and trend are fixed by the cell, so the conservative cells (c and p) score at most 8 and can only be confirmation entries; the aggressive cells (f and m) score at most 9.
+
       XLT Criteria - Conservative | Aggressive
 
          XLT Rule Variant: Short Trade - Scenario 1 (Conservative)
@@ -65,18 +67,16 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
 
                3) Retail Liquidity Absorption: The XLT trader looks for specific retail buying traps immediately preceding the supply zone (such as breakout buyers purchasing psychological resistance levels). The target trade is confirmed if it absorbs that frantic retail buying momentum into institutional limit orders.
 
-               4) Execution Trigger: To buy into this trade, a sell limit order is configured directly on the Proximal Line (the bottom edge of the supply zone) with the protective buy-stop-loss set just above the Distal Line (the absolute high of the supply base) as a percentage of the daily ATR. 
+               4) Execution Trigger: Shorting in an uptrend in the retail range of the curve grants at most 8 points on the scorecard, so this can only be a confirmation trade of 7 to 8 points: a sell order 10 cents below the Proximal Line (the bottom edge of the supply zone) with the protective buy-stop-loss set just above the Distal Line (the absolute high of the supply base) as a percentage of the daily ATR. 
 
          XLT Rule Variant: Short Trade - Scenario 2 (Aggressive)
             LTF Zone: Supply | HTF Curve: Wholesale | ITF Trend: Downtrend
 
-               1) Confirmation Entry with an 8.5+ score from the odds enhancers.
+               1) Entry type follows the odds enhancer score at face value: 8.5 to 9 proximal, 7 to 8 confirmation, below 7 no trade.
 
-               2) You must wait until the reversal candle is “printed” and the candle closes below the supply proximal line before entry at the candle's closing price.
+               2) The stop is placed behind the supply distal line as a percentage of the daily ATR, like any other trade.
 
-               3) The stop is not calculated as a percentage of the daily ATR but is placed a few cents (three) behind the distal line.
-
-               4) Your target must be the first opposing zone, which must yield a 5:1 reward to risk ratio.
+               3) Your target must be the first opposing zone, which must yield a 5:1 reward to risk ratio.
 
          XLT Rule Variant: Long Trade - Scenario 1 (Conservative)
             LTF Zone: Demand | HTF Curve: Wholesale | ITF Trend: Downtrend
@@ -99,26 +99,16 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
                         What happens: The Daily candle that broke the structure must leave behind a Fair Value Gap (FVG) or an aggressive Daily demand block.
                         The Key Detail: This shows "displacement." If the market just barely creeps past the old high and leaves tiny candles, the reversal is fake. You want to see explosive upward momentum.
 
-               4) Execution Trigger: The order must be executed via an institutional limit order placed at the "Proximal Line" (the top edge of the demand zone) with the protective stop-loss mathematically set just below the "Distal Line" (the absolute bottom edge of the zone plus an allowance for market spread).
+               4) Execution Trigger: Buying in a downtrend in the wholesale range of the curve grants at most 8 points on the scorecard, so this can only be a confirmation trade of 7 to 8 points: a buy order 10 cents above the "Proximal Line" (the top edge of the demand zone) with the protective stop-loss set just below the "Distal Line" (the absolute bottom edge of the zone) as a percentage of the daily ATR.
 
          XLT Rule Variant: Long Trade - Scenario 2 (Aggressive)
             LTF Zone: Demand | HTF Curve: Retail | ITF Trend: Uptrend
 
-               1) The Trap: In this scenario, you are on the other side of the trade from a seller in an XLT Short trade scenario 1 who is seeking a short, high on the curve in an uptrend. They will enter the trade with a proximal entry at the supply zone. Even though the intermediate trend is bullish, the asset has expanded deep into higher timeframe sell orders. If you buy a minor low-timeframe demand pullback here, you are purchasing at the absolute ceiling of the market cycle.
+               1) The Trap: In this scenario, you are on the other side of the trade from a seller in an XLT Short trade scenario 1 who is seeking a short, high on the curve in an uptrend. They can only enter the trade with a confirmation entry at the supply zone, since that setup scores at most 8. Even though the intermediate trend is bullish, the asset has expanded deep into higher timeframe sell orders. If you buy a minor low-timeframe demand pullback here, you are purchasing at the absolute ceiling of the market cycle.
 
-               2) Profit zone must yield a 5:1 ratio or greater. You are also strictly forbidden from using a proximal limit order here. XLT rules require switching to a Confirmation Entry Type with a proximal entry score no different than a short trade in an aggressive scenario. You must wait for price to hit the zone, fail to break lower, and visually print a green reversal candle back out of the zone before executing. “Print” means, you cannot execute the trade while the candle is a live, fluctuating bar and the candle must close above the proximal line and enter the trade at the candles closing price. If the candle closes inside the depth of the zone, it has not officially "printed" a valid reversal trigger yet, and you must wait for the next candle to close. The closed bar must visually prove that demand absorbed all selling pressure inside the zone and print as one of two structural footprints:
+               2) Profit zone must yield a 5:1 ratio or greater. Entry type follows the odds enhancer score at face value: 8.5 to 9 proximal, 7 to 8 confirmation, below 7 no trade.
 
-                  a) A Bullish Engulfing Bar: The body of the green candle must completely cover (engulf) the body of the previous red candle that entered the zone.
-                     * The Visual: A red candle drops down into the demand zone. The next candle opens, completely reverses direction, and closes as a green candle.
-                     * The Rule: The physical real body (the solid box part) of the green candle must be taller than and completely cover the body of the previous red candle.
-                     * The Meaning: It shows an immediate, aggressive shift in power. Sellers pushed down, but buyers instantly overwhelmed them with massive volume, erasing the sellers' entire progress in a single candle.
-
-                  b) A Hammer / Long Lower Wick: The candle can have a smaller body, but it must feature a long lower tail poking through the proximal line, proving that prices tried to break lower, failed, and buyers pushed it back up before the close.
-                     * The Visual: A candle opens, plummets deep into the demand zone, but then magically gets sucked back up before it closes, leaving a tiny candle body at the top with a long, thin tail sticking out the bottom.
-                     * The Rule: The long lower tail must poke deeply into or through the proximal line, but the candle body must close up high, outside of the zone's depth.
-                     * The Meaning: This is a visual "fake out." It proves that institutional sellers tried to break the market lower, ran out of gas, and aggressive buyers stepped in, absorbed all the supply, and violently slammed the price back up before the candle interval ended.
-
-               3) The stop is not calculated as a percentage of the daily ATR but is placed a few cents (three) behind the distal line
+               3) The stop is placed behind the demand distal line as a percentage of the daily ATR, like any other trade.
 
   4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 

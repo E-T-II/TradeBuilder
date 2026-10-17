@@ -90,26 +90,7 @@ describe("given Scorecard", () => {
     expect(screen.queryByText("No valid trade")).not.toBeInTheDocument();
   });
 
-  test("given a long high-on-curve uptrend below 9: should show the no-trade XLT requirement text", () => {
-    const result = buildTrade({
-      ...longTrade,
-      curveLow: 90,
-      curveHigh: 110,
-      strength: 1,
-      time: 0.5,
-      freshness: 1,
-    });
-    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
-    expect(result.order).toBeNull();
-    expect(result.entryType).toBe("no-trade");
-
-    render(<Scorecard result={result} />);
-    expect(
-      screen.getByText(/xlt requires this confirmation entry to earn a 8\.5\+ odds-enhancer score to qualify the setup/i),
-    ).toBeInTheDocument();
-  });
-
-  test("given a long high-on-curve uptrend at 8.5 or more: should show the confirmation XLT qualification text", () => {
+  test("given an aggressive long XLT setup scoring 8.5+: should show the scorecard's proximal entry", () => {
     const result = buildTrade({
       ...longTrade,
       curveLow: 90,
@@ -118,73 +99,41 @@ describe("given Scorecard", () => {
       time: 1,
       freshness: 2,
     });
-    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
-    expect(result.entryType).toBe("confirmation");
     expect(result.scorecard.total).toBeGreaterThanOrEqual(8.5);
+    expect(result.entryType).toBe("proximal");
 
     render(<Scorecard result={result} />);
-    expect(
-      screen.getByText(/xlt requires this confirmation entry\. your 8\.5\+ odds-enhancer score qualified the setup; it did not select the order type\./i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Proximal entry")).toBeInTheDocument();
+    expect(screen.queryByText(/xlt setup:/i)).not.toBeInTheDocument();
   });
 
-  test("given an aggressive short XLT setup (supply, low on the curve, downtrend): should show the candle-close and fixed-stop guidance", () => {
+  test("given a conservative short XLT setup (supply, high on the curve, uptrend): should explain the 8-point ceiling", () => {
     const result = buildTrade({
       accountBalance: 2500,
       riskTolerancePct: 0.02,
       targetBufferPct: 0.75,
       targetMode: "percent",
       direction: "short",
-      trend: "downtrend",
-      timeframe: "daily",
-      atr: 4,
-      curveLow: 100,
-      curveHigh: 190,
-      entryProximal: 122,
-      entryDistal: 124,
-      targetProximal: 106,
-      targetDistal: 104,
-      strength: 2,
-      time: 0.5,
-      freshness: 2,
-    });
-    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
-    expect(result.entryType).toBe("confirmation");
-    expect(result.objective).toBe("short");
-
-    render(<Scorecard result={result} />);
-    expect(
-      screen.getByText(/wait for the reversal candle to close below the supply proximal line before entering/i),
-    ).toBeInTheDocument();
-  });
-
-  test("given an aggressive long XLT setup (demand, high on the curve, uptrend): should show the candle-close and fixed-stop guidance", () => {
-    const result = buildTrade({
-      accountBalance: 2500,
-      riskTolerancePct: 0.02,
-      targetBufferPct: 0.75,
-      targetMode: "percent",
-      direction: "long",
       trend: "uptrend",
       timeframe: "daily",
       atr: 4,
-      curveLow: 90,
-      curveHigh: 110,
-      entryProximal: 108,
-      entryDistal: 106,
-      targetProximal: 124,
-      targetDistal: 126,
+      curveLow: 100,
+      curveHigh: 130,
+      entryProximal: 125,
+      entryDistal: 127,
+      targetProximal: 115,
+      targetDistal: 113,
       strength: 2,
-      time: 0.5,
+      time: 1,
       freshness: 2,
     });
-    expect(result.scorecard.confirmationRequiredByXlt).toBe(true);
+    expect(result.scorecard.total).toBe(8);
     expect(result.entryType).toBe("confirmation");
-    expect(result.objective).toBe("long");
 
     render(<Scorecard result={result} />);
+    expect(screen.getByText("Confirmation entry")).toBeInTheDocument();
     expect(
-      screen.getByText(/wait for the reversal candle to close above the demand proximal line before entering/i),
+      screen.getByText(/can score at most 8, so it can only be a confirmation entry \(7 to 8\)/i),
     ).toBeInTheDocument();
   });
 
