@@ -52,6 +52,10 @@ test.each([
   render(<ZoneScorecard form={form} direction={direction} opposing ratings={{ strength: "1", time: "0.5", freshness: "1" }} onChange={() => {}} />);
   const card = within(screen.getByRole("region", { name: "Target zone scorecard" }));
   expect(card.getByText(new RegExp(`${zone} zone`))).toBeInTheDocument();
+  expect(card.getByText(direction === "long" ? "Demand · Buy" : "Supply · Sell")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Target zone scorecard" })).toHaveClass(
+    direction === "long" ? "border-t-emerald-500" : "border-t-red-500",
+  );
   expect(card.getByLabelText("Trend score")).toHaveTextContent(trend);
   expect(card.getByLabelText("Curve score")).toHaveTextContent(curve);
   expect(card.getByLabelText("Profit zone score")).toHaveTextContent(profit);

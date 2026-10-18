@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import type { FormState } from "@/components/trade-builder-app";
 import {
   curveScore,
@@ -158,10 +159,27 @@ export function ZoneScorecard({
     : null;
   const prefix = opposing ? "opposing-" : "";
   const name = opposing ? "Target zone" : "Entry zone";
+  const demand = direction === "long";
+  const DirectionIcon = demand ? TrendingUp : TrendingDown;
 
   return (
-    <section aria-label={`${name} scorecard`} className="min-w-0 space-y-4">
-      <div>
+    <section
+      aria-label={`${name} scorecard`}
+      className={`min-w-0 space-y-4 rounded-xl border border-t-4 bg-linear-to-b p-2 transition-shadow duration-300 motion-reduce:transition-none sm:p-4 ${
+        demand
+          ? "border-emerald-200 border-t-emerald-500 from-emerald-50/80 to-background hover:shadow-[0_0_20px_-6px_rgba(16,185,129,0.3)] dark:border-emerald-900 dark:border-t-emerald-400 dark:from-emerald-950/40"
+          : "border-red-200 border-t-red-500 from-red-50/80 to-background hover:shadow-[0_0_20px_-6px_rgba(239,68,68,0.3)] dark:border-red-900 dark:border-t-red-400 dark:from-red-950/40"
+      }`}
+    >
+      <div className="space-y-2">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+          demand
+            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+            : "bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200"
+        }`}>
+          <DirectionIcon className="size-3.5" aria-hidden />
+          {demand ? "Demand · Buy" : "Supply · Sell"}
+        </span>
         <h3 className="text-base font-semibold">{name}</h3>
         <p className="text-xs text-muted-foreground">
           {direction === "long" ? "Demand" : "Supply"} zone
@@ -206,7 +224,11 @@ export function ZoneScorecard({
             <div className="text-center font-mono text-sm tabular-nums">{max}</div>
           </Fragment>
         ))}
-        <span className="col-span-3 mt-1 grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 border-t pt-3 font-medium lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3">
+        <span className={`col-span-3 mt-1 grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 rounded-lg border-t px-1 py-3 font-medium lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3 ${
+          demand
+            ? "border-emerald-200 bg-emerald-100/60 dark:border-emerald-900 dark:bg-emerald-950/50"
+            : "border-red-200 bg-red-100/60 dark:border-red-900 dark:bg-red-950/50"
+        }`}>
           <span>Total score</span>
           <output className="text-center font-mono text-sm tabular-nums" aria-label="Total odds-enhancer score">
             {total ?? "-"}
