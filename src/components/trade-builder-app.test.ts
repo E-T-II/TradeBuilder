@@ -60,6 +60,9 @@ const form = (overrides: Partial<FormState> = {}): FormState => ({
   strength: "1",
   time: "0.5",
   freshness: "1",
+  opposingStrength: "",
+  opposingTime: "",
+  opposingFreshness: "",
   openTradeRisk: "0",
   ...overrides,
   xltAcknowledgement: overrides.xltAcknowledgement ?? "",
@@ -417,6 +420,23 @@ describe("given normalizeForm", () => {
 
   test("given a stale half-point strength: should snap it to a valid step", () => {
     expect(normalizeForm({ strength: "1.5" }).strength).toBe("2");
+  });
+
+  test("given an older save: should leave opposing ratings unanswered", () => {
+    const merged = normalizeForm({ strength: "2", time: "1", freshness: "2" });
+    expect(merged.opposingStrength).toBe("");
+    expect(merged.opposingTime).toBe("");
+    expect(merged.opposingFreshness).toBe("");
+  });
+
+  test("given stale opposing ratings: should normalize them independently", () => {
+    const merged = normalizeForm({
+      strength: "1", opposingStrength: "1.5", opposingTime: "0.7", opposingFreshness: "9",
+    });
+    expect(merged.strength).toBe("1");
+    expect(merged.opposingStrength).toBe("2");
+    expect(merged.opposingTime).toBe("0.5");
+    expect(merged.opposingFreshness).toBe("2");
   });
 
   test("given a risk/buffer beyond the caps: should clamp to the limits", () => {

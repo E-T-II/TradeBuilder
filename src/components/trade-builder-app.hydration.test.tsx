@@ -16,11 +16,12 @@
  */
 
 // @vitest-environment jsdom
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { TradeBuilderApp } from "@/components/trade-builder-app";
+import { TradeBuilderApp, normalizeForm, resultsTsv, toInputs } from "@/components/trade-builder-app";
+import { buildTrade } from "@/lib/trade-builder";
 
 const KEY = "tradebuilder-form-v3";
 const TRADE_LOG_KEY = "tradebuilder-log-v1";
@@ -47,9 +48,64 @@ const savedForm = {
   time: "0",
   freshness: "0",
   openTradeRisk: "0",
-};
+} as const;
 
 afterEach(() => window.localStorage.clear());
+
+test("opposing-zone ratings persist without changing the original scorecard, order, exports, or logged trade", async () => {
+  const setup = { ...savedForm, strength: "2", time: "1", freshness: "2" };
+  window.localStorage.setItem(KEY, JSON.stringify(setup));
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  const expected = buildTrade(toInputs(normalizeForm(setup))!);
+  expect(expected.order).not.toBeNull();
+  const { unmount } = render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /next/i }));
+  }
+  const original = screen.getByRole("region", { name: "Entry zone scorecard" });
+  const opposing = screen.getByRole("region", { name: "Target zone scorecard" });
+  expect(original.compareDocumentPosition(opposing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(within(opposing).getByLabelText("Total odds-enhancer score")).toHaveTextContent("-");
+
+  for (const [factor, choice] of [
+    ["Strength", "Good strength, 1 points"],
+    ["Time", "Good time, 0.5 points"],
+    ["Freshness", "Poor freshness, 0 points"],
+  ]) {
+    await user.click(within(opposing).getByRole("button", { name: factor }));
+    await user.click(within(opposing).getByRole("button", { name: choice }));
+  }
+  expect(within(original).getByRole("button", { name: "Strength" })).toHaveTextContent("2");
+  expect(within(original).getByRole("button", { name: "Time" })).toHaveTextContent("1");
+  expect(within(original).getByRole("button", { name: "Freshness" })).toHaveTextContent("2");
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  expect(screen.queryByRole("region", { name: "Target zone scorecard" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Copy results" }));
+  expect(writeText).toHaveBeenCalledWith(resultsTsv(expected, setup.ticker));
+  await user.click(screen.getByRole("button", { name: "Log trade" }));
+  const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];
+  expect(logged.score).toBe(expected.scorecard.total);
+  expect(logged.entry).toBe(expected.order!.entry);
+  expect(logged.form).toMatchObject({
+    strength: "2", time: "1", freshness: "2",
+    opposingStrength: "1", opposingTime: "0.5", opposingFreshness: "0",
+  });
+  expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject(logged.form);
+
+  unmount();
+  render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /next/i }));
+  }
+  const restored = screen.getByRole("region", { name: "Target zone scorecard" });
+  expect(within(restored).getByRole("button", { name: "Time" })).toHaveTextContent("0.5");
+  await user.click(screen.getByRole("button", { name: "Reset" }));
+  expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject({
+    opposingStrength: "", opposingTime: "", opposingFreshness: "",
+  });
+  writeText.mockRestore();
+});
 
 test("hydrating a saved half-point strength: snaps the rendered selection onto a valid step", async () => {
   window.localStorage.setItem(KEY, JSON.stringify(savedForm));
@@ -61,7 +117,7 @@ test("hydrating a saved half-point strength: snaps the rendered selection onto a
     await user.click(screen.getByRole("button", { name: /next/i }));
   }
 
-  const strength = screen.getByRole("button", { name: "Strength" });
+  const strength = within(screen.getByRole("region", { name: "Entry zone scorecard" })).getByRole("button", { name: "Strength" });
   // 1.5 snaps up to 2; the current graphic selector displays that score.
   expect(strength).toHaveTextContent("2");
 });

@@ -17,7 +17,7 @@
 
 "use client";
 
-import { Fragment, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -30,13 +30,8 @@ import type { FormState } from "@/components/trade-builder-app";
 import {
   TARGET_BUFFER_MAX_PCT,
   TARGET_BUFFER_MIN_PCT,
-  curveScore,
-  deriveZoneLines,
   isXltMatrixCell,
   locateOnCurve,
-  profitZoneRatio,
-  profitZoneScore,
-  trendScore,
 } from "@/lib/trade-builder";
 import { DISCLAIMER } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
@@ -51,9 +46,7 @@ import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
 import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
-import { StrengthReference } from "@/components/strength-reference";
-import { TimeReference } from "@/components/time-reference";
-import { FreshnessReference } from "@/components/freshness-reference";
+import { ZoneScorecard } from "@/components/zone-scorecard";
 
 interface TradeFormProps {
   form: FormState;
@@ -89,56 +82,6 @@ export function firstIncompleteStep(form: FormState): number {
   }
   return STEPS.length;
 }
-
-const ScorePopupButton = forwardRef<HTMLButtonElement, {
-  id: string;
-  labelId: string;
-  value: string;
-  onClick: () => void;
-  popup: React.ReactNode;
-  popupRef: React.RefObject<HTMLDivElement | null>;
-  popupClassName?: string;
-}>(({ id, labelId, value, onClick, popup, popupRef, popupClassName }, ref) => {
-  const [popupTop, setPopupTop] = useState<number | null>(null);
-
-  useLayoutEffect(() => {
-    if (!popup || typeof ref === "function" || !ref?.current) return;
-
-    const updatePopupPosition = () => {
-      const buttonRect = ref.current?.getBoundingClientRect();
-      if (buttonRect) setPopupTop(buttonRect.bottom + 8);
-    };
-
-    updatePopupPosition();
-    window.addEventListener("resize", updatePopupPosition);
-    window.addEventListener("scroll", updatePopupPosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePopupPosition);
-      window.removeEventListener("scroll", updatePopupPosition, true);
-    };
-  }, [popup, ref]);
-
-  return (
-    <div className="relative justify-self-start">
-      <button
-        ref={ref}
-        id={id}
-        type="button"
-        aria-labelledby={labelId}
-        onClick={onClick}
-        className="flex h-9 w-11 items-center justify-center rounded-lg border border-input bg-background px-1 text-center text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <span>{value}</span>
-      </button>
-      {popup ? (
-        <div ref={popupRef} style={{ top: popupTop === null ? "50%" : `${popupTop}px` }} className={`fixed left-1/2 z-100 w-[min(39.5rem,calc(100vw-2.5rem))] -translate-x-1/2 shadow-xl ${popupClassName ?? ""}`}>
-          {popup}
-        </div>
-      ) : null}
-    </div>
-  );
-});
-ScorePopupButton.displayName = "ScorePopupButton";
 
 // `group` fields wrap a radiogroup (a div, which <label htmlFor> can't target),
 // so the label carries an id for the control to point at via aria-labelledby.
@@ -405,100 +348,11 @@ export function TradeForm({
     onChange(shouldResetXlt ? { ...patch, xltAcknowledgement: "" } : patch);
   };
 
-  const computedScores = (() => {
-    const numbers = [
-      Number(form.curveLow),
-      Number(form.curveHigh),
-      Number(form.demandHigh),
-      Number(form.demandLow),
-      Number(form.supplyHigh),
-      Number(form.supplyLow),
-    ];
-    if (numbers.some((value) => !Number.isFinite(value))) return null;
-
-    const [curveLow, curveHigh, demandHigh, demandLow, supplyHigh, supplyLow] = numbers;
-    if (curveHigh <= curveLow) return null;
-    const lines = deriveZoneLines(
-      { demandHigh, demandLow, supplyHigh, supplyLow },
-      form.direction,
-    );
-    const curve = locateOnCurve(lines.entryProximal, curveLow, curveHigh);
-    const ratio = profitZoneRatio(
-      lines.entryProximal,
-      lines.entryDistal,
-      lines.targetProximal,
-    );
-    return {
-      trend: trendScore(form.trend, form.direction),
-      curve: curveScore(curve, form.direction),
-      profitZone: profitZoneScore(ratio),
-    };
-  })();
-  const allEnhancerScore = computedScores &&
-    form.strength !== "" &&
-    form.time !== "" &&
-    form.freshness !== ""
-    ? computedScores.trend +
-    computedScores.curve +
-    computedScores.profitZone +
-    Number(form.strength) +
-    Number(form.time) +
-    Number(form.freshness)
-    : null;
-
-  const [showStrengthReference, setShowStrengthReference] = useState(false);
-  const [showTimeReference, setShowTimeReference] = useState(false);
-  const [showFreshnessReference, setShowFreshnessReference] = useState(false);
-  const strengthButtonRef = useRef<HTMLButtonElement>(null);
-  const strengthPopupRef = useRef<HTMLDivElement>(null);
-  const timeButtonRef = useRef<HTMLButtonElement>(null);
-  const timePopupRef = useRef<HTMLDivElement>(null);
-  const freshnessButtonRef = useRef<HTMLButtonElement>(null);
-  const freshnessPopupRef = useRef<HTMLDivElement>(null);
   const remaining = STEP_FIELDS[step].filter(
     (key) => form[key].trim() === "",
   ).length;
   const isLast = step === STEPS.length - 1;
   const long = form.direction === "long";
-
-  useEffect(() => {
-    if (!showStrengthReference) return;
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (
-        !strengthButtonRef.current?.contains(target) &&
-        !strengthPopupRef.current?.contains(target)
-      ) {
-        setShowStrengthReference(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [showStrengthReference]);
-
-  useEffect(() => {
-    if (!showTimeReference) return;
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!timeButtonRef.current?.contains(target) && !timePopupRef.current?.contains(target)) {
-        setShowTimeReference(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [showTimeReference]);
-
-  useEffect(() => {
-    if (!showFreshnessReference) return;
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!freshnessButtonRef.current?.contains(target) && !freshnessPopupRef.current?.contains(target)) {
-        setShowFreshnessReference(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [showFreshnessReference]);
 
   // Geometry errors block advancing on the step that owns the offending field:
   // a bad curve on the Curve step (1), zone-geometry errors on the Zones
@@ -535,7 +389,7 @@ export function TradeForm({
       : null;
   })();
   const missingXltAcknowledgement =
-    step === 3 &&
+    isLast &&
     xltCellKey !== null &&
     form.xltAcknowledgement !== xltCellKey;
   const blockedByZones =
@@ -565,7 +419,7 @@ export function TradeForm({
   }, [step]);
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col px-5 py-10 lg:py-14">
+    <div className={`mx-auto flex w-full flex-col px-5 py-10 lg:py-14 ${step === 4 ? "max-w-5xl" : "max-w-xl"}`}>
       <p className="text-xs font-medium text-muted-foreground lg:hidden">
         Step {step + 1} of {STEPS.length}
       </p>
@@ -925,99 +779,44 @@ export function TradeForm({
                 ? "You enter at the demand zone and target the supply zone."
                 : "You enter at the supply zone and target the demand zone."}
             </p>
-            {xltCellKey ? (
-              <Label className="items-start rounded-lg border p-3 leading-snug">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 shrink-0 accent-primary"
-                  checked={form.xltAcknowledgement === xltCellKey}
-                  onChange={(event) =>
-                    onChange({
-                      xltAcknowledgement: event.target.checked ? xltCellKey : "",
-                    })
-                  }
-                />
-                <span>I verified the XLT criteria for this setup.</span>
-              </Label>
-            ) : null}
           </>
         ) : null}
 
         {step === 4 ? (
-          <>
-            <div className="grid grid-cols-[minmax(0,1fr)_3rem_4rem] items-center gap-x-3 gap-y-3">
-              <div className="text-xs font-medium text-muted-foreground">Odds Enhancer</div>
-              <div className="text-center text-xs font-medium text-muted-foreground">Score</div>
-              <div className="text-center text-xs font-medium text-muted-foreground">Max</div>
-
-              <Label id="strength-label">Strength</Label>
-              <ScorePopupButton
-                ref={strengthButtonRef}
-                id="strength"
-                labelId="strength-label"
-                value={form.strength}
-                onClick={() => setShowStrengthReference(true)}
-                popup={showStrengthReference ? <StrengthReference direction={form.direction} selected={form.strength === "" ? null : Number(form.strength)} onSelect={(strength) => { onChange({ strength: String(strength) }); setShowStrengthReference(false); }} /> : null}
-                popupRef={strengthPopupRef}
-              />
-              <div className="text-center font-mono text-sm tabular-nums">2</div>
-
-              <Label id="time-label">Time</Label>
-              <ScorePopupButton
-                ref={timeButtonRef}
-                id="time"
-                labelId="time-label"
-                value={form.time}
-                onClick={() => setShowTimeReference(true)}
-                popup={showTimeReference ? <TimeReference direction={form.direction} selected={form.time === "" ? null : Number(form.time)} onSelect={(time) => { onChange({ time: String(time) }); setShowTimeReference(false); }} /> : null}
-                popupRef={timePopupRef}
-                popupClassName="w-[min(34rem,calc(100vw-2.5rem))]"
-              />
-              <div className="text-center font-mono text-sm tabular-nums">1</div>
-
-              <Label id="freshness-label">Freshness</Label>
-              <ScorePopupButton
-                ref={freshnessButtonRef}
-                id="freshness"
-                labelId="freshness-label"
-                value={form.freshness}
-                onClick={() => setShowFreshnessReference(true)}
-                popup={showFreshnessReference ? <FreshnessReference direction={form.direction} selected={form.freshness === "" ? null : Number(form.freshness)} onSelect={(freshness) => { onChange({ freshness: String(freshness) }); setShowFreshnessReference(false); }} /> : null}
-                popupRef={freshnessPopupRef}
-              />
-              <div className="text-center font-mono text-sm tabular-nums">2</div>
-
-              <div className="col-span-3 mt-1 border-t pt-3 text-xs font-medium text-muted-foreground">
-                Auto-scored odds enhancers
-              </div>
-
-              <span className="text-sm text-muted-foreground">Trend</span>
-              <output className="text-center font-mono text-sm tabular-nums" aria-label="Trend score">
-                {computedScores?.trend ?? "-"}
-              </output>
-              <div className="text-center font-mono text-sm tabular-nums">2</div>
-
-              <span className="text-sm text-muted-foreground">Curve</span>
-              <output className="text-center font-mono text-sm tabular-nums" aria-label="Curve score">
-                {computedScores?.curve ?? "-"}
-              </output>
-              <div className="text-center font-mono text-sm tabular-nums">1</div>
-
-              <span className="text-sm text-muted-foreground">Profit zone</span>
-              <output className="text-center font-mono text-sm tabular-nums" aria-label="Profit zone score">
-                {computedScores?.profitZone ?? "-"}
-              </output>
-              <div className="text-center font-mono text-sm tabular-nums">2</div>
-
-              <span className="col-span-3 mt-1 grid grid-cols-[minmax(0,1fr)_3rem_4rem] items-center gap-x-3 border-t pt-3 font-medium">
-                <span>Total score</span>
-                <output className="text-center font-mono text-sm tabular-nums" aria-label="Total odds-enhancer score">
-                  {allEnhancerScore ?? "-"}
-                </output>
-                <span className="text-center font-mono text-sm tabular-nums">10</span>
-              </span>
-            </div>
-          </>
+          <div className="grid items-start gap-6 min-[480px]:grid-cols-2 min-[480px]:gap-4 lg:gap-8">
+            <ZoneScorecard
+              form={form}
+              direction={form.direction}
+              ratings={{ strength: form.strength, time: form.time, freshness: form.freshness }}
+              onChange={onChange}
+            />
+            <ZoneScorecard
+              form={form}
+              direction={form.direction === "long" ? "short" : "long"}
+              ratings={{ strength: form.opposingStrength, time: form.opposingTime, freshness: form.opposingFreshness }}
+              opposing
+              onChange={(patch) => onChange({
+                ...(patch.strength !== undefined ? { opposingStrength: patch.strength } : {}),
+                ...(patch.time !== undefined ? { opposingTime: patch.time } : {}),
+                ...(patch.freshness !== undefined ? { opposingFreshness: patch.freshness } : {}),
+              })}
+            />
+          </div>
+        ) : null}
+        {isLast && xltCellKey ? (
+          <Label className="items-start rounded-lg border p-3 leading-snug">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+              checked={form.xltAcknowledgement === xltCellKey}
+              onChange={(event) =>
+                onChange({
+                  xltAcknowledgement: event.target.checked ? xltCellKey : "",
+                })
+              }
+            />
+            <span>I verified the XLT criteria for this setup.</span>
+          </Label>
         ) : null}
       </div>
 

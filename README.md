@@ -2,6 +2,10 @@
 
 Trade Builder helps traders engineer the trade before risking capital. It converts market structure, supply and demand, trend, zone quality and account risk into a rules-based trade plan—then calculates the stop, entry, target and position size or rejects the setup when it fails to meet the strategy’s requirements. The key distinction is that it is not a trade-prediction or brokerage-execution tool. It is a decision-support and rule-enforcement system designed to promote consistency, discipline and measurable risk.
 
+Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and adds a target-zone scorecard on the right (side by side at screen widths of 480px and above; stacked entry-first on narrower phones). Both use the same graphical selectors for Strength, Time, and Freshness. Trend, Curve, and Profit zone are automatically scored for each zone: the target zone is supply for a long trade and demand for a short trade. Target ratings are optional, saved with the setup and logged setup snapshots, and do not affect orders, risk checks, copied results, or logged trade scores. The results screen remains unchanged. Older saves start with unanswered target ratings.
+
+For XLT setups, Step 5 also requires checking "I verified the XLT criteria for this setup" before viewing the trade. Step 4 (Zones) does not require this acknowledgement. Changing curve, trend, direction, or zone prices clears the acknowledgement.
+
 Trade Plan Defaults:
 users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
 the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.

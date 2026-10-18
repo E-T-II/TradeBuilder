@@ -71,6 +71,9 @@ export interface FormState {
   strength: string;
   time: string;
   freshness: string;
+  opposingStrength: string;
+  opposingTime: string;
+  opposingFreshness: string;
   openTradeRisk: string;
   /** The XLT matrix cell the trader has explicitly acknowledged. */
   xltAcknowledgement: string;
@@ -97,6 +100,9 @@ const initialState: FormState = {
   strength: "",
   time: "",
   freshness: "",
+  opposingStrength: "",
+  opposingTime: "",
+  opposingFreshness: "",
   openTradeRisk: "0",
   xltAcknowledgement: "",
 };
@@ -239,6 +245,9 @@ export function normalizeForm(stored: Partial<FormState>): FormState {
   merged.strength = snapStep(merged.strength, 1, JUDGED_MAX.strength);
   merged.freshness = snapStep(merged.freshness, 1, JUDGED_MAX.freshness);
   merged.time = snapStep(merged.time, 0.5, JUDGED_MAX.time);
+  merged.opposingStrength = snapStep(merged.opposingStrength, 1, JUDGED_MAX.strength);
+  merged.opposingTime = snapStep(merged.opposingTime, 0.5, JUDGED_MAX.time);
+  merged.opposingFreshness = snapStep(merged.opposingFreshness, 1, JUDGED_MAX.freshness);
   merged.riskTolerance = clampNumericString(merged.riskTolerance, 0, 2);
   merged.targetBuffer = clampNumericString(
     merged.targetBuffer,

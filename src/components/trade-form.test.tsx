@@ -43,6 +43,9 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   strength: "1",
   time: "0.5",
   freshness: "1",
+  opposingStrength: "",
+  opposingTime: "",
+  opposingFreshness: "",
   openTradeRisk: "0",
   ...overrides,
   xltAcknowledgement: overrides.xltAcknowledgement ?? "",
@@ -348,46 +351,61 @@ describe("given the direction control on the Zones step", () => {
       screen.getByText(/you enter at the supply zone/i),
     ).toBeInTheDocument();
 
-    // Geometry is unchanged, but the selected retail-supply/uptrend cell is an
-    // XLT setup, so it requires its explicit acknowledgement before advancing.
-    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
+    // XLT acknowledgement belongs to Score, not Zones.
+    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 
-  test("given an XLT matrix cell: should require an acknowledgement before advancing", async () => {
+  test("given an XLT matrix cell: should allow Zones to advance and require acknowledgement on Score", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
 
+    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.getByRole("heading", { name: "Score" })).toBeInTheDocument();
     const acknowledgement = screen.getByRole("checkbox", {
       name: /verified the xlt criteria/i,
     });
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
 
     await user.click(acknowledgement);
-    expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+    await user.click(acknowledgement);
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 
-  test("given a non-XLT matrix cell: should not show an acknowledgement", () => {
+  test("given a non-XLT matrix cell: should not show an acknowledgement on Zones or Score", async () => {
+    const user = userEvent.setup();
     render(<ZonesStep initial={baseForm()} />);
 
     expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
   });
 
   test("changing a zone-driving field should clear the XLT acknowledgement", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
 
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
     const acknowledgement = screen.getByRole("checkbox", {
       name: /verified the xlt criteria/i,
     });
     await user.click(acknowledgement);
     expect(acknowledgement).toBeChecked();
 
+    await user.click(screen.getByRole("button", { name: /^back$/i }));
     const supply = screen.getByLabelText("Supply distal ($)");
     await user.clear(supply);
     await user.type(supply, "128");
 
-    expect(acknowledgement).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 });
 
@@ -407,11 +425,18 @@ describe("given the odds-enhancer controls on the Score step", () => {
       />,
     );
 
-    expect(screen.getByRole("status", { name: "Trend score" })).toHaveTextContent("2");
-    expect(screen.getByRole("status", { name: "Curve score" })).toHaveTextContent("1");
-    expect(screen.getByRole("status", { name: "Profit zone score" })).toHaveTextContent("2");
-    expect(screen.getByText("Auto-scored odds enhancers")).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Total odds-enhancer score" })).toHaveTextContent("7.5");
+    const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
+    expect(entry.getByRole("status", { name: "Trend score" })).toHaveTextContent("2");
+    expect(entry.getByRole("status", { name: "Curve score" })).toHaveTextContent("1");
+    expect(entry.getByRole("status", { name: "Profit zone score" })).toHaveTextContent("2");
+    expect(entry.getByText("Auto-scored odds enhancers")).toBeInTheDocument();
+    expect(entry.getByRole("status", { name: "Total odds-enhancer score" })).toHaveTextContent("7.5");
+    const opposing = within(screen.getByRole("region", { name: "Target zone scorecard" }));
+    expect(opposing.getByRole("status", { name: "Trend score" })).toHaveTextContent("0");
+    expect(opposing.getByRole("status", { name: "Curve score" })).toHaveTextContent("1");
+    expect(opposing.getByRole("status", { name: "Profit zone score" })).toHaveTextContent("2");
+    expect(opposing.getByRole("status", { name: "Total odds-enhancer score" })).toHaveTextContent("-");
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
   });
 
   test("should offer a strength dropdown and rating chips for the other factors", () => {
@@ -429,7 +454,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
       />,
     );
 
-    const strength = screen.getByRole("button", { name: "Strength" });
+    const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
+    const strength = entry.getByRole("button", { name: "Strength" });
     expect(strength).toHaveTextContent("1");
     fireEvent.click(strength);
     expect(screen.queryByRole("option", { name: "2" })).not.toBeInTheDocument();
@@ -444,15 +470,15 @@ describe("given the odds-enhancer controls on the Score step", () => {
     fireEvent.pointerDown(document.body);
     expect(screen.queryByText("How did price leave the zone?")).not.toBeInTheDocument();
     fireEvent.click(strength);
-    fireEvent.pointerDown(screen.getByText("Strength"));
-    fireEvent.click(screen.getByText("Strength"));
+    fireEvent.pointerDown(entry.getByText("Strength"));
+    fireEvent.click(entry.getByText("Strength"));
     expect(screen.queryByText("How did price leave the zone?")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Freshness" })).toHaveTextContent("1");
-    fireEvent.click(screen.getByRole("button", { name: "Freshness" }));
+    expect(entry.getByRole("button", { name: "Freshness" })).toHaveTextContent("1");
+    fireEvent.click(entry.getByRole("button", { name: "Freshness" }));
     expect(screen.getByText("Has price returned to the zone?")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Poor freshness, 0 points" }));
     expect(screen.queryByText("Has price returned to the zone?")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Time" })).toHaveTextContent("0.5");
+    expect(entry.getByRole("button", { name: "Time" })).toHaveTextContent("0.5");
   });
 
   test("given any factor unanswered: should disable the final action, even with the other two answered", () => {
