@@ -183,7 +183,7 @@ export function ZoneScorecard({
         <h3 className="text-base font-semibold">{name}</h3>
         <p className="text-xs text-muted-foreground">
           {direction === "long" ? "Demand" : "Supply"} zone
-          {opposing ? " - comparison only" : " - used for your trade"}
+          {opposing ? " - for comparison only" : " - used for your trade"}
         </p>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 gap-y-3 lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3">
