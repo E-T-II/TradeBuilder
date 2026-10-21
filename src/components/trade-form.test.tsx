@@ -410,6 +410,41 @@ describe("given the direction control on the Zones step", () => {
 });
 
 describe("given the odds-enhancer controls on the Score step", () => {
+  test("switching to an unanswered target keeps its ratings unanswered and blocks submission until switching back", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm()} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.click(screen.getByRole("button", { name: "Switch to sell short" }));
+    const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
+    for (const factor of ["Strength", "Time", "Freshness"]) {
+      expect(entry.getByRole("button", { name: factor }).textContent).toBe("");
+    }
+    expect(entry.getByLabelText("Total odds-enhancer score")).toHaveTextContent("-");
+    expect(screen.getByRole("button", { name: "3 fields left" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Switch to buy long" }));
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+    expect(within(screen.getByRole("region", { name: "Entry zone scorecard" })).getByRole("button", { name: "Time" })).toHaveTextContent("0.5");
+  });
+
+  test("switching clears XLT verification, closes rating popups, and requires verification again on returning to XLT", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend", opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
+    const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
+    await user.click(entry.getByRole("button", { name: "Strength" }));
+    expect(screen.getByRole("img", { name: /Strength reference/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Switch to sell short" }));
+    expect(screen.queryByRole("img", { name: /Strength reference/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Switch to buy long" }));
+    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
+  });
+
   test("should display the automatically calculated trend, curve, and profit-zone scores", () => {
     render(
       <TradeForm

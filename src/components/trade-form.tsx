@@ -20,6 +20,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
+  ArrowLeftRight,
   Check,
   ChevronLeft,
   MoveRight,
@@ -783,24 +784,48 @@ export function TradeForm({
         ) : null}
 
         {step === 4 ? (
-          <div className="grid items-start gap-6 min-[480px]:grid-cols-2 min-[480px]:gap-4 lg:gap-8">
-            <ZoneScorecard
-              form={form}
-              direction={form.direction}
-              ratings={{ strength: form.strength, time: form.time, freshness: form.freshness }}
-              onChange={onChange}
-            />
-            <ZoneScorecard
-              form={form}
-              direction={form.direction === "long" ? "short" : "long"}
-              ratings={{ strength: form.opposingStrength, time: form.opposingTime, freshness: form.opposingFreshness }}
-              opposing
-              onChange={(patch) => onChange({
-                ...(patch.strength !== undefined ? { opposingStrength: patch.strength } : {}),
-                ...(patch.time !== undefined ? { opposingTime: patch.time } : {}),
-                ...(patch.freshness !== undefined ? { opposingFreshness: patch.freshness } : {}),
-              })}
-            />
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                {long ? "Buy long: enter at demand, target supply." : "Sell short: enter at supply, target demand."}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => updateForm({
+                  direction: long ? "short" : "long",
+                  strength: form.opposingStrength,
+                  time: form.opposingTime,
+                  freshness: form.opposingFreshness,
+                  opposingStrength: form.strength,
+                  opposingTime: form.time,
+                  opposingFreshness: form.freshness,
+                })}
+              >
+                <ArrowLeftRight aria-hidden />
+                {long ? "Switch to sell short" : "Switch to buy long"}
+              </Button>
+            </div>
+            <div className="grid items-start gap-6 min-[480px]:grid-cols-2 min-[480px]:gap-4 lg:gap-8">
+              <ZoneScorecard
+                key={`entry-${form.direction}`}
+                form={form}
+                direction={form.direction}
+                ratings={{ strength: form.strength, time: form.time, freshness: form.freshness }}
+                onChange={onChange}
+              />
+              <ZoneScorecard
+                key={`target-${form.direction}`}
+                form={form}
+                direction={form.direction === "long" ? "short" : "long"}
+                ratings={{ strength: form.opposingStrength, time: form.opposingTime, freshness: form.opposingFreshness }}
+                opposing
+                onChange={(patch) => onChange({
+                  ...(patch.strength !== undefined ? { opposingStrength: patch.strength } : {}),
+                  ...(patch.time !== undefined ? { opposingTime: patch.time } : {}),
+                  ...(patch.freshness !== undefined ? { opposingFreshness: patch.freshness } : {}),
+                })}
+              />
+            </div>
           </div>
         ) : null}
         {isLast && xltCellKey ? (

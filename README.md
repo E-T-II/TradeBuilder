@@ -6,6 +6,8 @@ Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and
 
 For XLT setups, Step 5 also requires checking "I verified the XLT criteria for this setup" before viewing the trade. Step 4 (Zones) does not require this acknowledgement. Changing curve, trend, direction, or zone prices clears the acknowledgement.
 
+The direction-switch button on Step 5 swaps Entry and Target roles and their Strength, Time, and Freshness ratings, including unanswered ratings, without changing supply or demand prices. Card colors and automatic scores follow the new direction, which also updates Step 4. Trade outputs continue to use the Entry scorecard. Switching clears XLT verification; if the new entry ratings are unanswered, they must be completed before viewing the trade. Switching again restores the previous direction and ratings.
+
 Trade Plan Defaults:
 users define their risk tolerance of up to 2% of their account balance and their target buffer of 75 to 80%.
 the user defines their income objective/trading purpose. will the High Time Frame (HTF) be less than or equal to the daily time frame or greater than or equal to the weekly time frame to establish a stop buffer of either 2 or 10%.

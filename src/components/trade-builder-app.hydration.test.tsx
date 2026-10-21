@@ -52,6 +52,72 @@ const savedForm = {
 
 afterEach(() => window.localStorage.clear());
 
+test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updates Step 4, persists, and uses the new Entry for trade outputs", async (direction) => {
+  const setup = {
+    ...savedForm, direction, trend: "sideways" as const,
+    strength: "1", time: "0.5", freshness: "1",
+    opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+  };
+  window.localStorage.setItem(KEY, JSON.stringify(setup));
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  const { unmount } = render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  const switchedDirection = direction === "long" ? "short" : "long";
+  const switchName = direction === "long" ? "Switch to sell short" : "Switch to buy long";
+  await user.click(screen.getByRole("button", { name: switchName }));
+  const entry = screen.getByRole("region", { name: "Entry zone scorecard" });
+  const target = screen.getByRole("region", { name: "Target zone scorecard" });
+  expect(entry).toHaveClass(switchedDirection === "long" ? "border-t-emerald-500" : "border-t-red-500");
+  expect(target).toHaveClass(switchedDirection === "long" ? "border-t-red-500" : "border-t-emerald-500");
+  for (const [label, entryValue, targetValue] of [
+    ["Strength", "2", "1"], ["Time", "1", "0.5"], ["Freshness", "2", "1"],
+  ]) {
+    expect(within(entry).getByRole("button", { name: label })).toHaveTextContent(entryValue);
+    expect(within(target).getByRole("button", { name: label })).toHaveTextContent(targetValue);
+  }
+  const switched = normalizeForm({
+    ...setup, direction: switchedDirection,
+    strength: "2", time: "1", freshness: "2",
+    opposingStrength: "1", opposingTime: "0.5", opposingFreshness: "1",
+  });
+  expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject(switched);
+  const expected = buildTrade(toInputs(switched)!);
+  expect(expected.order).not.toBeNull();
+  expect(within(entry).getByLabelText("Total odds-enhancer score")).toHaveTextContent(String(expected.scorecard.total));
+  expect(within(entry).getByLabelText("Trend score")).toHaveTextContent(String(expected.scorecard.trend));
+  expect(within(entry).getByLabelText("Curve score")).toHaveTextContent(String(expected.scorecard.curve));
+  expect(within(entry).getByLabelText("Profit zone score")).toHaveTextContent(String(expected.scorecard.profitZone));
+
+  await user.click(screen.getByRole("button", { name: /^back$/i }));
+  expect(screen.getByRole("radio", { name: switchedDirection === "long" ? "Buy long" : "Sell short" })).toBeChecked();
+  expect(screen.queryByRole("button", { name: /switch to/i })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /^next$/i }));
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  await user.click(screen.getByRole("button", { name: "Copy results" }));
+  expect(writeText).toHaveBeenCalledWith(resultsTsv(expected, setup.ticker));
+  await user.click(screen.getByRole("button", { name: "Log trade" }));
+  const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];
+  expect(logged).toMatchObject({
+    direction: switchedDirection, score: expected.scorecard.total,
+    entry: expected.order!.entry, stop: expected.order!.stop, target: expected.order!.target,
+    form: switched,
+  });
+  unmount();
+  render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  expect(screen.getByRole("region", { name: "Entry zone scorecard" })).toHaveClass(
+    switchedDirection === "long" ? "border-t-emerald-500" : "border-t-red-500",
+  );
+  await user.click(screen.getByRole("button", { name: /switch to/i }));
+  expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject(setup);
+  writeText.mockRestore();
+});
+
 test("opposing-zone ratings persist without changing the original scorecard, order, exports, or logged trade", async () => {
   const setup = { ...savedForm, strength: "2", time: "1", freshness: "2" };
   window.localStorage.setItem(KEY, JSON.stringify(setup));
