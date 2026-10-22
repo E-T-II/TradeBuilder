@@ -25,14 +25,14 @@ import {
   loadStoredForm,
   loadTradeLog,
   normalizeForm,
-  resultsTsv,
+  realizedOutcome,
   snapStep,
+  summarizeTradeOutcomes,
   toInputs,
   tradeLogTsv,
   type FormState,
   type TradeLogEntry,
 } from "@/components/trade-builder-app";
-import { buildTrade } from "@/lib/trade-builder";
 
 const KEY = "tradebuilder-form-v3";
 const TRADE_LOG_KEY = "tradebuilder-log-v1";
@@ -82,23 +82,6 @@ describe("given toInputs and the risk cap", () => {
   });
 });
 
-describe("given resultsTsv", () => {
-  const result = buildTrade(toInputs(form())!);
-
-  test("given a ticker: should include it in copied results", () => {
-    const [headers, values] = resultsTsv(result, "NVDA").split("\n");
-
-    expect(headers.split("\t")[0]).toBe("Ticker");
-    expect(values.split("\t")[0]).toBe("NVDA");
-  });
-
-  test("given a blank ticker: should copy Unknown", () => {
-    const [, values] = resultsTsv(result, "  ").split("\n");
-
-    expect(values.split("\t")[0]).toBe("Unknown");
-  });
-});
-
 describe("given tradeLogTsv", () => {
   const entry: TradeLogEntry = {
     id: "entry-1",
@@ -132,23 +115,108 @@ describe("given tradeLogTsv", () => {
       "Reward : risk",
       "Score",
       "Status",
+      "Exit price",
+      "Fees",
+      "Realized P&L",
     ]);
     const cells = values.split("\t");
     expect(cells[1]).toBe("NVDA");
     expect(cells[2]).toBe("Buy");
-    expect(cells[cells.length - 1]).toBe("Open");
+    expect(cells[11]).toBe("Open");
   });
 
   test("given a closed trade: should report its status as Closed", () => {
     const [, values] = tradeLogTsv([{ ...entry, isOpen: false }]).split("\n");
 
-    expect(values.split("\t").at(-1)).toBe("Closed");
+    expect(values.split("\t")[11]).toBe("Closed");
+  });
+
+  test("given an outcome: should export its exit, fees, and net P&L", () => {
+    const [, values] = tradeLogTsv([
+      { ...entry, isOpen: false, exitPrice: "110", fees: "2" },
+    ]).split("\n");
+    const cells = values.split("\t");
+
+    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00"]);
   });
 
   test("given no logged trades: should copy only the header row", () => {
     expect(tradeLogTsv([])).toBe(
-      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus",
+      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L",
     );
+  });
+});
+
+describe("given realizedOutcome", () => {
+  const entry: TradeLogEntry = {
+    id: "entry-1",
+    createdAt: "2026-09-07T12:00:00.000Z",
+    ticker: "NVDA",
+    direction: "long",
+    entry: 108,
+    stop: 105.92,
+    target: 120,
+    positionSize: 11,
+    capitalRequirement: 1188,
+    totalTradeRisk: 22.88,
+    rewardRisk: 5.77,
+    score: 8.5,
+    isOpen: false,
+  };
+
+  test("given a long close and fees: should calculate net P&L", () => {
+    expect(realizedOutcome({ ...entry, exitPrice: "110", fees: "2" })).toBe(20);
+  });
+
+  test("given a short close without fees: should calculate net P&L", () => {
+    expect(
+      realizedOutcome({
+        ...entry,
+        direction: "short",
+        exitPrice: "106",
+      }),
+    ).toBe(22);
+  });
+
+  test("given an open trade, missing exit, or invalid fees: should not report an outcome", () => {
+    expect(realizedOutcome({ ...entry, isOpen: true, exitPrice: "110" })).toBeNull();
+    expect(realizedOutcome(entry)).toBeNull();
+    expect(realizedOutcome({ ...entry, exitPrice: "110", fees: "-1" })).toBeNull();
+    expect(realizedOutcome({ ...entry, exitPrice: "108" })).toBe(0);
+  });
+
+  test("given closed trades: should summarize by entry type, trend, and score range", () => {
+    const outcomes = summarizeTradeOutcomes([
+      {
+        ...entry,
+        exitPrice: "110",
+        fees: "2",
+        form: { trend: "uptrend" },
+      },
+      {
+        ...entry,
+        id: "entry-2",
+        exitPrice: "106",
+        score: 7.5,
+        form: { trend: "uptrend" },
+      },
+      { ...entry, id: "open", isOpen: true, exitPrice: "110" },
+    ]);
+
+    expect(outcomes).toEqual([
+      {
+        label: "Confirmation · Uptrend · 7–8",
+        trades: 1,
+        winRate: 0,
+        netPnl: -22,
+      },
+      {
+        label: "Proximal · Uptrend · 8.5–10",
+        trades: 1,
+        winRate: 100,
+        netPnl: 20,
+      },
+    ]);
   });
 });
 
@@ -406,6 +474,31 @@ describe("given loadTradeLog", () => {
     window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([legacyEntry]));
 
     expect(loadTradeLog()[0].form).toBeUndefined();
+  });
+
+  test("given a saved outcome: should retain valid prices and discard invalid optional values", () => {
+    const entry = {
+      id: "entry-1",
+      createdAt: "2026-09-07T12:00:00.000Z",
+      ticker: "NVDA",
+      direction: "long",
+      entry: 108,
+      stop: 105.92,
+      target: 120,
+      positionSize: 11,
+      capitalRequirement: 1188,
+      totalTradeRisk: 22.88,
+      rewardRisk: 5.77,
+      score: 8.5,
+      isOpen: false,
+      exitPrice: "110",
+      fees: "-1",
+    };
+    window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([entry]));
+
+    const [loaded] = loadTradeLog();
+    expect(loaded.exitPrice).toBe("110");
+    expect(loaded).not.toHaveProperty("fees");
   });
 });
 

@@ -216,7 +216,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
       s.curve + s.trend + 2 + JUDGED_MAX.strength + JUDGED_MAX.time + JUDGED_MAX.freshness;
     if (maxScore < 8.5) {
       xltMessages.push(
-        `XLT setup: the entry type follows the scorecard. This setup can score at most ${formatScore(maxScore)}, so it can only be a confirmation entry (7 to 8).`,
+        `XLT setup: This setup can score at most ${formatScore(maxScore)}, so it can only be a confirmation entry.`,
       );
     }
   }

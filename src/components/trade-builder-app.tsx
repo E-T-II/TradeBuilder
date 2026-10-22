@@ -30,7 +30,6 @@ import {
   type IncomeTimeframe,
   type TargetMode,
   type TradeInputs,
-  type TradeResult,
   type Trend,
 } from "@/lib/trade-builder";
 import {
@@ -42,12 +41,22 @@ import {
 import { clampNumericString } from "@/lib/utils";
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
+import { TradePlanExport } from "@/components/trade-plan-export";
 import { RiskChecks } from "@/components/risk-checks";
 import { Reveal } from "@/components/reveal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { DecisionMatrix } from "@/components/decision-matrix";
+import { TradeBackupControls } from "@/components/trade-backup-controls";
+import {
+  FORM_ENUM_VALUES,
+  FORM_STORAGE_KEY as STORAGE_KEY,
+  restoreTradeBackup,
+  TRADE_LOG_STORAGE_KEY,
+  type TradeBackup,
+} from "@/lib/trade-backup";
 
 export interface FormState {
   ticker: string;
@@ -111,8 +120,6 @@ const initialState: FormState = {
 // (a deliberate score), a semantic change. A v2 save's "0" would otherwise
 // load as a deliberate zero the user never chose, so bump the key and let
 // old saves fall back to the new defaults instead.
-const STORAGE_KEY = "tradebuilder-form-v3";
-const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
 const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback/issues/new/choose";
 const REPORT_EMAIL_URL = "mailto:tradebuilderfeedback@protonmail.com?subject=Trade%20Builder%20Report";
 
@@ -131,8 +138,22 @@ export interface TradeLogEntry {
   score: number;
   /** Whether this order is still open in the market. */
   isOpen: boolean;
+  /** Closing price entered when the trade is marked closed. */
+  exitPrice?: string;
+  /** Total fees for the completed trade. Blank or absent means no fees recorded. */
+  fees?: string;
   /** The builder inputs that produced this entry, so it can be reloaded later. Absent on pre-v2 saves. */
   form?: Partial<FormState>;
+}
+
+function sanitizeOutcomeField(value: unknown, allowZero: boolean): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (value === "") return value;
+  const number = Number(value);
+  if (!Number.isFinite(number) || (allowZero ? number < 0 : number <= 0)) {
+    return undefined;
+  }
+  return value;
 }
 
 export function loadTradeLog(): TradeLogEntry[] {
@@ -152,11 +173,18 @@ export function loadTradeLog(): TradeLogEntry[] {
           (key) => typeof candidate[key] === "number" && Number.isFinite(candidate[key]),
         );
       if (!valid) return [];
+      const exitPrice = sanitizeOutcomeField(candidate.exitPrice, false);
+      const fees = sanitizeOutcomeField(candidate.fees, true);
+      const cleanCandidate = { ...candidate };
+      delete cleanCandidate.exitPrice;
+      delete cleanCandidate.fees;
       return [{
-        ...candidate,
+        ...cleanCandidate,
         ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown",
         // Older saves predate this field; assume still open until marked otherwise.
         isOpen: typeof candidate.isOpen === "boolean" ? candidate.isOpen : true,
+        ...(exitPrice !== undefined ? { exitPrice } : {}),
+        ...(fees !== undefined ? { fees } : {}),
         form: sanitizeFormPatch(candidate.form) ?? undefined,
       } as TradeLogEntry];
     });
@@ -199,12 +227,7 @@ export function snapStep(value: string, step: number, max: number): string {
 // Enum fields need their values checked, not just their type: `direction:
 // "banana"` is a string, so a shape-only check would pass it through and the
 // engine would silently treat it as the non-long branch.
-const ENUM_VALUES: { [K in keyof FormState]?: readonly string[] } = {
-  direction: ["long", "short"] satisfies Direction[],
-  trend: ["uptrend", "sideways", "downtrend"] satisfies Trend[],
-  timeframe: ["daily", "weekly"] satisfies IncomeTimeframe[],
-  targetMode: ["percent", "ratio", "auto"] satisfies TargetMode[],
-};
+const ENUM_VALUES: { [K in keyof FormState]?: readonly string[] } = FORM_ENUM_VALUES;
 
 // Keep only the fields that match the shape we persist: known keys with
 // string values, and enum fields whose value is in range. A number where a
@@ -354,62 +377,8 @@ const exportUsd = new Intl.NumberFormat("en-US", {
 const exportRatio = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
-
-export function resultsTsv(result: TradeResult, ticker: string): string {
-  const score = result.scorecard;
-  const matrixDirection =
-    result.objective === "long"
-      ? "Long"
-      : result.objective === "short"
-        ? "Short"
-        : "No action";
-  const order = result.order;
-  const headers = [
-    "Ticker",
-    "Strength",
-    "Time",
-    "Freshness",
-    "Trend",
-    "Curve",
-    "Profit zone",
-    "Total O.E. Score",
-    "Decision matrix",
-    "Stop loss",
-    "Entry price",
-    "Target price",
-    "Position size",
-    "Order type",
-    "Capital required",
-    "Risk per share",
-    "Total trade risk",
-    "Reward : risk",
-  ];
-  const values = [
-    ticker.trim() || "Unknown",
-    score.strength,
-    score.time,
-    score.freshness,
-    score.trend,
-    score.curve,
-    score.profitZone,
-    `${score.total} / 10`,
-    matrixDirection,
-    order ? exportUsd.format(order.stop) : "",
-    order ? exportUsd.format(order.entry) : "",
-    order ? exportUsd.format(order.target) : "",
-    order?.positionSize ?? "",
-    order
-      ? result.entryType === "proximal"
-        ? "Limit order"
-        : "Stop limit order"
-      : "",
-    order ? exportUsd.format(order.capitalRequirement) : "",
-    order ? exportUsd.format(order.riskPerShare) : "",
-    order ? exportUsd.format(order.totalTradeRisk) : "",
-    order ? `${exportRatio.format(order.rewardRisk)}:1` : "",
-  ];
-  return `${headers.join("\t")}\n${values.join("\t")}`;
-}
+const formatSignedUsd = (value: number) =>
+  value > 0 ? `+${exportUsd.format(value)}` : exportUsd.format(value);
 
 export function tradeLogTsv(entries: TradeLogEntry[]): string {
   const headers = [
@@ -425,9 +394,21 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
     "Reward : risk",
     "Score",
     "Status",
+    "Exit price",
+    "Fees",
+    "Realized P&L",
   ];
-  const rows = entries.map((entry) =>
-    [
+  const rows = entries.map((entry) => {
+    const outcome = realizedOutcome(entry);
+    const exitPrice =
+      entry.exitPrice === undefined || entry.exitPrice.trim() === ""
+        ? null
+        : Number(entry.exitPrice);
+    const fees =
+      entry.fees === undefined || entry.fees.trim() === ""
+        ? null
+        : Number(entry.fees);
+    return [
       new Date(entry.createdAt).toLocaleString(),
       entry.ticker,
       entry.direction === "long" ? "Buy" : "Sell short",
@@ -440,16 +421,85 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
       `${exportRatio.format(entry.rewardRisk)}:1`,
       `${entry.score} / 10`,
       entry.isOpen ? "Open" : "Closed",
-    ].join("\t"),
-  );
+      exitPrice !== null && Number.isFinite(exitPrice) && exitPrice > 0
+        ? exportUsd.format(exitPrice)
+        : "",
+      fees !== null && Number.isFinite(fees) && fees >= 0
+        ? exportUsd.format(fees)
+        : "",
+      outcome !== null ? exportUsd.format(outcome) : "",
+    ].join("\t");
+  });
   return [headers.join("\t"), ...rows].join("\n");
+}
+
+export interface TradeOutcomeSummary {
+  label: string;
+  trades: number;
+  winRate: number;
+  netPnl: number;
+}
+
+export function realizedOutcome(entry: TradeLogEntry): number | null {
+  if (entry.isOpen || entry.exitPrice === undefined || entry.exitPrice.trim() === "") {
+    return null;
+  }
+  const exitPrice = Number(entry.exitPrice);
+  const fees = entry.fees === undefined || entry.fees.trim() === "" ? 0 : Number(entry.fees);
+  if (
+    !Number.isFinite(exitPrice) ||
+    exitPrice <= 0 ||
+    !Number.isFinite(fees) ||
+    fees < 0 ||
+    entry.positionSize <= 0
+  ) {
+    return null;
+  }
+  const priceChange =
+    entry.direction === "long"
+      ? exitPrice - entry.entry
+      : entry.entry - exitPrice;
+  const grossPnl = priceChange * entry.positionSize;
+  if (!Number.isFinite(grossPnl)) return null;
+  const netPnl = grossPnl - fees;
+  if (!Number.isFinite(netPnl)) return null;
+  return roundToCent(netPnl);
+}
+
+export function summarizeTradeOutcomes(
+  entries: TradeLogEntry[],
+): TradeOutcomeSummary[] {
+  const groups = new Map<string, number[]>();
+  for (const entry of entries) {
+    const outcome = realizedOutcome(entry);
+    if (outcome === null) continue;
+    const entryType =
+      entry.score >= 8.5 ? "Proximal" : entry.score >= 7 ? "Confirmation" : "Other";
+    const scoreBand =
+      entry.score >= 8.5 ? "8.5–10" : entry.score >= 7 ? "7–8" : "under 7";
+    const trend = entry.form?.trend
+      ? entry.form.trend[0].toUpperCase() + entry.form.trend.slice(1)
+      : "Trend unavailable";
+    const label = `${entryType} · ${trend} · ${scoreBand}`;
+    const group = groups.get(label) ?? [];
+    group.push(outcome);
+    groups.set(label, group);
+  }
+
+  return [...groups.entries()]
+    .map(([label, outcomes]) => ({
+      label,
+      trades: outcomes.length,
+      winRate: (outcomes.filter((outcome) => outcome > 0).length / outcomes.length) * 100,
+      netPnl: roundToCent(outcomes.reduce((sum, outcome) => sum + outcome, 0)),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function TradeBuilderApp() {
   const [form, setForm] = useState<FormState>(initialState);
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [copyLogState, setCopyLogState] = useState<"idle" | "copied" | "error">("idle");
   const [tradeLog, setTradeLog] = useState<TradeLogEntry[]>([]);
   const [showTradeLog, setShowTradeLog] = useState(true);
@@ -533,17 +583,6 @@ export function TradeBuilderApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const copyResults = async () => {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(resultsTsv(result, form.ticker));
-      setCopyState("copied");
-      window.setTimeout(() => setCopyState("idle"), 1800);
-    } catch {
-      setCopyState("error");
-    }
-  };
-
   const copyTradeLog = async () => {
     if (tradeLog.length === 0) return;
     try {
@@ -553,6 +592,20 @@ export function TradeBuilderApp() {
     } catch {
       setCopyLogState("error");
     }
+  };
+
+  const updateLogOutcome = (
+    id: string,
+    field: "exitPrice" | "fees",
+    value: string,
+  ) => {
+    setTradeLog((entries) => {
+      const updated = entries.map((entry) =>
+        entry.id === id ? { ...entry, [field]: value } : entry,
+      );
+      saveTradeLog(updated);
+      return updated;
+    });
   };
 
   const logTrade = () => {
@@ -615,8 +668,31 @@ export function TradeBuilderApp() {
     saveTradeLog([]);
   };
 
+  const restoreBackup = (backup: TradeBackup) => {
+    restoreTradeBackup(window.localStorage, backup);
+    setAutoOpenTradeRisk(false);
+    setForm(backup.form);
+    setTradeLog(backup.tradeLog);
+    setCopyLogState("idle");
+    setShowTradeLog(true);
+    goToStep(0);
+  };
+
   const reachable = firstIncompleteStep(form);
   const inForm = step < RESULTS_STEP;
+  const outcomeSummaries = summarizeTradeOutcomes(tradeLog);
+  const completedOutcomes = tradeLog.flatMap((entry) => {
+    const outcome = realizedOutcome(entry);
+    return outcome !== null ? [outcome] : [];
+  });
+  const totalRealizedPnl = roundToCent(
+    completedOutcomes.reduce((sum, outcome) => sum + outcome, 0),
+  );
+  const winRate = completedOutcomes.length
+    ? (completedOutcomes.filter((outcome) => outcome > 0).length /
+        completedOutcomes.length) *
+      100
+    : 0;
 
   return (
     <div className="flex flex-1 flex-col pb-16 lg:pb-6">
@@ -634,6 +710,7 @@ export function TradeBuilderApp() {
           ) : null}
         </div>
         <div className="flex items-center justify-end gap-2 lg:gap-3">
+          <TradeBackupControls form={form} tradeLog={tradeLog} onRestore={restoreBackup} />
           {inForm ? (
             <Button
               variant="ghost"
@@ -673,21 +750,16 @@ export function TradeBuilderApp() {
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
               {result ? (
                 <>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                    {inputs ? (
+                      <TradePlanExport form={form} inputs={inputs} result={result} />
+                    ) : null}
                     {result.order ? (
                       <Button className="w-full sm:w-auto" onClick={logTrade}>
                         <NotebookPen aria-hidden />
                         Log trade
                       </Button>
                     ) : null}
-                    <Button className="w-full sm:w-auto" variant="outline" onClick={copyResults}>
-                      {copyState === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
-                      {copyState === "copied"
-                        ? "Copied"
-                        : copyState === "error"
-                          ? "Copy failed"
-                          : "Copy results"}
-                    </Button>
                   </div>
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                     <div className="space-y-6">
@@ -744,66 +816,193 @@ export function TradeBuilderApp() {
                     </CardHeader>
                     {showTradeLog ? (
                       <CardContent>
+                        <section aria-labelledby="trade-performance-heading" className="mb-5 space-y-3">
+                          <div>
+                            <h3 id="trade-performance-heading" className="font-medium">
+                              Realized performance
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              Based on planned entry and share size; fees are total round-trip fees.
+                            </p>
+                          </div>
+                          {completedOutcomes.length > 0 ? (
+                            <>
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Completed outcomes</p>
+                                  <p className="font-mono tabular-nums">{completedOutcomes.length}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Net P&amp;L</p>
+                                  <p className="font-mono tabular-nums">{formatSignedUsd(totalRealizedPnl)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Win rate</p>
+                                  <p className="font-mono tabular-nums">{exportRatio.format(winRate)}%</p>
+                                </div>
+                              </div>
+                              <div className="overflow-x-auto">
+                                <table className="w-full min-w-[34rem] text-left text-xs">
+                                  <caption className="sr-only">
+                                    Completed trade outcomes grouped by entry type, trend, and score range
+                                  </caption>
+                                  <thead className="border-b text-muted-foreground">
+                                    <tr>
+                                      <th scope="col" className="py-2 pr-3 font-medium">Setup</th>
+                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Trades</th>
+                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Win rate</th>
+                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Net P&amp;L</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y">
+                                    {outcomeSummaries.map((summary) => (
+                                      <tr key={summary.label}>
+                                        <th scope="row" className="py-2 pr-3 font-normal">{summary.label}</th>
+                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{summary.trades}</td>
+                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{exportRatio.format(summary.winRate)}%</td>
+                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{formatSignedUsd(summary.netPnl)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Mark a trade closed and enter its exit price to see performance.
+                            </p>
+                          )}
+                        </section>
                         {tradeLog.length === 0 ? (
                           <p className="text-sm text-muted-foreground">No trades logged yet.</p>
                         ) : (
                           <div className="divide-y">
-                            {tradeLog.map((entry) => (
-                              <div key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                                <div className="min-w-0">
-                                  <p className="font-medium">
-                                    {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
-                                  </p>
-                                  <p className="font-mono text-xs tabular-nums text-muted-foreground">
-                                    Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
-                                  </p>
+                            {tradeLog.map((entry) => {
+                              const outcome = realizedOutcome(entry);
+                              const exitValue = entry.exitPrice ?? "";
+                              const feesValue = entry.fees ?? "";
+                              const invalidExitPrice =
+                                exitValue !== "" &&
+                                (!Number.isFinite(Number(exitValue)) || Number(exitValue) <= 0);
+                              const invalidFees =
+                                feesValue !== "" &&
+                                (!Number.isFinite(Number(feesValue)) || Number(feesValue) < 0);
+                              return (
+                                <div key={entry.id} className="py-3 text-sm">
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="font-medium">
+                                        {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
+                                      </p>
+                                      <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                                        Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div
+                                        role="radiogroup"
+                                        aria-label={`${entry.ticker} trade status`}
+                                        className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
+                                      >
+                                        <label className="flex items-center gap-1">
+                                          <input
+                                            type="radio"
+                                            name={`trade-status-${entry.id}`}
+                                            checked={entry.isOpen}
+                                            onChange={() => setLogEntryOpen(entry.id, true)}
+                                          />
+                                          Open
+                                        </label>
+                                        <label className="flex items-center gap-1">
+                                          <input
+                                            type="radio"
+                                            name={`trade-status-${entry.id}`}
+                                            checked={!entry.isOpen}
+                                            onChange={() => setLogEntryOpen(entry.id, false)}
+                                          />
+                                          Closed
+                                        </label>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        title="Load setup"
+                                        aria-label={`Load ${entry.ticker} setup into builder`}
+                                        onClick={() => loadLogEntry(entry)}
+                                      >
+                                        <Upload aria-hidden />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label="Delete logged trade"
+                                        onClick={() => deleteLogEntry(entry.id)}
+                                      >
+                                        <Trash2 aria-hidden />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  {!entry.isOpen ? (
+                                    <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                                      <label className="space-y-1">
+                                        <span className="text-xs font-medium">Exit price ($)</span>
+                                        <Input
+                                          aria-label={`Exit price for ${entry.ticker}`}
+                                          aria-invalid={invalidExitPrice || undefined}
+                                          type="number"
+                                          min="0"
+                                          step="any"
+                                          inputMode="decimal"
+                                          value={exitValue}
+                                          onChange={(event) =>
+                                            updateLogOutcome(entry.id, "exitPrice", event.target.value)
+                                          }
+                                        />
+                                        {invalidExitPrice ? (
+                                          <span className="block text-xs text-destructive">
+                                            Enter a closing price above zero.
+                                          </span>
+                                        ) : null}
+                                      </label>
+                                      <label className="space-y-1">
+                                        <span className="text-xs font-medium">Fees ($, optional)</span>
+                                        <Input
+                                          aria-label={`Fees for ${entry.ticker}`}
+                                          aria-invalid={invalidFees || undefined}
+                                          type="number"
+                                          min="0"
+                                          step="any"
+                                          inputMode="decimal"
+                                          value={feesValue}
+                                          onChange={(event) =>
+                                            updateLogOutcome(entry.id, "fees", event.target.value)
+                                          }
+                                        />
+                                        {invalidFees ? (
+                                          <span className="block text-xs text-destructive">
+                                            Fees must be zero or more.
+                                          </span>
+                                        ) : null}
+                                      </label>
+                                      <div aria-live="polite" className="pb-2 text-xs">
+                                        {outcome !== null ? (
+                                          <span>
+                                            Net P&amp;L <strong>{formatSignedUsd(outcome)}</strong>
+                                          </span>
+                                        ) : (
+                                          <span className="text-muted-foreground">
+                                            Enter an exit price to calculate net P&amp;L.
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null}
                                 </div>
-                                <div
-                                  role="radiogroup"
-                                  aria-label={`${entry.ticker} trade status`}
-                                  className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
-                                >
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="radio"
-                                      name={`trade-status-${entry.id}`}
-                                      checked={entry.isOpen}
-                                      onChange={() => setLogEntryOpen(entry.id, true)}
-                                    />
-                                    Open
-                                  </label>
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="radio"
-                                      name={`trade-status-${entry.id}`}
-                                      checked={!entry.isOpen}
-                                      onChange={() => setLogEntryOpen(entry.id, false)}
-                                    />
-                                    Closed
-                                  </label>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  title="Load setup"
-                                  aria-label={`Load ${entry.ticker} setup into builder`}
-                                  onClick={() => loadLogEntry(entry)}
-                                >
-                                  <Upload aria-hidden />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label="Delete logged trade"
-                                  onClick={() => deleteLogEntry(entry.id)}
-                                >
-                                  <Trash2 aria-hidden />
-                                </Button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </CardContent>
@@ -811,7 +1010,8 @@ export function TradeBuilderApp() {
                     <CardContent className={showTradeLog ? "pt-0" : undefined}>
                       <p className="text-center text-xs text-muted-foreground">
                         Not shared between browsers or devices. Can be lost when
-                        browser site data is cleared.
+                        browser site data is cleared. Use Backup in the header to
+                        download or restore your form and trade log.
                       </p>
                     </CardContent>
                   </Card>

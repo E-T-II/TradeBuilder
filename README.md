@@ -2,7 +2,25 @@
 
 Trade Builder helps traders engineer the trade before risking capital. It converts market structure, supply and demand, trend, zone quality and account risk into a rules-based trade plan—then calculates the stop, entry, target and position size or rejects the setup when it fails to meet the strategy’s requirements. The key distinction is that it is not a trade-prediction or brokerage-execution tool. It is a decision-support and rule-enforcement system designed to promote consistency, discipline and measurable risk.
 
-Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and adds a target-zone scorecard on the right (side by side at screen widths of 480px and above; stacked entry-first on narrower phones). Both use the same graphical selectors for Strength, Time, and Freshness. Trend, Curve, and Profit zone are automatically scored for each zone: the target zone is supply for a long trade and demand for a short trade. Target ratings are optional, saved with the setup and logged setup snapshots, and do not affect orders, risk checks, copied results, or logged trade scores. The results screen remains unchanged. Older saves start with unanswered target ratings.
+Logged trades can be marked closed and given an exit price and optional total fees. Realized P&L uses the planned entry and share count, less fees. The log summarizes completed outcomes overall and by entry type, trend, and score range. Trades and these outcome details remain in the current browser's local storage.
+
+### Review and print a trade plan
+
+On the results screen, select **Print / save plan** to open the browser's print dialog. Print the plan or choose **Save as PDF** to download it. The plan includes the setup assumptions, score breakdown, Decision Matrix verdict, order details when an order qualifies, and risk-check outcomes. Rejected setups are also exportable, with the reason no order was produced. Review the plan and confirm current prices and conditions before placing any order.
+
+### Backup and restore
+
+Use **Backup** in the header from any step or the results screen:
+
+- **Download backup** saves a versioned JSON file containing the current form and the entire trade log, including open/closed status, exit prices, fees, and saved setup snapshots. Theme and temporary screen preferences are not included.
+- To move to another browser or device, transfer the file yourself and choose it under **Restore backup**. Files are processed locally, not uploaded; no account or cloud sync is required.
+- Restore validates the whole file before showing its export date, form ticker, and trade counts. Invalid JSON, unsupported versions, malformed data, duplicate trade IDs, and files over 10 MB are rejected without changing existing data. Incomplete in-progress forms are supported.
+- Check the replacement acknowledgement, then select **Replace data and restore**. This replaces both the current form and entire log; it does not merge trades. Cancel leaves your data unchanged. Download your current data first if you want to keep it.
+- A successful restore saves both datasets in browser storage and returns to Pre-steps. The optional auto-fill open-risk toggle is turned off so the imported form's risk value is preserved. If saving the log fails, the previous saved form is restored and an error is shown instead of reporting success.
+
+Backups contain account balances and trade history and are **not encrypted**. Store them privately. A copied spreadsheet trade log is not a restorable backup.
+
+Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and adds a target-zone scorecard on the right (side by side at screen widths of 480px and above; stacked entry-first on narrower phones). Both use the same graphical selectors for Strength, Time, and Freshness. Trend, Curve, and Profit zone are automatically scored for each zone: the target zone is supply for a long trade and demand for a short trade. Target ratings are optional, saved with the setup and logged setup snapshots, and do not affect orders, risk checks, copied trade logs, or logged trade scores. Older saves start with unanswered target ratings.
 
 For XLT setups, Step 5 also requires checking "I verified the XLT criteria for this setup" before viewing the trade. Step 4 (Zones) does not require this acknowledgement. Changing curve, trend, direction, or zone prices clears the acknowledgement.
 

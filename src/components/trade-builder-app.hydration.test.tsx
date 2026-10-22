@@ -20,8 +20,9 @@ import { afterEach, expect, test, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { TradeBuilderApp, normalizeForm, resultsTsv, toInputs } from "@/components/trade-builder-app";
+import { TradeBuilderApp, normalizeForm, toInputs, tradeLogTsv } from "@/components/trade-builder-app";
 import { buildTrade } from "@/lib/trade-builder";
+import { createTradeBackup } from "@/lib/trade-backup";
 
 const KEY = "tradebuilder-form-v3";
 const TRADE_LOG_KEY = "tradebuilder-log-v1";
@@ -60,7 +61,6 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   };
   window.localStorage.setItem(KEY, JSON.stringify(setup));
   const user = userEvent.setup();
-  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
   const { unmount } = render(<TradeBuilderApp />);
   for (let i = 0; i < 4; i++) {
     await user.click(screen.getByRole("button", { name: /^next$/i }));
@@ -96,8 +96,7 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   expect(screen.queryByRole("button", { name: /switch to/i })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: /^next$/i }));
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
-  await user.click(screen.getByRole("button", { name: "Copy results" }));
-  expect(writeText).toHaveBeenCalledWith(resultsTsv(expected, setup.ticker));
+  expect(screen.queryByRole("button", { name: "Copy results" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Log trade" }));
   const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];
   expect(logged).toMatchObject({
@@ -115,10 +114,9 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   );
   await user.click(screen.getByRole("button", { name: /switch to/i }));
   expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject(setup);
-  writeText.mockRestore();
 });
 
-test("opposing-zone ratings persist without changing the original scorecard, order, exports, or logged trade", async () => {
+test("opposing-zone ratings persist without changing the original scorecard, order, copied log, or logged trade", async () => {
   const setup = { ...savedForm, strength: "2", time: "1", freshness: "2" };
   window.localStorage.setItem(KEY, JSON.stringify(setup));
   const user = userEvent.setup();
@@ -147,12 +145,13 @@ test("opposing-zone ratings persist without changing the original scorecard, ord
   expect(within(original).getByRole("button", { name: "Freshness" })).toHaveTextContent("2");
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   expect(screen.queryByRole("region", { name: "Target zone scorecard" })).not.toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Copy results" }));
-  expect(writeText).toHaveBeenCalledWith(resultsTsv(expected, setup.ticker));
+  expect(screen.queryByRole("button", { name: "Copy results" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Log trade" }));
   const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];
   expect(logged.score).toBe(expected.scorecard.total);
   expect(logged.entry).toBe(expected.order!.entry);
+  await user.click(screen.getByRole("button", { name: "Copy log" }));
+  expect(writeText).toHaveBeenCalledWith(tradeLogTsv([logged]));
   expect(logged.form).toMatchObject({
     strength: "2", time: "1", freshness: "2",
     opposingStrength: "1", opposingTime: "0.5", opposingFreshness: "0",
@@ -289,4 +288,118 @@ test("loading a pre-existing (pre-snapshot) logged trade: still populates its ti
   await user.click(screen.getByRole("button", { name: "Load MSFT setup into builder" }));
 
   expect(screen.getByLabelText("Ticker symbol")).toHaveValue("MSFT");
+});
+
+test("recording a closed trade outcome: updates performance and persists the closing details", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  window.localStorage.setItem(
+    TRADE_LOG_KEY,
+    JSON.stringify([
+      {
+        id: "entry-1",
+        createdAt: "2026-09-07T12:00:00.000Z",
+        ticker: "NVDA",
+        direction: "long",
+        entry: 108,
+        stop: 106,
+        target: 120,
+        positionSize: 10,
+        capitalRequirement: 1080,
+        totalTradeRisk: 20,
+        rewardRisk: 6,
+        score: 8.5,
+        isOpen: true,
+        form: { ...savedForm },
+      },
+    ]),
+  );
+  const user = userEvent.setup();
+  const { unmount } = render(<TradeBuilderApp />);
+
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  await user.click(screen.getByRole("radio", { name: "Closed" }));
+  await user.type(screen.getByRole("spinbutton", { name: "Exit price for NVDA" }), "110");
+  await user.type(screen.getByRole("spinbutton", { name: "Fees for NVDA" }), "2");
+
+  expect(screen.getByText("Completed outcomes")).toBeInTheDocument();
+  expect(screen.getAllByText("+$18.00")).toHaveLength(3);
+  expect(screen.queryByText(/Average R|Actual R/)).not.toBeInTheDocument();
+  expect(screen.getByText("Proximal · Uptrend · 8.5–10")).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0]).toMatchObject({
+    isOpen: false,
+    exitPrice: "110",
+    fees: "2",
+  });
+
+  unmount();
+  render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  expect(screen.getByRole("spinbutton", { name: "Exit price for NVDA" })).toHaveValue(110);
+  expect(screen.getByRole("spinbutton", { name: "Fees for NVDA" })).toHaveValue(2);
+});
+
+test("restoring a backup replaces the form and log, preserves imported risk, and survives reload", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  const user = userEvent.setup();
+  const restoredForm = normalizeForm({
+    ...savedForm,
+    ticker: "AAPL",
+    accountBalance: "4000",
+    openTradeRisk: "12.00",
+  });
+  const restoredLog = [{
+    id: "restored-trade",
+    createdAt: "2026-10-22T12:00:00.000Z",
+    ticker: "AAPL",
+    direction: "long" as const,
+    entry: 108,
+    stop: 106,
+    target: 120,
+    positionSize: 10,
+    capitalRequirement: 1080,
+    totalTradeRisk: 20,
+    rewardRisk: 6,
+    score: 8.5,
+    isOpen: false,
+    exitPrice: "110",
+    fees: "2",
+    form: restoredForm,
+  }];
+  const text = createTradeBackup(restoredForm, restoredLog);
+  const file = new File([text], "backup.json", { type: "application/json" });
+  Object.defineProperty(file, "text", { value: async () => text });
+  window.localStorage.setItem(
+    TRADE_LOG_KEY,
+    JSON.stringify([{ ...restoredLog[0], id: "previous-trade", ticker: "NVDA" }]),
+  );
+  const { unmount } = render(<TradeBuilderApp />);
+  await user.click(screen.getByRole("button", { name: /advanced settings/i }));
+  await user.click(screen.getByRole("checkbox", { name: /Auto-fill open trade risk/ }));
+  await user.click(screen.getByRole("button", { name: "Backup and restore" }));
+  await user.upload(screen.getByLabelText(/Choose a backup file/), file);
+  await screen.findByText("Backup preview");
+  await user.click(screen.getByRole("checkbox", { name: /I understand/ }));
+  await user.click(screen.getByRole("button", { name: "Replace data and restore" }));
+  expect(screen.getByRole("status")).toHaveTextContent("Backup restored");
+  await user.click(screen.getByRole("button", { name: "Close backup dialog" }));
+  expect(screen.getByLabelText("Ticker symbol")).toHaveValue("AAPL");
+  expect(screen.getByLabelText("Risk in open trades ($)")).toHaveValue("12.00");
+  expect(screen.getByRole("checkbox", { name: /Auto-fill open trade risk/ })).not.toBeChecked();
+  expect(JSON.parse(window.localStorage.getItem(KEY)!)).toEqual(restoredForm);
+  expect(JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)).toEqual(restoredLog);
+  unmount();
+  render(<TradeBuilderApp />);
+  expect(screen.getByLabelText("Ticker symbol")).toHaveValue("AAPL");
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  expect(screen.getByRole("spinbutton", { name: "Exit price for AAPL" })).toHaveValue(110);
+  expect(screen.getByRole("spinbutton", { name: "Fees for AAPL" })).toHaveValue(2);
 });

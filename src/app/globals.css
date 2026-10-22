@@ -104,6 +104,101 @@
   }
 }
 
+@media screen {
+  .trade-plan-print {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.35in;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  body *:not(.trade-plan-print):not(.trade-plan-print *):not(:has(.trade-plan-print)) {
+    display: none !important;
+  }
+
+  body *:has(.trade-plan-print):not(.trade-plan-print) {
+    display: contents !important;
+  }
+
+  .trade-plan-print {
+    display: block !important;
+    position: static;
+    width: 100%;
+    color: #111;
+    background: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    line-height: 1.25;
+  }
+
+  .trade-plan-header {
+    border-bottom: 1.5px solid #111;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .trade-plan-header p,
+  .trade-plan-footer {
+    color: #444;
+    font-size: 7pt;
+  }
+
+  .trade-plan-header h1 {
+    font-size: 17pt;
+    font-weight: 700;
+    margin: 2px 0;
+  }
+
+  .trade-plan-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .trade-plan-section {
+    break-inside: avoid;
+    margin-bottom: 8px;
+  }
+
+  .trade-plan-section h2 {
+    border-bottom: 1px solid #999;
+    font-size: 9pt;
+    font-weight: 700;
+    margin: 0 0 3px;
+    padding-bottom: 2px;
+  }
+
+  .trade-plan-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 1px 0;
+  }
+
+  .trade-plan-row dt {
+    color: #444;
+  }
+
+  .trade-plan-row dd {
+    font-weight: 600;
+    margin: 0;
+    text-align: right;
+  }
+
+  .trade-plan-footer {
+    border-top: 1px solid #999;
+    margin-top: 6px;
+    padding-top: 4px;
+  }
+}
+
 /* The splash-hide rule is an inline <style> in layout.tsx; Tailwind strips
    it from this file. */
 @keyframes intro-pop {
