@@ -210,6 +210,17 @@ describe("given the advanced settings caps", () => {
   });
 });
 
+test("the pre-steps ATR hint links to Finviz", () => {
+  render(<AccountStep initial={baseForm()} />);
+
+  const finvizLink = screen.getByRole("link", { name: "finviz.com" });
+  expect(finvizLink).toHaveAttribute("href", "https://finviz.com/");
+  expect(finvizLink).toHaveAttribute("target", "_blank");
+  expect(finvizLink.parentElement).toHaveTextContent(
+    "From finviz.com (14-day Average True Range)",
+  );
+});
+
 describe("given the comma-formatted account balance field", () => {
   test("given a ticker: should normalize it to uppercase log-safe characters", async () => {
     const user = userEvent.setup();

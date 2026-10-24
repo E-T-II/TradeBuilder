@@ -53,6 +53,18 @@ const savedForm = {
 
 afterEach(() => window.localStorage.clear());
 
+test("the education-only line links to the strategy PDF without replacing the builder", () => {
+  render(<TradeBuilderApp />);
+
+  const link = screen.getByRole("link", { name: /Engineered Risk Trading Strategy/ });
+  expect(link).toHaveAttribute("href", "/engineered-risk-trading-strategy.pdf");
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link).toHaveAttribute("rel", "noreferrer");
+  expect(link.parentElement).toHaveTextContent(
+    "For education only, not financial advice. Based on the Engineered Risk Trading Strategy",
+  );
+});
+
 test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updates Step 4, persists, and uses the new Entry for trade outputs", async (direction) => {
   const setup = {
     ...savedForm, direction, trend: "sideways" as const,

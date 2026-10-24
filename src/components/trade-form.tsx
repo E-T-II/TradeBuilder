@@ -34,7 +34,7 @@ import {
   isXltMatrixCell,
   locateOnCurve,
 } from "@/lib/trade-builder";
-import { DISCLAIMER } from "@/lib/copy";
+import { Disclaimer } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ function Field({
 }: {
   id: string;
   label: string;
-  hint?: string;
+  hint?: React.ReactNode;
   group?: boolean;
   error?: string;
   children: React.ReactNode;
@@ -498,7 +498,20 @@ export function TradeForm({
               <Field
                 id="atr"
                 label="Daily ATR ($)"
-                hint="From finviz.com (14-day Average True Range)"
+                hint={
+                  <>
+                    From{" "}
+                    <a
+                      href="https://finviz.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-2 hover:text-foreground"
+                    >
+                      finviz.com
+                    </a>{" "}
+                    (14-day Average True Range)
+                  </>
+                }
               >
                 <NumberInput
                   id="atr"
@@ -857,7 +870,7 @@ export function TradeForm({
       {/* On mobile the footer sits behind the fixed action bar, so repeat it
           inline here for small screens. */}
       <p className="mt-10 text-center text-xs text-muted-foreground lg:hidden">
-        {DISCLAIMER}
+        <Disclaimer />
       </p>
 
       {/* Fixed action bar on mobile; in normal flow on large screens. */}

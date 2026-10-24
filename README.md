@@ -4,6 +4,8 @@ Trade Builder helps traders engineer the trade before risking capital. It conver
 
 Logged trades can be marked closed and given an exit price and optional total fees. Realized P&L uses the planned entry and share count, less fees. The log summarizes completed outcomes overall and by entry type, trend, and score range. Trades and these outcome details remain in the current browser's local storage.
 
+The **Engineered Risk Trading Strategy** link in the education-only disclaimer opens the included strategy PDF in a new tab without leaving the current setup.
+
 ### Review and print a trade plan
 
 On the results screen, select **Print / save plan** to open the browser's print dialog. Print the plan or choose **Save as PDF** to download it. The plan includes the setup assumptions, score breakdown, Decision Matrix verdict, order details when an order qualifies, and risk-check outcomes. Rejected setups are also exportable, with the reason no order was produced. Review the plan and confirm current prices and conditions before placing any order.

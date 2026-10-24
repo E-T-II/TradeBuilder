@@ -16,5 +16,25 @@
  */
 
 // Shared so the wording stays in sync across the footer and the wizard.
+const disclaimerPrefix = "For education only, not financial advice. Based on the ";
+const strategyTitle = "Engineered Risk Trading Strategy";
 export const DISCLAIMER =
-  "For education only, not financial advice. Based on the Engineered Risk Trading Strategy.";
+  `${disclaimerPrefix}${strategyTitle}.`;
+
+export function Disclaimer() {
+  return (
+    <>
+      {disclaimerPrefix}
+      <a
+        href="/engineered-risk-trading-strategy.pdf"
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-2 hover:text-foreground"
+      >
+        {strategyTitle}
+        <span className="sr-only"> (PDF, opens in a new tab)</span>
+      </a>
+      .
+    </>
+  );
+}
