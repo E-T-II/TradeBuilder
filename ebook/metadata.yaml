@@ -1,15 +1,11 @@
 ---
 title: "Engineered Risk"
-subtitle: "A rules-based strategy for scoring, sizing and placing a trade"
+subtitle: "A rules-based strategy for protecting capital, minimizing risk, and maximizing returns."
 author: "genoTrades"
-rights: "© 2026. All rights reserved."
 language: en-US
 subject: "Trading, risk management"
 description: >
-  The complete Engineered Risk Trading Strategy: how to set the curve, read the
-  trend, mark supply and demand zones, score a setup with the odds enhancers,
-  and derive the stop, entry, target and position size — with the risk rules
-  that decide when not to trade at all.
+  The complete Engineered Risk Trading Strategy: The Engineered Risk Trading Strategy establishes strict risk-management rules and mathematical formulas to protect trading capital, mandating that traders never invest more than 50% of an account balance in a single trade, risk more than 2% per individual trade, or risk more than 6% across multiple open positions. It details protocols for calculating target buffers, Average True Range (ATR)-based stop buffers, and reward-risk ratios of at least 3:1, while providing specific formulas and scenarios for adjusting position sizes when capital requirements exceed the 50% account limitation.
 # Uncomment when artwork exists:
 # cover-image: assets/images/cover.png
 toc: true
