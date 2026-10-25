@@ -37,6 +37,7 @@ import {
 import { Disclaimer } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +48,7 @@ import { ZoningVideoDialog } from "@/components/zoning-video-dialog";
 import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
-import { ZoneScorecard } from "@/components/zone-scorecard";
+import { ZoneScorecard, computeZoneScores, zoneTotal } from "@/components/zone-scorecard";
 
 interface TradeFormProps {
   form: FormState;
@@ -397,7 +398,18 @@ export function TradeForm({
     (step === 1 && curveStepError) ||
     (step === 3 && zoneStepError) ||
     (isLast && hasZoneErrors);
-  const disableNext = remaining > 0 || blockedByZones || missingXltAcknowledgement;
+  // The trade strategy treats an entry zone scoring below 7 out of 10 (70%) as
+  // no action, so the last step won't continue until a better zone is scored.
+  const entryZoneTotal = isLast && !hasZoneErrors
+    ? zoneTotal(computeZoneScores(form, form.direction), {
+        strength: form.strength,
+        time: form.time,
+        freshness: form.freshness,
+      })
+    : null;
+  const entryScoreTooLow = entryZoneTotal !== null && entryZoneTotal < 7;
+  const disableNext =
+    remaining > 0 || blockedByZones || missingXltAcknowledgement || entryScoreTooLow;
   // Name the step(s) that actually hold the error, so the last-step notice
   // points where the highlighted field really is.
   const errorSteps = [
@@ -858,6 +870,16 @@ export function TradeForm({
         ) : null}
       </div>
 
+      {entryScoreTooLow ? (
+        <Alert className="mx-auto mt-6 max-w-xl">
+          <AlertTitle>Unqualified Entry Zone</AlertTitle>
+          <AlertDescription>
+            The trade strategy calls for no action on a score below 7 (70%).
+            Choose and score a different entry zone to continue.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {/* On the last step the erroring zone fields aren't visible, so point
           the user back to fix them. */}
       {isLast && hasZoneErrors ? (
@@ -897,11 +919,13 @@ export function TradeForm({
             ? `${remaining} field${remaining === 1 ? "" : "s"} left`
             : blockedByZones
               ? "Check the highlighted values"
-              : missingXltAcknowledgement
-                ? "Confirm XLT criteria"
-                : isLast
-                  ? "See my trade"
-                  : "Next"}
+              : entryScoreTooLow
+                ? "Score below 7"
+                : missingXltAcknowledgement
+                  ? "Confirm XLT criteria"
+                  : isLast
+                    ? "See my trade"
+                    : "Next"}
           {!disableNext ? <ArrowRight aria-hidden /> : null}
         </Button>
       </div>

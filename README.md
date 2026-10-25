@@ -26,6 +26,12 @@ Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and
 
 For XLT setups, Step 5 also requires checking "I verified the XLT criteria for this setup" before viewing the trade. Step 4 (Zones) does not require this acknowledgement. Changing curve, trend, direction, or zone prices clears the acknowledgement.
 
+The circled **i** beside Trend, Curve, and Profit zone on both Step 5 scorecards opens a reference screenshot showing the Best, Good, and Poor scoring criteria. Both scorecards also have a circled **i** beside Total score, showing the proximal, confirmation, and no-trade entry examples. All four references use a Demand / Buy / Long or Supply / Sell / Short photo matching the card's zone, whether it is the entry or target zone, and update when the trade direction changes. The photos ship without their original orange markers; instead, the card draws an orange dashed box, an orange checkmark, and an orange heading on the option that matches the zone's calculated score (the Total score card follows the 8.5 / 7 entry-type thresholds). Nothing is highlighted until that score can be calculated. These cards are informational only: they do not accept selections or change scores. Close them with the close button, Escape, or by clicking outside the card.
+
+The Profit zone row also shows the calculated reward-to-zone ratio (for example, `Ratio 6.00:1`, rounded down to two decimals) once the curve and zone prices are valid. The Total score row shows the resulting entry type (Proximal, Confirmation, or No Trade) once Strength, Time, and Freshness are all rated. Both update as the inputs change.
+
+If the entry zone's total is below 7 out of 10 (70%), Step 5 shows an **Unqualified Entry Zone** alert and the **See my trade** button stays disabled until the zones are re-scored at 7 or above. The target zone's score is for comparison only and never blocks continuing.
+
 The direction-switch button on Step 5 swaps Entry and Target roles and their Strength, Time, and Freshness ratings, including unanswered ratings, without changing supply or demand prices. Card colors and automatic scores follow the new direction, which also updates Step 4. Trade outputs continue to use the Entry scorecard. Switching clears XLT verification; if the new entry ratings are unanswered, they must be completed before viewing the trade. Switching again restores the previous direction and ratings.
 
 Trade Plan Defaults:

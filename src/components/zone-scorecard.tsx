@@ -6,6 +6,7 @@ import type { FormState } from "@/components/trade-builder-app";
 import {
   curveScore,
   deriveZoneLines,
+  entryType,
   JUDGED_MAX,
   locateOnCurve,
   profitZoneRatio,
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { StrengthReference } from "@/components/strength-reference";
 import { TimeReference } from "@/components/time-reference";
 import { FreshnessReference } from "@/components/freshness-reference";
+import { ComputedEnhancerReference } from "@/components/computed-enhancer-reference";
 
 const factors = {
   strength: { label: "Strength", Reference: StrengthReference },
@@ -122,6 +124,49 @@ function ScoreSelector({
   );
 }
 
+const ENTRY_LABELS = { proximal: "Proximal", confirmation: "Confirmation", "no-trade": "No Trade" } as const;
+
+// Rounds down so the shown ratio never reaches a scoring threshold (3:1, 5:1)
+// that the score itself didn't; the epsilon absorbs float noise like 4.9999999.
+function formatRatio(ratio: number): string {
+  return `${(Math.floor(ratio * 100 + 1e-6) / 100).toFixed(2)}:1`;
+}
+
+/**
+ * The three auto-scored odds enhancers for one zone, or null until the curve
+ * and zone prices are all numbers and the curve is valid.
+ */
+export function computeZoneScores(form: FormState, direction: Direction) {
+  const numbers = [
+    Number(form.curveLow), Number(form.curveHigh),
+    Number(form.demandHigh), Number(form.demandLow),
+    Number(form.supplyHigh), Number(form.supplyLow),
+  ];
+  if (numbers.some((value) => !Number.isFinite(value))) return null;
+  const [curveLow, curveHigh, demandHigh, demandLow, supplyHigh, supplyLow] = numbers;
+  if (curveHigh <= curveLow) return null;
+  const lines = deriveZoneLines({ demandHigh, demandLow, supplyHigh, supplyLow }, direction);
+  const curve = locateOnCurve(lines.entryProximal, curveLow, curveHigh);
+  const ratio = profitZoneRatio(lines.entryProximal, lines.entryDistal, lines.targetProximal);
+  return {
+    trend: trendScore(form.trend, direction),
+    curve: curveScore(curve, direction),
+    profitZone: profitZoneScore(ratio),
+    ratio,
+  };
+}
+
+/** A zone's total out of 10, or null until every judged rating is answered. */
+export function zoneTotal(
+  computedScores: ReturnType<typeof computeZoneScores>,
+  ratings: ZoneRatings,
+): number | null {
+  return computedScores && Object.values(ratings).every((value) => value !== "")
+    ? computedScores.trend + computedScores.curve + computedScores.profitZone +
+      Number(ratings.strength) + Number(ratings.time) + Number(ratings.freshness)
+    : null;
+}
+
 export function ZoneScorecard({
   form,
   direction,
@@ -135,28 +180,9 @@ export function ZoneScorecard({
   onChange: (patch: Partial<ZoneRatings>) => void;
   opposing?: boolean;
 }) {
-  const computedScores = (() => {
-    const numbers = [
-      Number(form.curveLow), Number(form.curveHigh),
-      Number(form.demandHigh), Number(form.demandLow),
-      Number(form.supplyHigh), Number(form.supplyLow),
-    ];
-    if (numbers.some((value) => !Number.isFinite(value))) return null;
-    const [curveLow, curveHigh, demandHigh, demandLow, supplyHigh, supplyLow] = numbers;
-    if (curveHigh <= curveLow) return null;
-    const lines = deriveZoneLines({ demandHigh, demandLow, supplyHigh, supplyLow }, direction);
-    const curve = locateOnCurve(lines.entryProximal, curveLow, curveHigh);
-    const ratio = profitZoneRatio(lines.entryProximal, lines.entryDistal, lines.targetProximal);
-    return {
-      trend: trendScore(form.trend, direction),
-      curve: curveScore(curve, direction),
-      profitZone: profitZoneScore(ratio),
-    };
-  })();
-  const total = computedScores && Object.values(ratings).every((value) => value !== "")
-    ? computedScores.trend + computedScores.curve + computedScores.profitZone +
-      Number(ratings.strength) + Number(ratings.time) + Number(ratings.freshness)
-    : null;
+  const computedScores = computeZoneScores(form, direction);
+  const total = zoneTotal(computedScores, ratings);
+  const entryLabel = total === null ? null : ENTRY_LABELS[entryType(total)];
   const prefix = opposing ? "opposing-" : "";
   const name = opposing ? "Target zone" : "Entry zone";
   const demand = direction === "long";
@@ -217,7 +243,18 @@ export function ZoneScorecard({
           ["profitZone", "Profit zone", 2],
         ] as const).map(([key, label, max]) => (
           <Fragment key={key}>
-            <span className="text-sm text-muted-foreground">{label}</span>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              {label}
+              <ComputedEnhancerReference enhancer={key} direction={direction} score={computedScores?.[key] ?? null} />
+              {key === "profitZone" && computedScores ? (
+                <span
+                  className="ml-auto whitespace-nowrap text-xs tabular-nums"
+                  aria-label={`Profit zone ratio ${formatRatio(computedScores.ratio)}`}
+                >
+                  Ratio <span className="font-mono">{formatRatio(computedScores.ratio)}</span>
+                </span>
+              ) : null}
+            </span>
             <output className="text-center font-mono text-sm tabular-nums" aria-label={`${label} score`}>
               {computedScores?.[key] ?? "-"}
             </output>
@@ -229,7 +266,15 @@ export function ZoneScorecard({
             ? "border-emerald-200 bg-emerald-100/60 dark:border-emerald-900 dark:bg-emerald-950/50"
             : "border-red-200 bg-red-100/60 dark:border-red-900 dark:bg-red-950/50"
         }`}>
-          <span>Total score</span>
+          <span className="flex items-center gap-1">
+            Total score
+            <ComputedEnhancerReference enhancer={demand ? "total" : "totalSupply"} direction={direction} score={total} />
+            {entryLabel ? (
+              <span className="ml-auto whitespace-nowrap text-xs" aria-label={`Entry type ${entryLabel}`}>
+                {entryLabel}
+              </span>
+            ) : null}
+          </span>
           <output className="text-center font-mono text-sm tabular-nums" aria-label="Total odds-enhancer score">
             {total ?? "-"}
           </output>

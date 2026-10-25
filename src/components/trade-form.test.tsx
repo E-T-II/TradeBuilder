@@ -348,7 +348,8 @@ describe("given the Zones step guard", () => {
 describe("given the direction control on the Zones step", () => {
   test("switching direction should flip the entry/target sentence, not the geometry", async () => {
     const user = userEvent.setup();
-    render(<ZonesStep initial={baseForm()} />); // long by default
+    // Max judged ratings keep the short XLT entry (trend 0) at 8, above the 7 cutoff.
+    render(<ZonesStep initial={baseForm({ strength: "2", time: "1", freshness: "2" })} />); // long by default
 
     // Long: enter demand, target supply.
     expect(
@@ -372,7 +373,7 @@ describe("given the direction control on the Zones step", () => {
 
   test("given an XLT matrix cell: should allow Zones to advance and require acknowledgement on Score", async () => {
     const user = userEvent.setup();
-    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+    render(<ZonesStep initial={baseForm({ trend: "downtrend", strength: "2", time: "1", freshness: "2" })} />);
 
     expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^next$/i }));
@@ -400,7 +401,7 @@ describe("given the direction control on the Zones step", () => {
 
   test("changing a zone-driving field should clear the XLT acknowledgement", async () => {
     const user = userEvent.setup();
-    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+    render(<ZonesStep initial={baseForm({ trend: "downtrend", strength: "2", time: "1", freshness: "2" })} />);
 
     await user.click(screen.getByRole("button", { name: /^next$/i }));
     const acknowledgement = screen.getByRole("checkbox", {
@@ -421,6 +422,38 @@ describe("given the direction control on the Zones step", () => {
 });
 
 describe("given the odds-enhancer controls on the Score step", () => {
+  test("an entry zone scoring below 7 blocks continuing until it is re-scored", async () => {
+    const user = userEvent.setup();
+    // Long in a downtrend: trend 0 + curve 1 + profit zone 2 + 1/0.5/1 = 5.5.
+    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Unqualified Entry Zone");
+    expect(alert).toHaveTextContent(/no action on a score below 7 \(70%\)\. Choose and score a different entry zone to continue\./);
+    expect(screen.getByRole("button", { name: "Score below 7" })).toBeDisabled();
+
+    // XLT verification alone doesn't unlock a low score.
+    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
+    expect(screen.getByRole("button", { name: "Score below 7" })).toBeDisabled();
+
+    // Raising Strength to 2 and Freshness to 2 brings the total to 7.5.
+    const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
+    for (const [factor, choice] of [["Strength", "Best strength, 2 points"], ["Freshness", "Best freshness, 2 points"]]) {
+      await user.click(entry.getByRole("button", { name: factor }));
+      await user.click(screen.getByRole("button", { name: choice }));
+    }
+    expect(screen.queryByText(/Unqualified Entry Zone/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+  });
+
+  test("a low target zone score does not block continuing", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({ opposingStrength: "0", opposingTime: "0", opposingFreshness: "0" })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.queryByText(/Unqualified Entry Zone/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+  });
+
   test("switching to an unanswered target keeps its ratings unanswered and blocks submission until switching back", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm()} />);
@@ -440,7 +473,8 @@ describe("given the odds-enhancer controls on the Score step", () => {
   test("switching clears XLT verification, closes rating popups, and requires verification again on returning to XLT", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm({
-      trend: "downtrend", opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+      trend: "downtrend", strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
     })} />);
     await user.click(screen.getByRole("button", { name: /^next$/i }));
     await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
