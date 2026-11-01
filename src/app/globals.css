@@ -105,7 +105,8 @@
 }
 
 @media screen {
-  .trade-plan-print {
+  .trade-plan-print,
+  .trade-log-print {
     display: none;
   }
 }
@@ -119,11 +120,11 @@
     margin: 0;
   }
 
-  body *:not(.trade-plan-print):not(.trade-plan-print *):not(:has(.trade-plan-print)) {
+  body:not([data-print-report="trade-log"]) *:not(.trade-plan-print):not(.trade-plan-print *):not(:has(.trade-plan-print)) {
     display: none !important;
   }
 
-  body *:has(.trade-plan-print):not(.trade-plan-print) {
+  body:not([data-print-report="trade-log"]) *:has(.trade-plan-print):not(.trade-plan-print) {
     display: contents !important;
   }
 
@@ -196,6 +197,71 @@
     border-top: 1px solid #999;
     margin-top: 6px;
     padding-top: 4px;
+  }
+
+  body[data-print-report="trade-log"] *:not(.trade-log-print):not(.trade-log-print *):not(:has(.trade-log-print)) {
+    display: none !important;
+  }
+
+  body[data-print-report="trade-log"] *:has(.trade-log-print):not(.trade-log-print) {
+    display: contents !important;
+  }
+
+  .trade-log-print {
+    display: none;
+  }
+
+  body[data-print-report="trade-log"] .trade-log-print {
+    display: block !important;
+    color: #111;
+    background: #fff;
+    font: 8pt/1.35 Arial, sans-serif;
+    width: 100%;
+  }
+
+  .trade-log-print h1 {
+    font-size: 16pt;
+    font-weight: bold;
+  }
+
+  .trade-log-print header,
+  .trade-log-print footer,
+  .trade-log-totals {
+    margin: 8pt 0;
+  }
+
+  .trade-log-print table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .trade-log-print thead {
+    display: table-header-group;
+  }
+
+  .trade-log-print tr {
+    break-inside: avoid;
+  }
+
+  .trade-log-print th,
+  .trade-log-print td {
+    border-bottom: 1px solid #aaa;
+    padding: 5pt 3pt;
+    text-align: right;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+  }
+
+  .trade-log-print th:first-child,
+  .trade-log-print td:nth-child(2) {
+    text-align: left;
+  }
+
+  .trade-log-print footer {
+    border-top: 1px solid #aaa;
+    padding-top: 6pt;
+    font-size: 7pt;
   }
 }
 

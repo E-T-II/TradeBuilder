@@ -90,7 +90,7 @@ describe("given Scorecard", () => {
     expect(screen.queryByText("No valid trade")).not.toBeInTheDocument();
   });
 
-  test("given an aggressive long XLT setup scoring 8.5+: should show the scorecard's proximal entry", () => {
+  test("given a Scenario 2 long XLT setup scoring 8.5+: should show the scorecard's proximal entry", () => {
     const result = buildTrade({
       ...longTrade,
       curveLow: 90,
@@ -104,10 +104,10 @@ describe("given Scorecard", () => {
 
     render(<Scorecard result={result} />);
     expect(screen.getByText("Proximal entry")).toBeInTheDocument();
-    expect(screen.queryByText(/xlt setup:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/xlt scenario/i)).not.toBeInTheDocument();
   });
 
-  test("given a conservative short XLT setup (supply, high on the curve, uptrend): should explain the 8-point ceiling", () => {
+  test("given a Scenario 1 short XLT setup (supply, high on the curve, uptrend): should not display score-cap wording", () => {
     const result = buildTrade({
       accountBalance: 2500,
       riskTolerancePct: 0.02,
@@ -132,9 +132,7 @@ describe("given Scorecard", () => {
 
     render(<Scorecard result={result} />);
     expect(screen.getByText("Confirmation entry")).toBeInTheDocument();
-    expect(
-      screen.getByText(/can score at most 8, so it can only be a confirmation entry \(7 to 8\)/i),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/scorecard tops out at 8|can score at most/i)).not.toBeInTheDocument();
   });
 
   test("should show the profit-zone ratio to two decimal places", () => {
@@ -153,7 +151,7 @@ describe("given Scorecard", () => {
     expect(screen.getByText(/7\.48:1/)).toBeInTheDocument();
   });
 
-  test("should show the 3:1 XLT profit-zone requirement for a conditional conservative setup", () => {
+  test("should show the 3:1 XLT profit-zone requirement for a conditional Scenario 1 setup", () => {
     const result = buildTrade({
       ...longTrade,
       trend: "downtrend",
@@ -166,7 +164,7 @@ describe("given Scorecard", () => {
     expect(screen.getByText(/3:1 \(XLT requires 3:1\)/)).toBeInTheDocument();
   });
 
-  test("should show the 5:1 XLT profit-zone requirement for an aggressive setup", () => {
+  test("should show the 5:1 XLT profit-zone requirement for a Scenario 2 setup", () => {
     const result = buildTrade({
       ...longTrade,
       curveLow: 90,

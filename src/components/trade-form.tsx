@@ -31,9 +31,14 @@ import type { FormState } from "@/components/trade-builder-app";
 import {
   TARGET_BUFFER_MAX_PCT,
   TARGET_BUFFER_MIN_PCT,
-  isXltMatrixCell,
   locateOnCurve,
+  meetsProfitRatio,
 } from "@/lib/trade-builder";
+import {
+  parseXltChecked,
+  serializeXltChecked,
+  xltScenario,
+} from "@/lib/xlt-criteria";
 import { Disclaimer } from "@/lib/copy";
 import { clampNumericString } from "@/lib/utils";
 import { validateZones } from "@/lib/validate-zones";
@@ -49,6 +54,7 @@ import { DecisionMatrixDialog } from "@/components/decision-matrix-dialog";
 import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
 import { ZoneScorecard, computeZoneScores, zoneTotal } from "@/components/zone-scorecard";
+import { XltChecklistDialog } from "@/components/xlt-checklist-dialog";
 
 interface TradeFormProps {
   form: FormState;
@@ -369,7 +375,7 @@ export function TradeForm({
     zoneErrors.supplyHigh ||
     zoneErrors.supplyLow
   );
-  const xltCellKey = (() => {
+  const xlt = (() => {
     if (hasZoneErrors) return null;
     const curveLow = Number(form.curveLow);
     const curveHigh = Number(form.curveHigh);
@@ -384,16 +390,20 @@ export function TradeForm({
     ) {
       return null;
     }
-    const zoneType = form.direction === "long" ? "demand" : "supply";
+    const zoneType = form.direction === "long" ? ("demand" as const) : ("supply" as const);
     const curve = locateOnCurve(entryProximal, curveLow, curveHigh);
-    return isXltMatrixCell(zoneType, curve, form.trend)
-      ? `${zoneType}:${curve}:${form.trend}`
+    const scenario = xltScenario(zoneType, curve, form.trend);
+    return scenario
+      ? { cellKey: `${zoneType}:${curve}:${form.trend}`, scenario }
       : null;
   })();
+  const xltChecked = xlt
+    ? parseXltChecked(form.xltAcknowledgement, xlt.cellKey, xlt.scenario.items.length)
+    : new Set<number>();
   const missingXltAcknowledgement =
     isLast &&
-    xltCellKey !== null &&
-    form.xltAcknowledgement !== xltCellKey;
+    xlt !== null &&
+    xltChecked.size !== xlt.scenario.items.length;
   const blockedByZones =
     (step === 1 && curveStepError) ||
     (step === 3 && zoneStepError) ||
@@ -408,8 +418,36 @@ export function TradeForm({
       })
     : null;
   const entryScoreTooLow = entryZoneTotal !== null && entryZoneTotal < 7;
+  const xltScoreProblems = (() => {
+    if (!isLast || !xlt || hasZoneErrors) return [];
+    const problems: string[] = [];
+    if (form.strength !== "" && Number(form.strength) < 2) {
+      problems.push("Strength must score 2/2 on the scorecard.");
+    }
+    if (form.time !== "" && Number(form.time) < 0.5) {
+      problems.push("Time must score at least 0.5 on the scorecard.");
+    }
+    if (form.freshness !== "" && Number(form.freshness) < 2) {
+      problems.push("Freshness must score 2/2 on the scorecard.");
+    }
+    const computedScores = computeZoneScores(form, form.direction);
+    if (
+      computedScores &&
+      !meetsProfitRatio(computedScores.ratio, xlt.scenario.requiredProfitZoneRatio)
+    ) {
+      problems.push(
+        `Profit zone is ${computedScores.ratio.toFixed(2)}:1; this XLT scenario requires at least ${xlt.scenario.requiredProfitZoneRatio}:1.`,
+      );
+    }
+    return problems;
+  })();
+  const xltScoreBlocked = xltScoreProblems.length > 0;
   const disableNext =
-    remaining > 0 || blockedByZones || missingXltAcknowledgement || entryScoreTooLow;
+    remaining > 0 ||
+    blockedByZones ||
+    missingXltAcknowledgement ||
+    entryScoreTooLow ||
+    xltScoreBlocked;
   // Name the step(s) that actually hold the error, so the last-step notice
   // points where the highlighted field really is.
   const errorSteps = [
@@ -853,22 +891,37 @@ export function TradeForm({
             </div>
           </div>
         ) : null}
-        {isLast && xltCellKey ? (
-          <Label className="items-start rounded-lg border p-3 leading-snug">
-            <input
-              type="checkbox"
-              className="mt-0.5 size-4 shrink-0 accent-primary"
-              checked={form.xltAcknowledgement === xltCellKey}
-              onChange={(event) =>
+        {isLast && xlt ? (
+          <div className="flex justify-center">
+            <XltChecklistDialog
+              scenario={xlt.scenario}
+              checked={xltChecked}
+              onToggle={(index, value) => {
+                const next = new Set(xltChecked);
+                if (value) next.add(index);
+                else next.delete(index);
                 onChange({
-                  xltAcknowledgement: event.target.checked ? xltCellKey : "",
-                })
-              }
+                  xltAcknowledgement: serializeXltChecked(xlt.cellKey, next),
+                });
+              }}
             />
-            <span>I verified the XLT criteria for this setup.</span>
-          </Label>
+          </div>
         ) : null}
       </div>
+
+      {xltScoreProblems.length > 0 ? (
+        <Alert className="mx-auto mt-6 max-w-xl">
+          <AlertTitle>XLT score requirements not met</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc space-y-1 pl-5">
+              {xltScoreProblems.map((problem) => (
+                <li key={problem}>{problem}</li>
+              ))}
+            </ul>
+            Update the scorecard or choose another setup before continuing.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {entryScoreTooLow ? (
         <Alert className="mx-auto mt-6 max-w-xl">
@@ -919,8 +972,10 @@ export function TradeForm({
             ? `${remaining} field${remaining === 1 ? "" : "s"} left`
             : blockedByZones
               ? "Check the highlighted values"
-              : entryScoreTooLow
-                ? "Score below 7"
+              : xltScoreBlocked
+                ? "XLT score requirements not met"
+                : entryScoreTooLow
+                  ? "Score below 7"
                 : missingXltAcknowledgement
                   ? "Confirm XLT criteria"
                   : isLast

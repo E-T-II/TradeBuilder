@@ -42,6 +42,8 @@ import { clampNumericString } from "@/lib/utils";
 import { Scorecard } from "@/components/scorecard";
 import { OrderTicket } from "@/components/order-ticket";
 import { TradePlanExport } from "@/components/trade-plan-export";
+import { TradeExecutionFields, TradeTaxReport } from "@/components/trade-tax-report";
+import { EXECUTION_FIELDS, type ExecutionDetails, type ExecutionField } from "@/lib/trade-tax-report";
 import { RiskChecks } from "@/components/risk-checks";
 import { Reveal } from "@/components/reveal";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -84,7 +86,12 @@ export interface FormState {
   opposingTime: string;
   opposingFreshness: string;
   openTradeRisk: string;
-  /** The XLT matrix cell the trader has explicitly acknowledged. */
+  /**
+   * The XLT checklist state: "" when untouched, or
+   * "<zoneType>:<curve>:<trend>|v2:<checked item indexes>". A bare cell key
+   * (the legacy single-checkbox format) counts as fully verified.
+   * See src/lib/xlt-criteria.ts.
+   */
   xltAcknowledgement: string;
 }
 
@@ -123,7 +130,7 @@ const initialState: FormState = {
 const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback/issues/new/choose";
 const REPORT_EMAIL_URL = "mailto:tradebuilderfeedback@protonmail.com?subject=Trade%20Builder%20Report";
 
-export interface TradeLogEntry {
+export interface TradeLogEntry extends ExecutionDetails {
   id: string;
   createdAt: string;
   ticker: string;
@@ -178,6 +185,9 @@ export function loadTradeLog(): TradeLogEntry[] {
       const cleanCandidate = { ...candidate };
       delete cleanCandidate.exitPrice;
       delete cleanCandidate.fees;
+      for (const field of EXECUTION_FIELDS) {
+        if (typeof cleanCandidate[field] !== "string") delete cleanCandidate[field];
+      }
       return [{
         ...cleanCandidate,
         ticker: typeof candidate.ticker === "string" ? candidate.ticker : "Unknown",
@@ -194,9 +204,7 @@ export function loadTradeLog(): TradeLogEntry[] {
 }
 
 function saveTradeLog(entries: TradeLogEntry[]) {
-  try {
-    window.localStorage.setItem(TRADE_LOG_STORAGE_KEY, JSON.stringify(entries));
-  } catch { }
+  window.localStorage.setItem(TRADE_LOG_STORAGE_KEY, JSON.stringify(entries));
 }
 
 const REQUIRED: (keyof FormState)[] = [
@@ -397,6 +405,10 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
     "Exit price",
     "Fees",
     "Realized P&L",
+    "Actual opening date",
+    "Actual closing date",
+    "Actual opening price",
+    "Actual shares",
   ];
   const rows = entries.map((entry) => {
     const outcome = realizedOutcome(entry);
@@ -428,16 +440,13 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
         ? exportUsd.format(fees)
         : "",
       outcome !== null ? exportUsd.format(outcome) : "",
+      entry.openedOn ?? "",
+      entry.closedOn ?? "",
+      entry.actualEntryPrice ?? "",
+      entry.actualQuantity ?? "",
     ].join("\t");
   });
   return [headers.join("\t"), ...rows].join("\n");
-}
-
-export interface TradeOutcomeSummary {
-  label: string;
-  trades: number;
-  winRate: number;
-  netPnl: number;
 }
 
 export function realizedOutcome(entry: TradeLogEntry): number | null {
@@ -466,34 +475,21 @@ export function realizedOutcome(entry: TradeLogEntry): number | null {
   return roundToCent(netPnl);
 }
 
-export function summarizeTradeOutcomes(
-  entries: TradeLogEntry[],
-): TradeOutcomeSummary[] {
-  const groups = new Map<string, number[]>();
-  for (const entry of entries) {
-    const outcome = realizedOutcome(entry);
-    if (outcome === null) continue;
-    const entryType =
-      entry.score >= 8.5 ? "Proximal" : entry.score >= 7 ? "Confirmation" : "Other";
-    const scoreBand =
-      entry.score >= 8.5 ? "8.5–10" : entry.score >= 7 ? "7–8" : "under 7";
-    const trend = entry.form?.trend
-      ? entry.form.trend[0].toUpperCase() + entry.form.trend.slice(1)
-      : "Trend unavailable";
-    const label = `${entryType} · ${trend} · ${scoreBand}`;
-    const group = groups.get(label) ?? [];
-    group.push(outcome);
-    groups.set(label, group);
-  }
-
-  return [...groups.entries()]
-    .map(([label, outcomes]) => ({
-      label,
-      trades: outcomes.length,
-      winRate: (outcomes.filter((outcome) => outcome > 0).length / outcomes.length) * 100,
-      netPnl: roundToCent(outcomes.reduce((sum, outcome) => sum + outcome, 0)),
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+/**
+ * Average winning trade divided by the size of the average losing trade, e.g.
+ * wins averaging $300 against losses averaging $100 is 3 (3:1). Breakeven
+ * outcomes count as neither. Null until there is at least one loss to divide
+ * by; 0 when there are losses but no wins yet.
+ */
+export function averageProfitLossRatio(outcomes: number[]): number | null {
+  const wins = outcomes.filter((outcome) => outcome > 0);
+  const losses = outcomes.filter((outcome) => outcome < 0);
+  if (losses.length === 0) return null;
+  const toCents = (value: number) => Math.round(value * 100) / 100;
+  const averageLoss = toCents(Math.abs(losses.reduce((sum, loss) => sum + loss, 0) / losses.length));
+  if (wins.length === 0) return 0;
+  const averageWin = toCents(wins.reduce((sum, win) => sum + win, 0) / wins.length);
+  return averageWin / averageLoss;
 }
 
 export function TradeBuilderApp() {
@@ -502,6 +498,7 @@ export function TradeBuilderApp() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copyLogState, setCopyLogState] = useState<"idle" | "copied" | "error">("idle");
   const [tradeLog, setTradeLog] = useState<TradeLogEntry[]>([]);
+  const [logSaveError, setLogSaveError] = useState("");
   const [showTradeLog, setShowTradeLog] = useState(true);
   const [autoOpenTradeRisk, setAutoOpenTradeRisk] = useState(false);
 
@@ -594,18 +591,24 @@ export function TradeBuilderApp() {
     }
   };
 
+  const persistTradeLog = (updated: TradeLogEntry[]) => {
+    try {
+      saveTradeLog(updated);
+      setTradeLog(updated);
+      setLogSaveError("");
+    } catch {
+      setLogSaveError("Trade log changes could not be saved. Check browser storage permissions or available space, then try again. Your previous log was kept.");
+    }
+  };
+
   const updateLogOutcome = (
     id: string,
-    field: "exitPrice" | "fees",
+    field: "exitPrice" | "fees" | ExecutionField,
     value: string,
   ) => {
-    setTradeLog((entries) => {
-      const updated = entries.map((entry) =>
-        entry.id === id ? { ...entry, [field]: value } : entry,
-      );
-      saveTradeLog(updated);
-      return updated;
-    });
+    persistTradeLog(tradeLog.map((entry) =>
+      entry.id === id ? { ...entry, [field]: value } : entry,
+    ));
   };
 
   const logTrade = () => {
@@ -626,11 +629,7 @@ export function TradeBuilderApp() {
       isOpen: true,
       form: { ...form },
     };
-    setTradeLog((entries) => {
-      const updated = [entry, ...entries];
-      saveTradeLog(updated);
-      return updated;
-    });
+    persistTradeLog([entry, ...tradeLog]);
   };
 
   // Reload a logged setup's original inputs back into the builder, so the
@@ -646,26 +645,17 @@ export function TradeBuilderApp() {
   };
 
   const deleteLogEntry = (id: string) => {
-    setTradeLog((entries) => {
-      const updated = entries.filter((entry) => entry.id !== id);
-      saveTradeLog(updated);
-      return updated;
-    });
+    persistTradeLog(tradeLog.filter((entry) => entry.id !== id));
   };
 
   const setLogEntryOpen = (id: string, isOpen: boolean) => {
-    setTradeLog((entries) => {
-      const updated = entries.map((entry) =>
-        entry.id === id ? { ...entry, isOpen } : entry,
-      );
-      saveTradeLog(updated);
-      return updated;
-    });
+    persistTradeLog(tradeLog.map((entry) =>
+      entry.id === id ? { ...entry, isOpen } : entry,
+    ));
   };
 
   const clearTradeLog = () => {
-    setTradeLog([]);
-    saveTradeLog([]);
+    persistTradeLog([]);
   };
 
   const restoreBackup = (backup: TradeBackup) => {
@@ -673,6 +663,7 @@ export function TradeBuilderApp() {
     setAutoOpenTradeRisk(false);
     setForm(backup.form);
     setTradeLog(backup.tradeLog);
+    setLogSaveError("");
     setCopyLogState("idle");
     setShowTradeLog(true);
     goToStep(0);
@@ -680,7 +671,6 @@ export function TradeBuilderApp() {
 
   const reachable = firstIncompleteStep(form);
   const inForm = step < RESULTS_STEP;
-  const outcomeSummaries = summarizeTradeOutcomes(tradeLog);
   const completedOutcomes = tradeLog.flatMap((entry) => {
     const outcome = realizedOutcome(entry);
     return outcome !== null ? [outcome] : [];
@@ -688,6 +678,7 @@ export function TradeBuilderApp() {
   const totalRealizedPnl = roundToCent(
     completedOutcomes.reduce((sum, outcome) => sum + outcome, 0),
   );
+  const profitLossRatio = averageProfitLossRatio(completedOutcomes);
   const winRate = completedOutcomes.length
     ? (completedOutcomes.filter((outcome) => outcome > 0).length /
         completedOutcomes.length) *
@@ -816,6 +807,8 @@ export function TradeBuilderApp() {
                     </CardHeader>
                     {showTradeLog ? (
                       <CardContent>
+                        {logSaveError ? <p role="alert" className="mb-3 text-sm text-destructive">{logSaveError}</p> : null}
+                        {tradeLog.length > 0 ? <TradeTaxReport entries={tradeLog} /> : null}
                         <section aria-labelledby="trade-performance-heading" className="mb-5 space-y-3">
                           <div>
                             <h3 id="trade-performance-heading" className="font-medium">
@@ -827,9 +820,9 @@ export function TradeBuilderApp() {
                           </div>
                           {completedOutcomes.length > 0 ? (
                             <>
-                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Completed outcomes</p>
+                                  <p className="text-xs text-muted-foreground">Completed trades</p>
                                   <p className="font-mono tabular-nums">{completedOutcomes.length}</p>
                                 </div>
                                 <div>
@@ -840,31 +833,14 @@ export function TradeBuilderApp() {
                                   <p className="text-xs text-muted-foreground">Win rate</p>
                                   <p className="font-mono tabular-nums">{exportRatio.format(winRate)}%</p>
                                 </div>
-                              </div>
-                              <div className="overflow-x-auto">
-                                <table className="w-full min-w-[34rem] text-left text-xs">
-                                  <caption className="sr-only">
-                                    Completed trade outcomes grouped by entry type, trend, and score range
-                                  </caption>
-                                  <thead className="border-b text-muted-foreground">
-                                    <tr>
-                                      <th scope="col" className="py-2 pr-3 font-medium">Setup</th>
-                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Trades</th>
-                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Win rate</th>
-                                      <th scope="col" className="py-2 pr-3 text-right font-medium">Net P&amp;L</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y">
-                                    {outcomeSummaries.map((summary) => (
-                                      <tr key={summary.label}>
-                                        <th scope="row" className="py-2 pr-3 font-normal">{summary.label}</th>
-                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{summary.trades}</td>
-                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{exportRatio.format(summary.winRate)}%</td>
-                                        <td className="py-2 pr-3 text-right font-mono tabular-nums">{formatSignedUsd(summary.netPnl)}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Ave P&amp;L ratio</p>
+                                  {profitLossRatio === null ? (
+                                    <p className="text-sm text-muted-foreground">No losing trades yet</p>
+                                  ) : (
+                                    <p className="font-mono tabular-nums">{profitLossRatio.toFixed(2)}:1</p>
+                                  )}
+                                </div>
                               </div>
                             </>
                           ) : (
@@ -945,6 +921,9 @@ export function TradeBuilderApp() {
                                       </Button>
                                     </div>
                                   </div>
+                                  {!entry.isOpen ? (
+                                    <TradeExecutionFields entry={entry} onChange={updateLogOutcome} />
+                                  ) : null}
                                   {!entry.isOpen ? (
                                     <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
                                       <label className="space-y-1">

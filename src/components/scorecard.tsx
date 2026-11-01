@@ -206,21 +206,6 @@ export function Scorecard({ result }: { result: TradeResult }) {
   const badgeClasses = noValidTrade
     ? "bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
     : entryTypeClasses[result.entryType];
-  const xltMessages: string[] = [];
-
-  // XLT cells only add a profit-zone threshold; the entry type is still the
-  // scorecard's. Curve and trend are fixed by the cell, so spell out the best
-  // total it can reach — a counter-trend cell tops out at 8 (confirmation only).
-  if (s.requiredProfitZoneRatio !== null && result.objective !== "no-trade") {
-    const maxScore =
-      s.curve + s.trend + 2 + JUDGED_MAX.strength + JUDGED_MAX.time + JUDGED_MAX.freshness;
-    if (maxScore < 8.5) {
-      xltMessages.push(
-        `XLT setup: This setup can score at most ${formatScore(maxScore)}, so it can only be a confirmation entry.`,
-      );
-    }
-  }
-
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -232,13 +217,6 @@ export function Scorecard({ result }: { result: TradeResult }) {
           >
             {badgeLabel}
           </Badge>
-          {xltMessages.length > 0 ? (
-            <div className="flex max-w-md flex-col gap-1 text-left text-xs text-muted-foreground">
-              {xltMessages.map((message, index) => (
-                <p key={`${message}-${index}`}>{message}</p>
-              ))}
-            </div>
-          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-2">

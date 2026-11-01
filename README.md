@@ -2,7 +2,15 @@
 
 Trade Builder helps traders engineer the trade before risking capital. It converts market structure, supply and demand, trend, zone quality and account risk into a rules-based trade plan—then calculates the stop, entry, target and position size or rejects the setup when it fails to meet the strategy’s requirements. The key distinction is that it is not a trade-prediction or brokerage-execution tool. It is a decision-support and rule-enforcement system designed to promote consistency, discipline and measurable risk.
 
-Logged trades can be marked closed and given an exit price and optional total fees. Realized P&L uses the planned entry and share count, less fees. The log summarizes completed outcomes overall and by entry type, trend, and score range. Trades and these outcome details remain in the current browser's local storage.
+Logged trades can be marked closed and given an exit price and optional total fees. Realized P&L uses the planned entry and share count, less fees. The log summarizes completed trades overall. The **Ave P&L ratio** divides the average winning trade by the average losing trade, each rounded to the cent, and shows the result to two decimals (for example, $29.13 ÷ $12.15 = 2.40:1); breakeven trades are excluded, and it reads "No losing trades yet" until a loss is recorded. Trades and these outcome details remain in the current browser's local storage.
+
+### Printing tax supporting records (U.S.)
+
+For each closed trade, enter the **actual opening date**, **actual closing date**, **actual opening price**, and **actual shares** from your broker. The existing exit price is the actual closing price, and fees are total round-trip fees (blank means $0). Planned prices, quantities, and the date a setup was logged are never substituted for actual execution data. Use one record per fully closed lot; partial closes and multiple tax lots must be split and reconciled separately.
+
+Choose a **Closing year** in the trade log, then **Print trade log / Save as PDF**. Printing is enabled only when the selected year has complete closed trades and no closed trades have an unknown/invalid closing date. Open trades and other closing years are excluded and counted. The printer-friendly report includes dates, direction, actual shares/prices, gross proceeds, purchase cost, fees, net P&L, and totals. For shorts, proceeds are the opening sale and purchase cost is the closing cover. Prices and quantities may differ from the planned values used in the on-screen Realized performance summary. Actual execution fields are also retained in backups and appended to the copied spreadsheet log.
+
+This USD-only report is a supporting record, **not IRS Form 8949, Schedule D, or a substitute for your broker's 1099-B**. It does not calculate wash sales, adjusted tax basis, holding-period categories, or special short-sale tax timing. Opening/closing dates are not a mapping to Form 8949's acquired/sold fields for short sales. Reconcile all amounts and tax-year treatment with broker statements and your tax preparer before filing.
 
 The **Engineered Risk Trading Strategy** link in the education-only disclaimer opens the included strategy PDF in a new tab without leaving the current setup.
 
@@ -24,7 +32,7 @@ Backups contain account balances and trade history and are **not encrypted**. St
 
 Step 5 of 5 (Score) keeps the entry-zone odds enhancer scorecard on the left and adds a target-zone scorecard on the right (side by side at screen widths of 480px and above; stacked entry-first on narrower phones). Both use the same graphical selectors for Strength, Time, and Freshness. Trend, Curve, and Profit zone are automatically scored for each zone: the target zone is supply for a long trade and demand for a short trade. Target ratings are optional, saved with the setup and logged setup snapshots, and do not affect orders, risk checks, copied trade logs, or logged trade scores. Older saves start with unanswered target ratings.
 
-For XLT setups, Step 5 also requires checking "I verified the XLT criteria for this setup" before viewing the trade. Step 4 (Zones) does not require this acknowledgement. Changing curve, trend, direction, or zone prices clears the acknowledgement.
+For XLT setups, Step 5 provides a scenario-specific checklist button that opens a popup of chart observations the scorecard cannot assess. Checklist progress is preserved when the popup is closed and reopened. All items must be checked before viewing the trade. Step 4 (Zones) does not require this checklist. Changing curve, trend, direction, or zone prices clears the checks.
 
 The circled **i** beside Trend, Curve, and Profit zone on both Step 5 scorecards opens a reference screenshot showing the Best, Good, and Poor scoring criteria. Both scorecards also have a circled **i** beside Total score, showing the proximal, confirmation, and no-trade entry examples. All four references use a Demand / Buy / Long or Supply / Sell / Short photo matching the card's zone, whether it is the entry or target zone, and update when the trade direction changes. The photos ship without their original orange markers; instead, the card draws an orange dashed box, an orange checkmark, and an orange heading on the option that matches the zone's calculated score (the Total score card follows the 8.5 / 7 entry-type thresholds). Nothing is highlighted until that score can be calculated. These cards are informational only: they do not accept selections or change scores. Close them with the close button, Escape, or by clicking outside the card.
 
@@ -86,61 +94,61 @@ Six-Step Process Flowchart: trade builder takes basic input the user identifies 
      r) a demand zone low on the curve in an uptrend = Buy Long.
      ******
 
-     XLT cells add only a profit zone requirement (3:1 or 5:1) and chart criteria. They never change the entry type: the odds enhancer score is taken at face value (8.5+ proximal, 7 to 8 confirmation, below 7 no trade), and the stop always uses the daily ATR buffer. Curve and trend are fixed by the cell, so the conservative cells (c and p) score at most 8 and can only be confirmation entries; the aggressive cells (f and m) score at most 9.
+     XLT cells add only a profit zone requirement (3:1 or 5:1) and chart criteria. They never change the entry type: the odds enhancer score is taken at face value (8.5+ proximal, 7 to 8 confirmation, below 7 no trade), and the stop always uses the daily ATR buffer. Curve and trend are fixed by the cell, so the Scenario 1 cells (c and p) score at most 8 and can only be confirmation entries; the Scenario 2 cells (f and m) score at most 9.
 
-      XLT Criteria - Conservative | Aggressive
+     The Trade Builder automatically checks the entry scorecard requirements: strength = 2, freshness = 2, time at least 0.5, the scenario's minimum profit-zone ratio, and a total entry score of at least 7. It reports unmet scores directly. The opposing target zone's quality and intervening structures are judged by the trader; the app does not use a target-zone score to qualify or block the setup. The XLT checklist is only for chart observations the scorecard cannot assess.
 
-         XLT Rule Variant: Short Trade - Scenario 1 (Conservative)
+      XLT Criteria - Scenario 1 (counter-trend reversal) | Scenario 2 (aggressive trend continuation)
+
+         Checks shared by every XLT cell (verified from the chart before committing capital):
+
+               1) Structural Quality & Imbalance: the LTF entry zone must be a clean Drop-Base-Drop or Rally-Base-Drop for a short (Rally-Base-Rally or Drop-Base-Rally for a long).
+
+               2) Strength: a rapid, explosive move away from the base origin of at least 2:1 with breakout (3:1 is optimal) - full marks on the strength odds enhancer (move out AND breakout). A move out only or a breakout only disqualifies the setup.
+
+               3) Time: a clean, tight base of no more than 3 to 4 tightly packed candles (1 to 2 is optimal). Score time as normal (1-3 candles = 1 point, 4-6 candles = 0.5), but a base of 5 or more candles disqualifies the setup.
+
+               4) Freshness: the zone must be completely fresh and untested (full marks on the freshness enhancer). A retested zone invalidates the setup, potentially dissolving unfilled orders.
+
+               5) Price Arrival: price must return to the zone in a strong impulsion phase (long leg candles). Slow, grinding, or choppy consolidated structures moving back toward the zone may invalidate the setup because they indicate structural institutional redistribution rather than a simple retest.
+
+               6) Opposing Structures: the trader assesses intervening pivots between the entry zone and target as weak and chooses the nearest opposing zone judged to be quality. This may require reviewing several opposing zones. The app does not use the target zone's score to qualify or block the setup.
+
+               7) Line Placement: the proximal line goes at the nearest candle body of the base (bottom of the lowest body for supply, top of the highest body for demand). The distal line goes at the extreme wick per the zone formation: a reversal formation (Rally-Base-Drop / Drop-Base-Rally) uses the extreme wick in the entire formation; a continuation formation (Drop-Base-Drop / Rally-Base-Rally) uses the extreme wick in the base or the leg out.
+
+               8) Risk Parameters: the stop is placed safely behind the distal line, buffered by a percentage of the daily ATR per the HTF income objective (10% if the HTF is weekly or greater, 2% if daily or less). Every XLT setup keeps the baseline minimum 3:1 reward to risk: trade risk (entry to stop) must divide at least 3 times into the distance from entry to the target at the 75 to 80% target buffer (or a mechanical 3:1 target). If the target zone is hit before 3:1 is reached, the trade is disqualified.
+
+         XLT Rule Variant: Short Trade - Scenario 1 (counter-trend reversal)
             LTF Zone: Supply | HTF Curve: Retail | ITF Trend: Uptrend
 
-               1) Drop-Base-Drop or Rally-Base-Drop Structural Quality: The LTF Supply zone must feature a clean, tight base (no more than 3 to 4 tightly packed candles) followed immediately by a severe, swift drop. This structural footprint identifies pure institutional distribution. Confirm zone strength beyond the odds enhancers by locating overlapping zones on multiple timeframes.
+               1) Profit Zone Validation: the target area - the nearest opposing LTF demand zone you judge to be quality - must allow a move of at least 3:1 (profit zone enhancer earns at least 1 point). Because the ITF trend is up, assess minor pivots built on the way up to the supply zone and confirm they are weak. The app does not determine target-zone quality from its score.
 
-               2) Clear Path to Profit (Unfilled Liquidity Vacuum): Because the ITF trend is up, there will be minor pivot points built on the way up to our supply zone. The trader must confirm that these local pivots are "weak structures" or already exhausted, leaving a clear vacuum of unfilled space of at least 3:1 back down to a major opposing demand zone.
+               2) HTF Overlap: the curve is set from HTF zones, which is where the current trend is expected to end. Identify the LTF supply zone within (overlapping) a HTF zone. Under these circumstances scoring zero for trend is not much of an impact, but still respect the scorecard and wait for confirmation of a reversal.
 
-               3) Retail Liquidity Absorption: The XLT trader looks for specific retail buying traps immediately preceding the supply zone (such as breakout buyers purchasing psychological resistance levels). The target trade is confirmed if it absorbs that frantic retail buying momentum into institutional limit orders.
+               3) Execution Trigger: shorting in an uptrend in the retail range grants at most 8 points on the scorecard, so this can only be a confirmation trade of 7 to 8 points: a sell order 10 cents below the proximal line with the protective buy stop above the distal line per the ATR buffer.
 
-               4) Execution Trigger: Shorting in an uptrend in the retail range of the curve grants at most 8 points on the scorecard, so this can only be a confirmation trade of 7 to 8 points: a sell order 10 cents below the Proximal Line (the bottom edge of the supply zone) with the protective buy-stop-loss set just above the Distal Line (the absolute high of the supply base) as a percentage of the daily ATR. 
-
-         XLT Rule Variant: Short Trade - Scenario 2 (Aggressive)
+         XLT Rule Variant: Short Trade - Scenario 2 (aggressive trend continuation)
             LTF Zone: Supply | HTF Curve: Wholesale | ITF Trend: Downtrend
 
-               1) Entry type follows the odds enhancer score at face value: 8.5 to 9 proximal, 7 to 8 confirmation, below 7 no trade.
+               1) The market looks deeply bearish on the ITF chart but sits in the wholesale curve range, where proximity to actual HTF demand must be checked. Shorting a minor supply rally here risks an adverse reversal as price approaches or enters HTF demand.
 
-               2) The stop is placed behind the supply distal line as a percentage of the daily ATR, like any other trade.
+               2) Profit Zone Validation: the available profit zone, measured zone to zone, must reach at least 5:1 (the profit zone enhancer must earn its full 2 points). If the first demand zone you judge to be quality is reached before 5:1 is available, the setup is ineligible per the Decision Matrix. Target-zone quality is the trader's judgment, not an app calculation.
 
-               3) Your target must be the first opposing zone, which must yield a 5:1 reward to risk ratio.
+               3) HTF Proximal Check: back out to the higher timeframe (per income objective and duration) and verify the HTF demand zone's proximal line location to ensure the 5:1 profit zone completes before price reaches it. If the HTF curve was set from a prominent high/low with no clean zone formation (no proximal line to check), pass and locate another opportunity with a valid HTF zone structure.
 
-         XLT Rule Variant: Long Trade - Scenario 1 (Conservative)
+               4) Entry Location: the entry and the LTF zone's proximal line must be located in the wholesale curve range. A zone that straddles the boundary still counts as an XLT entry as long as the proximal line is within the wholesale range.
+
+               5) Execution Trigger: entry type follows the odds enhancer score at face value (max 9): 8.5 to 9 proximal, 7 to 8 confirmation, below 7 no trade. On arrival, verify the return to the zone is not building fresh intervening demand zones that shrink the profit zone below 5:1; any structures it builds must score below 7.
+
+         XLT Rule Variant: Long Trade - Scenario 1 (counter-trend reversal)
             LTF Zone: Demand | HTF Curve: Wholesale | ITF Trend: Downtrend
 
-               1) Institutional Imbalance Verification (The "Freshness" Rule): The Low Timeframe (LTF) Demand zone must be fresh and completely untested. It must exhibit a rapid, explosive move away from the origin base (large bullish candles/strong green bars), proving significant institutional buy orders are left behind waiting to be filled. Therefore, the zone must be completely fresh, with no retests.
+               Mirror of Short Trade Scenario 1. Profit zone of at least 3:1 to the nearest LTF supply zone you judge to be quality, all intervening pivots assessed as weak, and the LTF demand zone overlapping a HTF zone where the downtrend is expected to end. The app does not determine target-zone quality from its score. Buying in a downtrend in the wholesale range grants at most 8 points, so this can only be a confirmation trade of 7 to 8 points: a buy order 10 cents above the proximal line with the protective stop below the distal line per the ATR buffer.
 
-               2) Profit Zone Validation (Odds-Enhancers Score ≥ 3:1): Although the decision matrix requires a 5:1 ratio for aggressive/high-curve counter-trend trades, standard XLT confirmation requires verifying that the target area—the nearest opposing fresh LTF supply zone—allows a clean, unrestricted move of at least 3:1 risk-to-reward ratio before encountering any structural resistance from sellers. 
-
-               3) The Odd Enhancer Checklist (Arrival Score): The trader must ensure that price is returning to the LTF demand zone impulsively and quickly (sharp red candles). Slow, grinding, or choppy consolidated structures moving back toward a demand zone will invalidate the setup because they indicate structural institutional redistribution rather than a simple retest. A valid Daily confirmation structure consists of a three-step structural shift.
-                  
-                  a) The Clean Sweep (The Arrival)
-                        What happens: Price aggressively slices downward with large red Daily candles, piercing into the Monthly demand zone.
-                        The Key Detail: This move must take out a recent Daily swing low (Liquidity Sweep). This triggers stop-losses and tricks retail traders into shorting right before the reversal.
-
-                  b) The Change of Character (CHoCH)
-                        What happens: Almost immediately after the sweep, a massive, impulsive green Daily candle surges upward.
-                        The Key Detail: This green surge must close completely above the most recent Daily swing high (the last lower high that led to the final drop). This structural break is your CHoCH—it proves the bears have lost control and institutional buyers have taken over.
-
-                  c) The Displacement & Fair Value Gap (FVG)
-                        What happens: The Daily candle that broke the structure must leave behind a Fair Value Gap (FVG) or an aggressive Daily demand block.
-                        The Key Detail: This shows "displacement." If the market just barely creeps past the old high and leaves tiny candles, the reversal is fake. You want to see explosive upward momentum.
-
-               4) Execution Trigger: Buying in a downtrend in the wholesale range of the curve grants at most 8 points on the scorecard, so this can only be a confirmation trade of 7 to 8 points: a buy order 10 cents above the "Proximal Line" (the top edge of the demand zone) with the protective stop-loss set just below the "Distal Line" (the absolute bottom edge of the zone) as a percentage of the daily ATR.
-
-         XLT Rule Variant: Long Trade - Scenario 2 (Aggressive)
+         XLT Rule Variant: Long Trade - Scenario 2 (aggressive trend continuation)
             LTF Zone: Demand | HTF Curve: Retail | ITF Trend: Uptrend
 
-               1) The Trap: In this scenario, you are on the other side of the trade from a seller in an XLT Short trade scenario 1 who is seeking a short, high on the curve in an uptrend. They can only enter the trade with a confirmation entry at the supply zone, since that setup scores at most 8. Even though the intermediate trend is bullish, the asset has expanded deep into higher timeframe sell orders. If you buy a minor low-timeframe demand pullback here, you are purchasing at the absolute ceiling of the market cycle.
-
-               2) Profit zone must yield a 5:1 ratio or greater. Entry type follows the odds enhancer score at face value: 8.5 to 9 proximal, 7 to 8 confirmation, below 7 no trade.
-
-               3) The stop is placed behind the demand distal line as a percentage of the daily ATR, like any other trade.
+               Mirror of Short Trade Scenario 2. You are opposite a Scenario 1 short seller at the same end of the curve: the ITF is bullish but the asset has expanded deep into HTF supply, so buying a minor demand pullback here risks an adverse reversal as price approaches or enters HTF supply. The profit zone must reach at least 5:1 before the first supply zone you judge to be quality; verify the HTF supply zone's proximal line leaves room for the 5:1 (no clean HTF proximal line = pass); the entry and proximal line must be located in the retail curve range. Entry type follows the scorecard at face value (max 9). The app does not use the target zone's score to qualify or block the setup.
 
   4) Score the Trade using the Odds Enhancers: present the odds enhancer scorecard
 

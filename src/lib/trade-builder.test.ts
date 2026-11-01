@@ -277,8 +277,8 @@ describe("given entryType", () => {
   });
 });
 
-describe("given the supply-low/downtrend XLT entry rule", () => {
-  const aggressiveShort: TradeInputs = {
+describe("given the supply-low/downtrend XLT entry rule (Scenario 2)", () => {
+  const scenario2Short: TradeInputs = {
     accountBalance: 2_500,
     riskTolerancePct: 0.02,
     targetBufferPct: 0.75,
@@ -299,7 +299,7 @@ describe("given the supply-low/downtrend XLT entry rule", () => {
   };
 
   test("given a confirmation-band score: should build a standard confirmation order", () => {
-    const result = buildTrade(aggressiveShort);
+    const result = buildTrade(scenario2Short);
 
     expect(result.scorecard.total).toBe(7.5);
     expect(result.entryType).toBe("confirmation");
@@ -311,7 +311,7 @@ describe("given the supply-low/downtrend XLT entry rule", () => {
   });
 
   test("given an 8.5 score: should take the scorecard's proximal entry, not force confirmation", () => {
-    const result = buildTrade({ ...aggressiveShort, strength: 2 });
+    const result = buildTrade({ ...scenario2Short, strength: 2 });
 
     expect(result.scorecard.total).toBe(8.5);
     expect(result.entryType).toBe("proximal");
@@ -320,11 +320,10 @@ describe("given the supply-low/downtrend XLT entry rule", () => {
   });
 });
 
-describe("given the supply-high/uptrend XLT entry rule (conservative)", () => {
-  // Retail curve for a supply zone: row c in the matrix. Only needs 3:1. The
-  // trend scores 0 against a short, so a perfect scorecard tops out at 8:
-  // this cell can only ever produce a confirmation entry.
-  const conservativeShort: TradeInputs = {
+describe("given the supply-high/uptrend XLT entry rule (Scenario 1)", () => {
+  // Retail curve for a supply zone: row c in the matrix. Only needs 3:1;
+  // this counter-trend cell can only ever produce a confirmation entry.
+  const scenario1Short: TradeInputs = {
     accountBalance: 2_500,
     riskTolerancePct: 0.02,
     targetBufferPct: 0.75,
@@ -345,7 +344,7 @@ describe("given the supply-high/uptrend XLT entry rule (conservative)", () => {
   };
 
   test("given a maxed-out scorecard: should top out at 8, a confirmation entry", () => {
-    const result = buildTrade(conservativeShort);
+    const result = buildTrade(scenario1Short);
 
     expect(result.scorecard.total).toBe(8);
     expect(result.entryType).toBe("confirmation");
@@ -355,13 +354,13 @@ describe("given the supply-high/uptrend XLT entry rule (conservative)", () => {
   });
 
   test("given a confirmation entry: should use the standard 10-cent offset, not enter at the proximal line", () => {
-    const result = buildTrade(conservativeShort);
+    const result = buildTrade(scenario1Short);
 
     expect(result.order?.entry).toBe(124.9);
   });
 
   test("given a qualifying score: should use the standard ATR-based stop", () => {
-    const result = buildTrade(conservativeShort);
+    const result = buildTrade(scenario1Short);
 
     expect(result.order?.stop).toBe(127.08);
     expect(result.math.stopBufferPct).toBe(2);
@@ -369,11 +368,11 @@ describe("given the supply-high/uptrend XLT entry rule (conservative)", () => {
   });
 });
 
-describe("given the demand-low/downtrend XLT entry rule (conservative)", () => {
+describe("given the demand-low/downtrend XLT entry rule (Scenario 1)", () => {
   // Wholesale curve for a demand zone in a downtrend: row p in the matrix.
   // Only needs 3:1. The trend scores 0 against a long, so the scorecard tops
   // out at 8 and this cell can only produce a confirmation entry.
-  const conservativeLong: TradeInputs = {
+  const scenario1Long: TradeInputs = {
     accountBalance: 2_500,
     riskTolerancePct: 0.02,
     targetBufferPct: 0.75,
@@ -394,7 +393,7 @@ describe("given the demand-low/downtrend XLT entry rule (conservative)", () => {
   };
 
   test("given a confirmation-band score: should still build the order, not reject it", () => {
-    const result = buildTrade(conservativeLong);
+    const result = buildTrade(scenario1Long);
 
     expect(result.scorecard.total).toBe(7);
     expect(result.entryType).toBe("confirmation");
@@ -404,13 +403,13 @@ describe("given the demand-low/downtrend XLT entry rule (conservative)", () => {
   });
 
   test("given a confirmation entry: should use the standard 10-cent offset, not enter at the proximal line", () => {
-    const result = buildTrade(conservativeLong);
+    const result = buildTrade(scenario1Long);
 
     expect(result.order?.entry).toBe(105.1);
   });
 
   test("given a qualifying score: should use the standard ATR-based stop", () => {
-    const result = buildTrade(conservativeLong);
+    const result = buildTrade(scenario1Long);
 
     expect(result.order?.stop).toBe(102.92);
     expect(result.math.stopBufferPct).toBe(2);
@@ -418,8 +417,8 @@ describe("given the demand-low/downtrend XLT entry rule (conservative)", () => {
   });
 });
 
-describe("given the demand-high/uptrend XLT entry rule", () => {
-  const aggressiveLong: TradeInputs = {
+describe("given the demand-high/uptrend XLT entry rule (Scenario 2)", () => {
+  const scenario2Long: TradeInputs = {
     accountBalance: 2_500,
     riskTolerancePct: 0.02,
     targetBufferPct: 0.75,
@@ -440,7 +439,7 @@ describe("given the demand-high/uptrend XLT entry rule", () => {
   };
 
   test("given a confirmation-band score: should build a standard confirmation order", () => {
-    const result = buildTrade(aggressiveLong);
+    const result = buildTrade(scenario2Long);
 
     expect(result.scorecard.total).toBe(7.5);
     expect(result.entryType).toBe("confirmation");
@@ -451,7 +450,7 @@ describe("given the demand-high/uptrend XLT entry rule", () => {
   });
 
   test("given an 8.5 score: should take the scorecard's proximal entry, not force confirmation", () => {
-    const result = buildTrade({ ...aggressiveLong, strength: 2 });
+    const result = buildTrade({ ...scenario2Long, strength: 2 });
 
     expect(result.scorecard.total).toBe(8.5);
     expect(result.entryType).toBe("proximal");

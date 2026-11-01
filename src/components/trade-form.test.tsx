@@ -51,6 +51,18 @@ const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   xltAcknowledgement: overrides.xltAcknowledgement ?? "",
 });
 
+// Every checkbox in the per-scenario XLT dialog.
+function xltChecklist() {
+  if (!screen.queryByRole("dialog")) {
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /review xlt checklist|xlt checklist complete/i,
+      }),
+    );
+  }
+  return within(screen.getByRole("dialog")).getAllByRole("checkbox");
+}
+
 // Renders the wizard parked on the Zones step, holding real form state so
 // edits flow through onChange the way they do in the app.
 function ZonesStep({ initial }: { initial: FormState }) {
@@ -349,7 +361,10 @@ describe("given the direction control on the Zones step", () => {
   test("switching direction should flip the entry/target sentence, not the geometry", async () => {
     const user = userEvent.setup();
     // Max judged ratings keep the short XLT entry (trend 0) at 8, above the 7 cutoff.
-    render(<ZonesStep initial={baseForm({ strength: "2", time: "1", freshness: "2" })} />); // long by default
+    render(<ZonesStep initial={baseForm({
+      strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />); // long by default
 
     // Long: enter demand, target supply.
     expect(
@@ -363,60 +378,176 @@ describe("given the direction control on the Zones step", () => {
       screen.getByText(/you enter at the supply zone/i),
     ).toBeInTheDocument();
 
-    // XLT acknowledgement belongs to Score, not Zones.
-    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
+    // The XLT checklist belongs to Score, not Zones.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /review xlt checklist · 0\/5$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 
   test("given an XLT matrix cell: should allow Zones to advance and require acknowledgement on Score", async () => {
     const user = userEvent.setup();
-    render(<ZonesStep initial={baseForm({ trend: "downtrend", strength: "2", time: "1", freshness: "2" })} />);
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend", strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />);
 
-    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^next$/i }));
     expect(screen.getByRole("heading", { name: "Score" })).toBeInTheDocument();
-    const acknowledgement = screen.getByRole("checkbox", {
-      name: /verified the xlt criteria/i,
-    });
+    xltChecklist();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /xlt long scenario 1/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
 
-    await user.click(acknowledgement);
-    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
-    await user.click(acknowledgement);
+    // Checking some, but not all, criteria keeps the trade blocked.
+    const reopenedForChecks = xltChecklist();
+    for (const criterion of reopenedForChecks.slice(0, -1)) await user.click(criterion);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
+    const reopenedChecklist = xltChecklist();
+    await user.click(reopenedChecklist[reopenedChecklist.length - 1]);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+    const checkedChecklist = xltChecklist();
+    await user.click(checkedChecklist[0]);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+    expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
+  });
+
+  test("should preserve checked items when the XLT checklist dialog closes and reopens", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend", strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+
+    const [firstCheck] = xltChecklist();
+    await user.click(firstCheck);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /review xlt checklist · 1\/5$/i })).toBeInTheDocument();
+
+    const [reopenedFirstCheck] = xltChecklist();
+    expect(reopenedFirstCheck).toBeChecked();
+  });
+
+  test("should keep scorecard requirements out of the manual XLT checklist", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend", strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+
+    const checklist = xltChecklist();
+    expect(checklist).toHaveLength(5);
+    expect(screen.queryByText(/strength:|freshness:|profit zone:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Strength must score 2\/2/)).not.toBeInTheDocument();
+  });
+
+  test("should notify and block when XLT strength or freshness misses its scorecard minimum", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend",
+      strength: "1",
+      time: "1",
+      freshness: "1",
+      opposingStrength: "2",
+      opposingTime: "1",
+      opposingFreshness: "2",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    for (const criterion of xltChecklist()) await user.click(criterion);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+
+    expect(screen.getByText("Strength must score 2/2 on the scorecard.")).toBeInTheDocument();
+    expect(screen.getByText("Freshness must score 2/2 on the scorecard.")).toBeInTheDocument();
+    expect(screen.queryByText(/opposing target zone.*at least 7/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /xlt score requirements not met/i })).toBeDisabled();
+  });
+
+  test("should leave target-zone quality to the user rather than gating on its score", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend",
+      strength: "2",
+      time: "1",
+      freshness: "2",
+      opposingStrength: "0",
+      opposingTime: "0",
+      opposingFreshness: "0",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    for (const criterion of xltChecklist()) await user.click(criterion);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+
+    expect(screen.queryByText(/opposing target zone.*at least 7/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
+  });
+
+  test("should notify and block when Scenario 2 profit zone is below 5:1", async () => {
+    const user = userEvent.setup();
+    render(<ZonesStep initial={baseForm({
+      trend: "uptrend",
+      curveHigh: "140",
+      demandHigh: "134",
+      demandLow: "132",
+      supplyHigh: "138",
+      supplyLow: "136",
+      strength: "2",
+      time: "1",
+      freshness: "2",
+      opposingStrength: "2",
+      opposingTime: "1",
+      opposingFreshness: "2",
+    })} />);
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    for (const criterion of xltChecklist()) await user.click(criterion);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
+
+    expect(screen.getByText(/Profit zone is 1\.00:1/)).toBeInTheDocument();
+    expect(screen.getByText(/this XLT scenario requires at least 5:1/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /xlt score requirements not met/i })).toBeDisabled();
   });
 
   test("given a non-XLT matrix cell: should not show an acknowledgement on Zones or Score", async () => {
     const user = userEvent.setup();
     render(<ZonesStep initial={baseForm()} />);
 
-    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("button", { name: /review xlt checklist/i })).toBeNull();
     expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
   });
 
   test("changing a zone-driving field should clear the XLT acknowledgement", async () => {
     const user = userEvent.setup();
-    render(<ZonesStep initial={baseForm({ trend: "downtrend", strength: "2", time: "1", freshness: "2" })} />);
+    render(<ZonesStep initial={baseForm({
+      trend: "downtrend", strength: "2", time: "1", freshness: "2",
+      opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
+    })} />);
 
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    const acknowledgement = screen.getByRole("checkbox", {
-      name: /verified the xlt criteria/i,
-    });
-    await user.click(acknowledgement);
-    expect(acknowledgement).toBeChecked();
+    for (const criterion of xltChecklist()) {
+      await user.click(criterion);
+      expect(criterion).toBeChecked();
+    }
 
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     await user.click(screen.getByRole("button", { name: /^back$/i }));
     const supply = screen.getByLabelText("Supply distal ($)");
     await user.clear(supply);
     await user.type(supply, "128");
 
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeChecked();
+    for (const criterion of xltChecklist()) expect(criterion).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 });
@@ -424,19 +555,15 @@ describe("given the direction control on the Zones step", () => {
 describe("given the odds-enhancer controls on the Score step", () => {
   test("an entry zone scoring below 7 blocks continuing until it is re-scored", async () => {
     const user = userEvent.setup();
-    // Long in a downtrend: trend 0 + curve 1 + profit zone 2 + 1/0.5/1 = 5.5.
-    render(<ZonesStep initial={baseForm({ trend: "downtrend" })} />);
+    // Long sideways in wholesale: trend 1 + curve 1 + profit zone 2 + 1/0.5/1 = 6.5.
+    render(<ZonesStep initial={baseForm({ trend: "sideways" })} />);
     await user.click(screen.getByRole("button", { name: /^next$/i }));
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent("Unqualified Entry Zone");
     expect(alert).toHaveTextContent(/no action on a score below 7 \(70%\)\. Choose and score a different entry zone to continue\./);
     expect(screen.getByRole("button", { name: "Score below 7" })).toBeDisabled();
 
-    // XLT verification alone doesn't unlock a low score.
-    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
-    expect(screen.getByRole("button", { name: "Score below 7" })).toBeDisabled();
-
-    // Raising Strength to 2 and Freshness to 2 brings the total to 7.5.
+    // Raising Strength and Freshness to 2 brings the total above 7.
     const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
     for (const [factor, choice] of [["Strength", "Best strength, 2 points"], ["Freshness", "Best freshness, 2 points"]]) {
       await user.click(entry.getByRole("button", { name: factor }));
@@ -477,16 +604,18 @@ describe("given the odds-enhancer controls on the Score step", () => {
       opposingStrength: "2", opposingTime: "1", opposingFreshness: "2",
     })} />);
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    await user.click(screen.getByRole("checkbox", { name: /verified the xlt criteria/i }));
+    for (const criterion of xltChecklist()) await user.click(criterion);
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     const entry = within(screen.getByRole("region", { name: "Entry zone scorecard" }));
     await user.click(entry.getByRole("button", { name: "Strength" }));
     expect(screen.getByRole("img", { name: /Strength reference/ })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Switch to sell short" }));
     expect(screen.queryByRole("img", { name: /Strength reference/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /see my trade/i })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "Switch to buy long" }));
-    expect(screen.getByRole("checkbox", { name: /verified the xlt criteria/i })).not.toBeChecked();
+    for (const criterion of xltChecklist()) expect(criterion).not.toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Close XLT checklist" }));
     expect(screen.getByRole("button", { name: /confirm xlt criteria/i })).toBeDisabled();
   });
 

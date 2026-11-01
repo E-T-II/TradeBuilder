@@ -1,4 +1,5 @@
 import type { FormState, TradeLogEntry } from "@/components/trade-builder-app";
+import { EXECUTION_FIELDS } from "@/lib/trade-tax-report";
 
 export const FORM_STORAGE_KEY = "tradebuilder-form-v3";
 export const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
@@ -103,6 +104,7 @@ function isTradeLogEntry(value: unknown): value is TradeLogEntry {
     value.score <= 10 &&
     isOutcomeField(value.exitPrice, false) &&
     isOutcomeField(value.fees, true) &&
+    EXECUTION_FIELDS.every((field) => value[field] === undefined || typeof value[field] === "string") &&
     (value.form === undefined || isForm(value.form, true))
   );
 }

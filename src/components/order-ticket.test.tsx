@@ -273,7 +273,7 @@ describe("given OrderTicket", () => {
     expect(screen.getByText("10%")).toBeInTheDocument();
   });
 
-  test("given an aggressive short XLT setup scoring 8.5: should show the scorecard's proximal limit order and ATR stop", () => {
+  test("given a Scenario 2 short XLT setup scoring 8.5: should show the scorecard's proximal limit order and ATR stop", () => {
     const result = buildTrade({
       accountBalance: 2500,
       riskTolerancePct: 0.02,
@@ -301,7 +301,7 @@ describe("given OrderTicket", () => {
     expect(screen.queryByText("Fixed (XLT)")).not.toBeInTheDocument();
   });
 
-  test("given an aggressive short XLT setup scoring 7.5: should show a standard confirmation order", () => {
+  test("given a Scenario 2 short XLT setup scoring 7.5: should show a standard confirmation order", () => {
     const result = buildTrade({ ...{
       accountBalance: 2500,
       riskTolerancePct: 0.02,

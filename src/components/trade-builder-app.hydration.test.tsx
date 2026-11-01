@@ -17,7 +17,7 @@
 
 // @vitest-environment jsdom
 import { afterEach, expect, test, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { TradeBuilderApp, normalizeForm, toInputs, tradeLogTsv } from "@/components/trade-builder-app";
@@ -335,15 +335,25 @@ test("recording a closed trade outcome: updates performance and persists the clo
   await user.click(screen.getByRole("radio", { name: "Closed" }));
   await user.type(screen.getByRole("spinbutton", { name: "Exit price for NVDA" }), "110");
   await user.type(screen.getByRole("spinbutton", { name: "Fees for NVDA" }), "2");
+  await user.type(screen.getByLabelText("Actual opening price ($) for NVDA"), "108.5");
+  await user.type(screen.getByLabelText("Actual shares for NVDA"), "10");
+  fireEvent.change(screen.getByLabelText("Actual opening date for NVDA"), { target: { value: "2026-09-07" } });
+  fireEvent.change(screen.getByLabelText("Actual closing date for NVDA"), { target: { value: "2026-09-08" } });
 
-  expect(screen.getByText("Completed outcomes")).toBeInTheDocument();
-  expect(screen.getAllByText("+$18.00")).toHaveLength(3);
+  expect(screen.getByText("Completed trades")).toBeInTheDocument();
+  expect(screen.getAllByText("+$18.00")).toHaveLength(2);
   expect(screen.queryByText(/Average R|Actual R/)).not.toBeInTheDocument();
-  expect(screen.getByText("Proximal · Uptrend · 8.5–10")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "Setup" })).not.toBeInTheDocument();
+  expect(screen.queryByText("Proximal · Uptrend · 8.5–10")).not.toBeInTheDocument();
+  expect(screen.getByText("Ave P&L ratio").nextElementSibling).toHaveTextContent("No losing trades yet");
   expect(JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0]).toMatchObject({
     isOpen: false,
     exitPrice: "110",
     fees: "2",
+    actualEntryPrice: "108.5",
+    actualQuantity: "10",
+    openedOn: "2026-09-07",
+    closedOn: "2026-09-08",
   });
 
   unmount();
@@ -354,6 +364,85 @@ test("recording a closed trade outcome: updates performance and persists the clo
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   expect(screen.getByRole("spinbutton", { name: "Exit price for NVDA" })).toHaveValue(110);
   expect(screen.getByRole("spinbutton", { name: "Fees for NVDA" })).toHaveValue(2);
+  expect(screen.getByLabelText("Actual opening price ($) for NVDA")).toHaveValue(108.5);
+  expect(screen.getByLabelText("Actual shares for NVDA")).toHaveValue(10);
+  expect(screen.getByLabelText("Actual opening date for NVDA")).toHaveValue("2026-09-07");
+  expect(screen.getByLabelText("Actual closing date for NVDA")).toHaveValue("2026-09-08");
+});
+
+test("shows the average winning trade against the average losing trade", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  // Wins: +$40 and +$20 (average $30). Losses: -$10 and -$5 (average $7.50). Ratio 4:1.
+  window.localStorage.setItem(
+    TRADE_LOG_KEY,
+    JSON.stringify([
+      {
+        id: "entry-1", createdAt: "2026-09-01T12:00:00.000Z", ticker: "NVDA", direction: "long",
+        entry: 108, stop: 106, target: 120, positionSize: 10, capitalRequirement: 1080,
+        totalTradeRisk: 20, rewardRisk: 6, score: 8.5, isOpen: false, exitPrice: "112", fees: "0",
+        form: { ...savedForm },
+      },
+      {
+        id: "entry-2", createdAt: "2026-09-02T12:00:00.000Z", ticker: "NVDA", direction: "long",
+        entry: 108, stop: 106, target: 120, positionSize: 10, capitalRequirement: 1080,
+        totalTradeRisk: 20, rewardRisk: 6, score: 8.5, isOpen: false, exitPrice: "110", fees: "0",
+        form: { ...savedForm },
+      },
+      {
+        id: "entry-3", createdAt: "2026-09-03T12:00:00.000Z", ticker: "NVDA", direction: "long",
+        entry: 108, stop: 106, target: 120, positionSize: 10, capitalRequirement: 1080,
+        totalTradeRisk: 20, rewardRisk: 6, score: 8.5, isOpen: false, exitPrice: "107", fees: "0",
+        form: { ...savedForm },
+      },
+      {
+        id: "entry-4", createdAt: "2026-09-04T12:00:00.000Z", ticker: "NVDA", direction: "long",
+        entry: 108, stop: 106, target: 120, positionSize: 10, capitalRequirement: 1080,
+        totalTradeRisk: 20, rewardRisk: 6, score: 8.5, isOpen: false, exitPrice: "107.5", fees: "0",
+        form: { ...savedForm },
+      },
+    ]),
+  );
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+
+  expect(screen.getByText("Ave P&L ratio").nextElementSibling).toHaveTextContent("4.00:1");
+});
+
+test("execution changes report storage failures and preserve the previous saved log", async () => {
+  const entry = {
+    id: "save-test", createdAt: "2026-09-07T12:00:00.000Z", ticker: "NVDA", direction: "long",
+    entry: 108, stop: 106, target: 120, positionSize: 10, capitalRequirement: 1080,
+    totalTradeRisk: 20, rewardRisk: 6, score: 9, isOpen: false, exitPrice: "110", fees: "2",
+    form: { ...savedForm },
+  };
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  window.localStorage.setItem(TRADE_LOG_KEY, JSON.stringify([entry]));
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+  }
+  await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  const originalSet = window.localStorage.setItem.bind(window.localStorage);
+  const setItem = vi.spyOn(window.localStorage, "setItem").mockImplementation((key, value) => {
+    if (key === TRADE_LOG_KEY) throw new Error("Storage full");
+    originalSet(key, value);
+  });
+  try {
+    fireEvent.change(screen.getByLabelText("Actual shares for NVDA"), { target: { value: "12" } });
+    expect(screen.getByText(/Trade log changes could not be saved/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Actual shares for NVDA")).toHaveValue(null);
+    expect(JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)).toEqual([entry]);
+  } finally {
+    setItem.mockRestore();
+  }
+  fireEvent.change(screen.getByLabelText("Actual shares for NVDA"), { target: { value: "12" } });
+  expect(screen.queryByText(/Trade log changes could not be saved/)).not.toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0].actualQuantity).toBe("12");
 });
 
 test("restoring a backup replaces the form and log, preserves imported risk, and survives reload", async () => {

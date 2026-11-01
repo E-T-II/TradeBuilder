@@ -32,6 +32,10 @@ const entry: TradeLogEntry = {
   isOpen: false,
   exitPrice: "110",
   fees: "2",
+  openedOn: "2026-10-21",
+  closedOn: "2026-10-22",
+  actualEntryPrice: "108.5",
+  actualQuantity: "10.5",
   form: { ticker: "NVDA", strength: "2", opposingFreshness: "1" },
 };
 
@@ -61,6 +65,20 @@ describe("backup validation", () => {
     expect(parseTradeBackup(createTradeBackup(draft, [])).tradeLog).toEqual([]);
   });
 
+  test("preserves unfinished execution fields so drafts can be backed up", () => {
+    const draft = { ...entry, openedOn: "", actualEntryPrice: "." };
+    expect(parseTradeBackup(createTradeBackup(form, [draft])).tradeLog).toEqual([draft]);
+  });
+
+  test("still accepts older records without actual execution fields", () => {
+    const legacy = { ...entry };
+    delete legacy.openedOn;
+    delete legacy.closedOn;
+    delete legacy.actualEntryPrice;
+    delete legacy.actualQuantity;
+    expect(parseTradeBackup(createTradeBackup(form, [legacy])).tradeLog).toEqual([legacy]);
+  });
+
   test.each([
     ["not JSON", /valid JSON/],
     ['{"format":"other"}', /not a Trade Builder backup/],
@@ -77,6 +95,8 @@ describe("backup validation", () => {
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, exitPrice: "invalid" }] }), /Trade 1/],
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, form: { trend: "invalid" } }] }), /Trade 1/],
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, isOpen: "false" }] }), /Trade 1/],
+    [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, actualQuantity: 3 }] }), /Trade 1/],
+    [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, closedOn: {} }] }), /Trade 1/],
   ])("rejects malformed backup without accepting partial data (%s)", (text, message) => {
     expect(() => parseTradeBackup(text)).toThrow(message);
   });

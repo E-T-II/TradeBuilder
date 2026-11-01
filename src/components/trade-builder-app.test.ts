@@ -19,6 +19,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 
 import {
+  averageProfitLossRatio,
   hasNonPositiveAtr,
   hasNonPositiveBalance,
   hasNonPositiveRisk,
@@ -27,7 +28,6 @@ import {
   normalizeForm,
   realizedOutcome,
   snapStep,
-  summarizeTradeOutcomes,
   toInputs,
   tradeLogTsv,
   type FormState,
@@ -118,6 +118,10 @@ describe("given tradeLogTsv", () => {
       "Exit price",
       "Fees",
       "Realized P&L",
+      "Actual opening date",
+      "Actual closing date",
+      "Actual opening price",
+      "Actual shares",
     ]);
     const cells = values.split("\t");
     expect(cells[1]).toBe("NVDA");
@@ -137,12 +141,22 @@ describe("given tradeLogTsv", () => {
     ]).split("\n");
     const cells = values.split("\t");
 
-    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00"]);
+    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00", "", "", "", ""]);
+  });
+
+  test("appends actual execution fields without replacing planned values", () => {
+    const [, values] = tradeLogTsv([{
+      ...entry, openedOn: "2026-09-01", closedOn: "2026-09-03",
+      actualEntryPrice: "108.25", actualQuantity: "10.5",
+    }]).split("\n");
+    const cells = values.split("\t");
+    expect(cells[3]).toBe("$108.00");
+    expect(cells.slice(15)).toEqual(["2026-09-01", "2026-09-03", "108.25", "10.5"]);
   });
 
   test("given no logged trades: should copy only the header row", () => {
     expect(tradeLogTsv([])).toBe(
-      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L",
+      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L\tActual opening date\tActual closing date\tActual opening price\tActual shares",
     );
   });
 });
@@ -185,38 +199,23 @@ describe("given realizedOutcome", () => {
     expect(realizedOutcome({ ...entry, exitPrice: "108" })).toBe(0);
   });
 
-  test("given closed trades: should summarize by entry type, trend, and score range", () => {
-    const outcomes = summarizeTradeOutcomes([
-      {
-        ...entry,
-        exitPrice: "110",
-        fees: "2",
-        form: { trend: "uptrend" },
-      },
-      {
-        ...entry,
-        id: "entry-2",
-        exitPrice: "106",
-        score: 7.5,
-        form: { trend: "uptrend" },
-      },
-      { ...entry, id: "open", isOpen: true, exitPrice: "110" },
-    ]);
+});
 
-    expect(outcomes).toEqual([
-      {
-        label: "Confirmation · Uptrend · 7–8",
-        trades: 1,
-        winRate: 0,
-        netPnl: -22,
-      },
-      {
-        label: "Proximal · Uptrend · 8.5–10",
-        trades: 1,
-        winRate: 100,
-        netPnl: 20,
-      },
-    ]);
+describe("given averageProfitLossRatio", () => {
+  test("divides the average win by the average loss, ignoring breakeven trades", () => {
+    // Wins average 300, losses average 100.
+    expect(averageProfitLossRatio([200, 400, -50, -150, 0])).toBe(3);
+    expect(averageProfitLossRatio([150, -100])).toBe(1.5);
+  });
+
+  test("matches the worked example: $87.39 ÷ 3 = $29.13, ÷ $12.15 = 2.40:1", () => {
+    expect(averageProfitLossRatio([40.12, 25.06, 22.21, -12.15])!.toFixed(2)).toBe("2.40");
+  });
+
+  test("is 0 with losses but no wins, and null without any losses", () => {
+    expect(averageProfitLossRatio([-20, -40])).toBe(0);
+    expect(averageProfitLossRatio([50, 0])).toBeNull();
+    expect(averageProfitLossRatio([])).toBeNull();
   });
 });
 

@@ -21,10 +21,10 @@ import { Printer } from "lucide-react";
 import type { ReactNode } from "react";
 import type { FormState } from "@/components/trade-builder-app";
 import {
-  isXltMatrixCell,
   type TradeInputs,
   type TradeResult,
 } from "@/lib/trade-builder";
+import { isXltVerified, xltScenario } from "@/lib/xlt-criteria";
 import { Button } from "@/components/ui/button";
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -120,7 +120,7 @@ export function TradePlanExport({
   const zoneKey = inputs.direction === "long" ? "demand" : "supply";
   const zoneType = zoneKey === "demand" ? "Demand" : "Supply";
   const targetZoneType = inputs.direction === "long" ? "Supply" : "Demand";
-  const isXlt = isXltMatrixCell(
+  const xlt = xltScenario(
     zoneKey,
     result.scorecard.curveZone,
     inputs.trend,
@@ -132,7 +132,10 @@ export function TradePlanExport({
       <Button
         variant="outline"
         className="w-full sm:w-auto"
-        onClick={() => window.print()}
+        onClick={() => {
+          delete document.body.dataset.printReport;
+          window.print();
+        }}
       >
         <Printer aria-hidden />
         Print / save plan
@@ -164,7 +167,7 @@ export function TradePlanExport({
               <PlanRow label={`${zoneType} zone (proximal / distal)`} value={`${usd.format(inputs.entryProximal)} / ${usd.format(inputs.entryDistal)}`} />
               <PlanRow label={`${targetZoneType} zone (proximal / distal)`} value={`${usd.format(inputs.targetProximal)} / ${usd.format(inputs.targetDistal)}`} />
               <PlanRow label="Target method" value={`${inputs.targetMode} · ${bufferDescription(result)}`} />
-              <PlanRow label="XLT chart criteria" value={!isXlt ? "Not applicable" : form.xltAcknowledgement === xltCellKey ? "Acknowledged" : "Not acknowledged"} />
+              <PlanRow label="XLT chart checks" value={!xlt ? "Not applicable" : isXltVerified(form.xltAcknowledgement, xltCellKey, xlt.items.length) ? `${xlt.title} — verified` : "Not verified"} />
             </Section>
 
             <Section title="Matrix verdict">

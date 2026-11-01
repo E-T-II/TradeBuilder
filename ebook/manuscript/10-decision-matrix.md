@@ -37,6 +37,10 @@ and **the trend**.
       matrix's only job is to veto that aim.
 - [ ] The four kinds of cell: unconditional trade, conditional on 3:1,
       conditional on 5:1, and outright no trade.
+- [ ] The four conditional cells are the **XLT cells**, paired into two
+      scenarios: Scenario 1, a counter-trend reversal (c and p, 3:1), and
+      Scenario 2, aggressive trend continuation at the curve extreme (m and f,
+      5:1). Forward-reference the XLT Criteria chapter.
 - [ ] Why the conditional cells exist — they are trading from the wrong end of
       the curve, or against the trend, and need extra room to justify the risk.
 - [ ] Walk at least four cells in prose, including one of each kind.
