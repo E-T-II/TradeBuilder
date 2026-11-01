@@ -39,6 +39,7 @@ export function TradeExecutionFields({
               type={type}
               min={type === "number" ? "0" : undefined}
               step={type === "number" ? "any" : undefined}
+              className={type === "date" ? "dark:[color-scheme:light]" : undefined}
               value={entry[field] ?? ""}
               onChange={(event) => onChange(entry.id, field, event.target.value)}
             />

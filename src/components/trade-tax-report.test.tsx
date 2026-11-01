@@ -60,6 +60,9 @@ test("execution fields report changes without filling in planned prices or dates
   const onChange = vi.fn();
   render(<TradeExecutionFields entry={{ ...entry, actualEntryPrice: undefined }} onChange={onChange} />);
   expect(screen.getByLabelText("Actual opening price ($) for TEST")).toHaveValue(null);
+  expect(screen.getByLabelText("Actual opening date for TEST")).toHaveClass("dark:[color-scheme:light]");
+  expect(screen.getByLabelText("Actual closing date for TEST")).toHaveClass("dark:[color-scheme:light]");
+  expect(screen.getByLabelText("Actual opening price ($) for TEST")).not.toHaveClass("dark:[color-scheme:light]");
   fireEvent.change(screen.getByLabelText("Actual opening date for TEST"), { target: { value: "2025-12-29" } });
   expect(onChange).toHaveBeenCalledWith("one", "openedOn", "2025-12-29");
 });
