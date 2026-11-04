@@ -104,6 +104,7 @@ function isTradeLogEntry(value: unknown): value is TradeLogEntry {
     value.score <= 10 &&
     isOutcomeField(value.exitPrice, false) &&
     isOutcomeField(value.fees, true) &&
+    (value.notes === undefined || typeof value.notes === "string") &&
     EXECUTION_FIELDS.every((field) => value[field] === undefined || typeof value[field] === "string") &&
     (value.form === undefined || isForm(value.form, true))
   );

@@ -37,12 +37,18 @@ test("prints only the selected closing year and resets the print target afterwar
   expect(within(report).queryByText("TEST")).not.toBeInTheDocument();
 });
 
-test("blocks incomplete or empty reports and explains why", async () => {
+test("allows printing incomplete or empty reports and explains what is excluded", async () => {
+  const user = userEvent.setup();
+  const print = vi.spyOn(window, "print").mockImplementation(() => {});
   const { rerender } = render(<TradeTaxReport entries={[{ ...entry, closedOn: "" }]} />);
-  expect(screen.getByRole("button", { name: /Print trade log/ })).toBeDisabled();
-  expect(screen.getByRole("status")).toHaveTextContent("valid actual closing date");
+  expect(screen.getByRole("button", { name: /Print trade log/ })).toBeEnabled();
+  expect(screen.getByRole("status")).toHaveTextContent("excluded from the tax report");
+  await user.click(screen.getByRole("button", { name: /Print trade log/ }));
+  expect(print).toHaveBeenCalledOnce();
+  expect(within(screen.getByRole("article", { name: "Printable trade log" })).getByText(/No complete closed trade records/)).toBeInTheDocument();
+
   rerender(<TradeTaxReport entries={[]} />);
-  expect(screen.getByRole("button", { name: /Print trade log/ })).toBeDisabled();
+  expect(screen.getByRole("button", { name: /Print trade log/ })).toBeEnabled();
   expect(screen.getByText(/No closed trades to print/)).toBeInTheDocument();
 });
 
@@ -59,10 +65,18 @@ test("reports print failure without leaving the log print target active", async 
 test("execution fields report changes without filling in planned prices or dates", () => {
   const onChange = vi.fn();
   render(<TradeExecutionFields entry={{ ...entry, actualEntryPrice: undefined }} onChange={onChange} />);
+  const today = new Date();
+  const maxDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
   expect(screen.getByLabelText("Actual opening price ($) for TEST")).toHaveValue(null);
-  expect(screen.getByLabelText("Actual opening date for TEST")).toHaveClass("dark:[color-scheme:light]");
-  expect(screen.getByLabelText("Actual closing date for TEST")).toHaveClass("dark:[color-scheme:light]");
-  expect(screen.getByLabelText("Actual opening price ($) for TEST")).not.toHaveClass("dark:[color-scheme:light]");
+  expect(screen.getByLabelText("Actual opening date for TEST")).toHaveClass("dark:scheme:light");
+  expect(screen.getByLabelText("Actual closing date for TEST")).toHaveClass("dark:scheme:light");
+  expect(screen.getByLabelText("Actual opening date for TEST")).toHaveAttribute("max", maxDate);
+  expect(screen.getByLabelText("Actual closing date for TEST")).toHaveAttribute("max", maxDate);
+  expect(screen.getByLabelText("Actual opening price ($) for TEST")).not.toHaveClass("dark:scheme:light");
   fireEvent.change(screen.getByLabelText("Actual opening date for TEST"), { target: { value: "2025-12-29" } });
   expect(onChange).toHaveBeenCalledWith("one", "openedOn", "2025-12-29");
 });

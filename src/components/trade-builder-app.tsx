@@ -18,7 +18,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, Check, ChevronDown, ChevronUp, Copy, NotebookPen, RotateCcw, Trash2, Upload } from "lucide-react";
+import { Dialog } from "@base-ui/react/dialog";
+import { Blocks, Check, ChevronDown, ChevronUp, Copy, NotebookPen, RotateCcw, Trash2, Upload, X } from "lucide-react";
 import {
   buildTrade,
   deriveZoneLines,
@@ -149,6 +150,8 @@ export interface TradeLogEntry extends ExecutionDetails {
   exitPrice?: string;
   /** Total fees for the completed trade. Blank or absent means no fees recorded. */
   fees?: string;
+  /** Trader's notes for this setup or its outcome. */
+  notes?: string;
   /** The builder inputs that produced this entry, so it can be reloaded later. Absent on pre-v2 saves. */
   form?: Partial<FormState>;
 }
@@ -185,6 +188,7 @@ export function loadTradeLog(): TradeLogEntry[] {
       const cleanCandidate = { ...candidate };
       delete cleanCandidate.exitPrice;
       delete cleanCandidate.fees;
+      if (typeof cleanCandidate.notes !== "string") delete cleanCandidate.notes;
       for (const field of EXECUTION_FIELDS) {
         if (typeof cleanCandidate[field] !== "string") delete cleanCandidate[field];
       }
@@ -409,6 +413,7 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
     "Actual closing date",
     "Actual opening price",
     "Actual shares",
+    "Notes",
   ];
   const rows = entries.map((entry) => {
     const outcome = realizedOutcome(entry);
@@ -444,6 +449,7 @@ export function tradeLogTsv(entries: TradeLogEntry[]): string {
       entry.closedOn ?? "",
       entry.actualEntryPrice ?? "",
       entry.actualQuantity ?? "",
+      entry.notes ?? "",
     ].join("\t");
   });
   return [headers.join("\t"), ...rows].join("\n");
@@ -501,6 +507,7 @@ export function TradeBuilderApp() {
   const [logSaveError, setLogSaveError] = useState("");
   const [showTradeLog, setShowTradeLog] = useState(true);
   const [autoOpenTradeRisk, setAutoOpenTradeRisk] = useState(false);
+  const [openTradeDetailsId, setOpenTradeDetailsId] = useState<string | null>(null);
 
   const firstPersist = useRef(true);
 
@@ -603,7 +610,7 @@ export function TradeBuilderApp() {
 
   const updateLogOutcome = (
     id: string,
-    field: "exitPrice" | "fees" | ExecutionField,
+    field: "exitPrice" | "fees" | "notes" | ExecutionField,
     value: string,
   ) => {
     persistTradeLog(tradeLog.map((entry) =>
@@ -826,20 +833,20 @@ export function TradeBuilderApp() {
                                   <p className="font-mono tabular-nums">{completedOutcomes.length}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Net P&amp;L</p>
-                                  <p className="font-mono tabular-nums">{formatSignedUsd(totalRealizedPnl)}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Win rate</p>
-                                  <p className="font-mono tabular-nums">{exportRatio.format(winRate)}%</p>
-                                </div>
-                                <div>
                                   <p className="text-xs text-muted-foreground">Ave P&amp;L ratio</p>
                                   {profitLossRatio === null ? (
                                     <p className="text-sm text-muted-foreground">No losing trades yet</p>
                                   ) : (
                                     <p className="font-mono tabular-nums">{profitLossRatio.toFixed(2)}:1</p>
                                   )}
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Win rate</p>
+                                  <p className="font-mono tabular-nums">{exportRatio.format(winRate)}%</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Net P&amp;L</p>
+                                  <p className="font-mono tabular-nums">{formatSignedUsd(totalRealizedPnl)}</p>
                                 </div>
                               </div>
                             </>
@@ -853,7 +860,7 @@ export function TradeBuilderApp() {
                           <p className="text-sm text-muted-foreground">No trades logged yet.</p>
                         ) : (
                           <div className="divide-y">
-                            {tradeLog.map((entry) => {
+                            {tradeLog.map((entry, index) => {
                               const outcome = realizedOutcome(entry);
                               const exitValue = entry.exitPrice ?? "";
                               const feesValue = entry.fees ?? "";
@@ -866,18 +873,136 @@ export function TradeBuilderApp() {
                               return (
                                 <div key={entry.id} className="py-3 text-sm">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <p className="font-medium">
-                                        {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
-                                      </p>
-                                      <p className="font-mono text-xs tabular-nums text-muted-foreground">
-                                        Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {new Date(entry.createdAt).toLocaleString()} | Score {entry.score} / 10 | {exportRatio.format(entry.rewardRisk)}:1
-                                      </p>
+                                    <div className="min-w-0 flex-1">
+                                      <Dialog.Root
+                                        open={openTradeDetailsId === entry.id}
+                                        onOpenChange={(open) => {
+                                          setOpenTradeDetailsId(open ? entry.id : null);
+                                        }}
+                                      >
+                                        <Dialog.Trigger
+                                          render={
+                                            <button
+                                              type="button"
+                                              className="w-full cursor-pointer rounded-md text-left outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                                            />
+                                          }
+                                        >
+                                          <span className="flex items-center justify-between gap-3">
+                                            <span className="font-medium">
+                                              {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
+                                            </span>
+                                          </span>
+                                          <span className="block font-mono text-xs tabular-nums text-muted-foreground">
+                                            Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
+                                          </span>
+                                          <span className="block text-xs text-muted-foreground">
+                                            {new Date(entry.createdAt).toLocaleString()} | O.E. Score {entry.score} / 10 | <span className="whitespace-nowrap">Reward:Risk {exportRatio.format(entry.rewardRisk)}:1</span>
+                                          </span>
+                                        </Dialog.Trigger>
+                                        <Dialog.Portal>
+                                          <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/50" />
+                                          <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(36rem,96vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none">
+                                            <div className="mb-3 flex items-start justify-between gap-4">
+                                              <div className="space-y-1">
+                                                <Dialog.Title className="font-medium">
+                                                  {entry.ticker} trade details
+                                                </Dialog.Title>
+                                                <Dialog.Description className="text-sm text-muted-foreground">
+                                                  {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares · Entry {exportUsd.format(entry.entry)} · Stop {exportUsd.format(entry.stop)} · Target {exportUsd.format(entry.target)} · <span className="whitespace-nowrap">Reward:Risk {exportRatio.format(entry.rewardRisk)}:1</span>
+                                                </Dialog.Description>
+                                              </div>
+                                              <Dialog.Close
+                                                render={<Button variant="ghost" size="icon-sm" aria-label={`Close ${entry.ticker} trade details`} />}
+                                              >
+                                                <X aria-hidden />
+                                              </Dialog.Close>
+                                            </div>
+                                            <div className="space-y-4">
+                                              {!entry.isOpen ? (
+                                                <>
+                                                  <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                                                    <label className="space-y-1">
+                                                      <span className="text-xs font-medium">Exit price ($)</span>
+                                                      <Input
+                                                        aria-label={`Exit price for ${entry.ticker}`}
+                                                        aria-invalid={invalidExitPrice || undefined}
+                                                        type="number"
+                                                        min="0"
+                                                        step="any"
+                                                        inputMode="decimal"
+                                                        value={exitValue}
+                                                        onChange={(event) =>
+                                                          updateLogOutcome(entry.id, "exitPrice", event.target.value)
+                                                        }
+                                                      />
+                                                      {invalidExitPrice ? (
+                                                        <span className="block text-xs text-destructive">
+                                                          Enter a closing price above zero.
+                                                        </span>
+                                                      ) : null}
+                                                    </label>
+                                                    <label className="space-y-1">
+                                                      <span className="text-xs font-medium">Fees ($, optional)</span>
+                                                      <Input
+                                                        aria-label={`Fees for ${entry.ticker}`}
+                                                        aria-invalid={invalidFees || undefined}
+                                                        type="number"
+                                                        min="0"
+                                                        step="any"
+                                                        inputMode="decimal"
+                                                        value={feesValue}
+                                                        onChange={(event) =>
+                                                          updateLogOutcome(entry.id, "fees", event.target.value)
+                                                        }
+                                                      />
+                                                      {invalidFees ? (
+                                                        <span className="block text-xs text-destructive">
+                                                          Fees must be zero or more.
+                                                        </span>
+                                                      ) : null}
+                                                    </label>
+                                                    <div aria-live="polite" className="pb-2 text-xs">
+                                                      {outcome !== null ? (
+                                                        <span>
+                                                          Net P&amp;L <strong>{formatSignedUsd(outcome)}</strong>
+                                                        </span>
+                                                      ) : (
+                                                        <span className="text-muted-foreground">
+                                                          Enter an exit price to calculate net P&amp;L.
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <details
+                                                    key={openTradeDetailsId}
+                                                    className="rounded-md border p-3"
+                                                  >
+                                                    <summary className="cursor-pointer text-xs font-medium">
+                                                      Advanced details
+                                                    </summary>
+                                                    <div className="mt-3">
+                                                      <TradeExecutionFields entry={entry} onChange={updateLogOutcome} />
+                                                    </div>
+                                                  </details>
+                                                </>
+                                              ) : null}
+                                              <label className="block space-y-1">
+                                                <span className="text-sm font-medium">Notes</span>
+                                                <textarea
+                                                  aria-label={`Notes for ${entry.ticker}`}
+                                                  className="min-h-28 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                                                  placeholder="Add notes about this trade..."
+                                                  value={entry.notes ?? ""}
+                                                  onChange={(event) => updateLogOutcome(entry.id, "notes", event.target.value)}
+                                                />
+                                              </label>
+                                            </div>
+                                          </Dialog.Popup>
+                                        </Dialog.Portal>
+                                      </Dialog.Root>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1">
                                       <div
                                         role="radiogroup"
                                         aria-label={`${entry.ticker} trade status`}
@@ -919,66 +1044,13 @@ export function TradeBuilderApp() {
                                       >
                                         <Trash2 aria-hidden />
                                       </Button>
+                                      {index === 0 ? (
+                                        <p className="col-span-3 text-xs text-primary">
+                                          Click to edit trade details and notes
+                                        </p>
+                                      ) : null}
                                     </div>
                                   </div>
-                                  {!entry.isOpen ? (
-                                    <TradeExecutionFields entry={entry} onChange={updateLogOutcome} />
-                                  ) : null}
-                                  {!entry.isOpen ? (
-                                    <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                                      <label className="space-y-1">
-                                        <span className="text-xs font-medium">Exit price ($)</span>
-                                        <Input
-                                          aria-label={`Exit price for ${entry.ticker}`}
-                                          aria-invalid={invalidExitPrice || undefined}
-                                          type="number"
-                                          min="0"
-                                          step="any"
-                                          inputMode="decimal"
-                                          value={exitValue}
-                                          onChange={(event) =>
-                                            updateLogOutcome(entry.id, "exitPrice", event.target.value)
-                                          }
-                                        />
-                                        {invalidExitPrice ? (
-                                          <span className="block text-xs text-destructive">
-                                            Enter a closing price above zero.
-                                          </span>
-                                        ) : null}
-                                      </label>
-                                      <label className="space-y-1">
-                                        <span className="text-xs font-medium">Fees ($, optional)</span>
-                                        <Input
-                                          aria-label={`Fees for ${entry.ticker}`}
-                                          aria-invalid={invalidFees || undefined}
-                                          type="number"
-                                          min="0"
-                                          step="any"
-                                          inputMode="decimal"
-                                          value={feesValue}
-                                          onChange={(event) =>
-                                            updateLogOutcome(entry.id, "fees", event.target.value)
-                                          }
-                                        />
-                                        {invalidFees ? (
-                                          <span className="block text-xs text-destructive">
-                                            Fees must be zero or more.
-                                          </span>
-                                        ) : null}
-                                      </label>
-                                      <div aria-live="polite" className="pb-2 text-xs">
-                                        {outcome !== null ? (
-                                          <span>
-                                            Net P&amp;L <strong>{formatSignedUsd(outcome)}</strong>
-                                          </span>
-                                        ) : (
-                                          <span className="text-muted-foreground">
-                                            Enter an exit price to calculate net P&amp;L.
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : null}
                                 </div>
                               );
                             })}

@@ -36,6 +36,7 @@ const entry: TradeLogEntry = {
   closedOn: "2026-10-22",
   actualEntryPrice: "108.5",
   actualQuantity: "10.5",
+  notes: "Waited for confirmation",
   form: { ticker: "NVDA", strength: "2", opposingFreshness: "1" },
 };
 
@@ -97,6 +98,7 @@ describe("backup validation", () => {
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, isOpen: "false" }] }), /Trade 1/],
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, actualQuantity: 3 }] }), /Trade 1/],
     [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, closedOn: {} }] }), /Trade 1/],
+    [JSON.stringify({ ...payload(), tradeLog: [{ ...entry, notes: 42 }] }), /Trade 1/],
   ])("rejects malformed backup without accepting partial data (%s)", (text, message) => {
     expect(() => parseTradeBackup(text)).toThrow(message);
   });

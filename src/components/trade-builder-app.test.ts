@@ -122,6 +122,7 @@ describe("given tradeLogTsv", () => {
       "Actual closing date",
       "Actual opening price",
       "Actual shares",
+      "Notes",
     ]);
     const cells = values.split("\t");
     expect(cells[1]).toBe("NVDA");
@@ -141,22 +142,22 @@ describe("given tradeLogTsv", () => {
     ]).split("\n");
     const cells = values.split("\t");
 
-    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00", "", "", "", ""]);
+    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00", "", "", "", "", ""]);
   });
 
   test("appends actual execution fields without replacing planned values", () => {
     const [, values] = tradeLogTsv([{
-      ...entry, openedOn: "2026-09-01", closedOn: "2026-09-03",
+      ...entry, openedOn: "2026-09-01", closedOn: "2026-09-03", notes: "Waited for setup",
       actualEntryPrice: "108.25", actualQuantity: "10.5",
     }]).split("\n");
     const cells = values.split("\t");
     expect(cells[3]).toBe("$108.00");
-    expect(cells.slice(15)).toEqual(["2026-09-01", "2026-09-03", "108.25", "10.5"]);
+    expect(cells.slice(15)).toEqual(["2026-09-01", "2026-09-03", "108.25", "10.5", "Waited for setup"]);
   });
 
   test("given no logged trades: should copy only the header row", () => {
     expect(tradeLogTsv([])).toBe(
-      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L\tActual opening date\tActual closing date\tActual opening price\tActual shares",
+      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L\tActual opening date\tActual closing date\tActual opening price\tActual shares\tNotes",
     );
   });
 });

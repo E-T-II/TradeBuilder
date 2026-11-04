@@ -18,14 +18,20 @@ export function TradeExecutionFields({
   onChange: (id: string, field: ExecutionField, value: string) => void;
 }) {
   const { issues } = taxTradeRecord(entry);
+  const now = new Date();
+  const maxDate = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
   return (
-    <fieldset className="mt-3 space-y-2 rounded-md border p-3">
-      <legend className="px-1 text-xs font-medium">Actual execution (tax supporting records)</legend>
+    <fieldset className="space-y-2 rounded-md border p-3">
+      <legend className="px-1 text-xs font-medium">Advanced details · Actual execution</legend>
       <p className="text-xs text-muted-foreground">
         Enter broker-confirmed fills, not planned values. Use one log entry per fully closed lot;
         split partial fills or multiple lots into separate records before using this report.
       </p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2">
         {([
           ["openedOn", "Actual opening date", "date"],
           ["closedOn", "Actual closing date", "date"],
@@ -38,8 +44,9 @@ export function TradeExecutionFields({
               aria-label={`${label} for ${entry.ticker}`}
               type={type}
               min={type === "number" ? "0" : undefined}
+              max={type === "date" ? maxDate : undefined}
               step={type === "number" ? "any" : undefined}
-              className={type === "date" ? "dark:[color-scheme:light]" : undefined}
+              className={type === "date" ? "dark:scheme:light" : undefined}
               value={entry[field] ?? ""}
               onChange={(event) => onChange(entry.id, field, event.target.value)}
             />
@@ -48,7 +55,7 @@ export function TradeExecutionFields({
       </div>
       {issues.length > 0 ? (
         <p className="text-xs text-muted-foreground">
-          Not ready for printing: {issues.join(" ")}
+          Excluded from tax report until complete: {issues.join(" ")}
         </p>
       ) : null}
     </fieldset>
@@ -63,7 +70,7 @@ export function TradeTaxReport({ entries }: { entries: TradeLogEntry[] }) {
     isTradeDate(entry.closedOn) ? [entry.closedOn.slice(0, 4)] : [],
   )])].sort().reverse();
   const report = buildTaxReport(entries, year);
-  const printable = report.rows.length > 0 && report.problems.length === 0;
+  const hasRows = report.rows.length > 0;
 
   useEffect(() => {
     const reset = () => { delete document.body.dataset.printReport; };
@@ -95,7 +102,7 @@ export function TradeTaxReport({ entries }: { entries: TradeLogEntry[] }) {
             {years.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </label>
-        <Button variant="outline" size="sm" onClick={print} disabled={!printable}>
+        <Button variant="outline" size="sm" onClick={print}>
           <Printer aria-hidden />Print trade log / Save as PDF
         </Button>
       </div>
@@ -111,7 +118,7 @@ export function TradeTaxReport({ entries }: { entries: TradeLogEntry[] }) {
       </p>
       {report.problems.length > 0 ? (
         <div role="status" className="space-y-1 text-xs text-destructive">
-          <p>Complete these records before printing. Closed trades without a valid closing date cannot be assigned a year.</p>
+          <p>Incomplete closed trades are excluded from the tax report until their actual execution details are complete.</p>
           <ul className="list-inside list-disc">
             {report.problems.map((problem) => (
               <li key={problem.id}>{problem.ticker}: {problem.issues.join(" ")}</li>
@@ -129,7 +136,7 @@ export function TradeTaxReport({ entries }: { entries: TradeLogEntry[] }) {
           <p>U.S. tax supporting record | USD | Generated {new Date().toLocaleDateString("en-US")}</p>
           <p>{report.rows.length} closed trades | Open trades excluded: {report.openCount} | Other closing years excluded: {report.otherYearCount}</p>
         </header>
-        {printable ? (
+        {hasRows ? (
           <>
             <table>
               <caption>Actual execution details, ordered by closing date</caption>
@@ -158,7 +165,7 @@ export function TradeTaxReport({ entries }: { entries: TradeLogEntry[] }) {
               Net P&amp;L {usd.format(report.totals.netPnl)}
             </p>
           </>
-        ) : <p>Report incomplete or empty. Complete actual execution details before printing.</p>}
+        ) : <p>No complete closed trade records are available for this year.</p>}
         <footer>
           <p>Net P&amp;L = gross proceeds - purchase cost - total round-trip fees. Amounts are rounded to cents per trade.
             Long: proceeds are the closing sale; cost is the opening purchase.

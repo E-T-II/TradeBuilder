@@ -261,6 +261,8 @@ test("loading a logged setup: repopulates the builder with that entry's inputs",
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
 
+  expect(screen.getByRole("button", { name: /O\.E\. Score 8\.5 \/ 10 \| Reward:Risk 5\.77:1/ })).toBeInTheDocument();
+  expect(screen.getByText("Click to edit trade details and notes")).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Load AAPL setup into builder" }));
 
   expect(screen.getByLabelText("Ticker symbol")).toHaveValue("AAPL");
@@ -333,12 +335,15 @@ test("recording a closed trade outcome: updates performance and persists the clo
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   await user.click(screen.getByRole("radio", { name: "Closed" }));
+  await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
   await user.type(screen.getByRole("spinbutton", { name: "Exit price for NVDA" }), "110");
   await user.type(screen.getByRole("spinbutton", { name: "Fees for NVDA" }), "2");
+  await user.click(screen.getByText("Advanced details"));
   await user.type(screen.getByLabelText("Actual opening price ($) for NVDA"), "108.5");
   await user.type(screen.getByLabelText("Actual shares for NVDA"), "10");
   fireEvent.change(screen.getByLabelText("Actual opening date for NVDA"), { target: { value: "2026-09-07" } });
   fireEvent.change(screen.getByLabelText("Actual closing date for NVDA"), { target: { value: "2026-09-08" } });
+  await user.type(screen.getByLabelText("Notes for NVDA"), "Waited for confirmation");
 
   expect(screen.getByText("Completed trades")).toBeInTheDocument();
   expect(screen.getAllByText("+$18.00")).toHaveLength(2);
@@ -354,7 +359,13 @@ test("recording a closed trade outcome: updates performance and persists the clo
     actualQuantity: "10",
     openedOn: "2026-09-07",
     closedOn: "2026-09-08",
+    notes: "Waited for confirmation",
   });
+
+  await user.click(screen.getByRole("button", { name: "Close NVDA trade details" }));
+  await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
+  expect(screen.getByRole("button", { name: "Close NVDA trade details" })).toBeVisible();
+  expect(screen.getByText("Advanced details").closest("details")).not.toHaveAttribute("open");
 
   unmount();
   render(<TradeBuilderApp />);
@@ -362,12 +373,16 @@ test("recording a closed trade outcome: updates performance and persists the clo
     await user.click(screen.getByRole("button", { name: /^next$/i }));
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
   expect(screen.getByRole("spinbutton", { name: "Exit price for NVDA" })).toHaveValue(110);
   expect(screen.getByRole("spinbutton", { name: "Fees for NVDA" })).toHaveValue(2);
+  expect(screen.getByText("Advanced details").closest("details")).not.toHaveAttribute("open");
+  await user.click(screen.getByText("Advanced details"));
   expect(screen.getByLabelText("Actual opening price ($) for NVDA")).toHaveValue(108.5);
   expect(screen.getByLabelText("Actual shares for NVDA")).toHaveValue(10);
   expect(screen.getByLabelText("Actual opening date for NVDA")).toHaveValue("2026-09-07");
   expect(screen.getByLabelText("Actual closing date for NVDA")).toHaveValue("2026-09-08");
+  expect(screen.getByLabelText("Notes for NVDA")).toHaveValue("Waited for confirmation");
 });
 
 test("shows the average winning trade against the average losing trade", async () => {
@@ -410,6 +425,8 @@ test("shows the average winning trade against the average losing trade", async (
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
 
   expect(screen.getByText("Ave P&L ratio").nextElementSibling).toHaveTextContent("4.00:1");
+  expect(screen.getAllByText("Click to edit trade details and notes")).toHaveLength(1);
+  expect(screen.getAllByRole("button", { name: /NVDA \| Buy 10 shares/ })).toHaveLength(4);
 });
 
 test("execution changes report storage failures and preserve the previous saved log", async () => {
@@ -427,6 +444,8 @@ test("execution changes report storage failures and preserve the previous saved 
     await user.click(screen.getByRole("button", { name: /^next$/i }));
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
+  await user.click(screen.getByText("Advanced details"));
   const originalSet = window.localStorage.setItem.bind(window.localStorage);
   const setItem = vi.spyOn(window.localStorage, "setItem").mockImplementation((key, value) => {
     if (key === TRADE_LOG_KEY) throw new Error("Storage full");
@@ -501,6 +520,7 @@ test("restoring a backup replaces the form and log, preserves imported risk, and
     await user.click(screen.getByRole("button", { name: /^next$/i }));
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  await user.click(screen.getByRole("button", { name: /AAPL \| Buy 10 shares/ }));
   expect(screen.getByRole("spinbutton", { name: "Exit price for AAPL" })).toHaveValue(110);
   expect(screen.getByRole("spinbutton", { name: "Fees for AAPL" })).toHaveValue(2);
 });
