@@ -19,6 +19,7 @@
 
 import { useEffect, useState } from "react";
 import { Blocks } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 
 // Once per session (sessionStorage clears when the session ends).
 const SESSION_KEY = "tradebuilder-intro-shown";
@@ -26,6 +27,7 @@ const HOLD = 2600; // wordmark and subtitle on screen before it steps aside
 const FADE = 700; // overlay fade-out
 
 export function SplashIntro() {
+  const { text: tx } = useLanguage();
   const [hidden, setHidden] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
@@ -73,15 +75,11 @@ export function SplashIntro() {
           <span
             className="text-3xl font-semibold tracking-tight"
             style={{ animation: "intro-rise 800ms ease-out 200ms both" }}
-          >
-            Trade Builder
-          </span>
+          >{tx("Trade Builder")}</span>
           <span
             className="mt-1 text-sm text-muted-foreground"
             style={{ animation: "intro-rise 800ms ease-out 420ms both" }}
-          >
-            Build the trade. Validate the risk. Follow the plan.
-          </span>
+          >{tx("Build the trade. Validate the risk. Follow the plan.")}</span>
         </div>
       </div>
     </div>

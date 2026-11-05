@@ -22,6 +22,7 @@ import { Check, ClipboardCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { XltScenario } from "@/lib/xlt-criteria";
+import { useLanguage } from "@/components/language-provider";
 
 export function XltChecklistDialog({
   scenario,
@@ -32,6 +33,7 @@ export function XltChecklistDialog({
   checked: Set<number>;
   onToggle: (index: number, value: boolean) => void;
 }) {
+  const { text: tx } = useLanguage();
   const completeCount = checked.size;
   const complete = completeCount === scenario.items.length;
 
@@ -41,9 +43,9 @@ export function XltChecklistDialog({
         render={<Button variant={complete ? "secondary" : "outline"} />}
       >
         {complete ? <Check aria-hidden /> : <ClipboardCheck aria-hidden />}
-        {complete
+        {tx(complete
           ? `XLT checklist complete · ${completeCount}/${scenario.items.length}`
-          : `Review XLT checklist · ${completeCount}/${scenario.items.length}`}
+          : `Review XLT checklist · ${completeCount}/${scenario.items.length}`)}
       </Dialog.Trigger>
 
       <Dialog.Portal>
@@ -52,27 +54,23 @@ export function XltChecklistDialog({
           <div className="flex items-start justify-between gap-4 border-b p-5">
             <div className="space-y-1">
               <Dialog.Title className="text-base font-semibold">
-                {scenario.title}
+                {tx(scenario.title)}
               </Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">
-                {scenario.description}
+                {tx(scenario.description)}
               </Dialog.Description>
             </div>
             <Dialog.Close
-              render={<Button variant="ghost" size="icon-sm" aria-label="Close XLT checklist" />}
+              render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close XLT checklist")} />}
             >
               <X aria-hidden />
             </Dialog.Close>
           </div>
 
           <div className="overflow-y-auto p-5">
-            <p className="mb-4 text-sm font-medium">
-              Chart checks · {completeCount} of {scenario.items.length} complete
-            </p>
+            <p className="mb-4 text-sm font-medium">{tx("Chart checks · {0} of {1} complete", [tx(completeCount), tx(scenario.items.length)])}</p>
             <fieldset className="space-y-4">
-              <legend className="sr-only">
-                {scenario.title} chart checks
-              </legend>
+              <legend className="sr-only">{tx("{0} chart checks", [tx(scenario.title)])}</legend>
               {scenario.items.map((item, index) => (
                 <Label key={item} className="items-start font-normal leading-snug">
                   <input
@@ -81,7 +79,7 @@ export function XltChecklistDialog({
                     checked={checked.has(index)}
                     onChange={(event) => onToggle(index, event.target.checked)}
                   />
-                  <span>{item}</span>
+                  <span>{tx(item)}</span>
                 </Label>
               ))}
             </fieldset>

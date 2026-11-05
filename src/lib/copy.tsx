@@ -15,6 +15,10 @@
  * along with this program.  If not, see <https://gnu.org>.
  */
 
+"use client";
+
+import { useLanguage } from "@/components/language-provider";
+
 // Shared so the wording stays in sync across the footer and the wizard.
 const disclaimerPrefix = "For education only, not financial advice. Based on the ";
 const strategyTitle = "Engineered Risk Trading Strategy";
@@ -22,17 +26,18 @@ export const DISCLAIMER =
   `${disclaimerPrefix}${strategyTitle}.`;
 
 export function Disclaimer() {
+  const { text: tx } = useLanguage();
   return (
     <>
-      {disclaimerPrefix}
+      {tx(disclaimerPrefix)}
       <a
         href="/engineered-risk-trading-strategy.pdf"
         target="_blank"
         rel="noreferrer"
         className="underline underline-offset-2 hover:text-foreground"
       >
-        {strategyTitle}
-        <span className="sr-only"> (PDF, opens in a new tab)</span>
+        {tx(strategyTitle)}
+        <span className="sr-only">{tx("(PDF, opens in a new tab)")}</span>
       </a>
       .
     </>

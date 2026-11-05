@@ -87,6 +87,11 @@
   filter: invert(1);
 }
 
+html[dir="rtl"] .font-mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -26,6 +26,7 @@ import {
 } from "@/lib/trade-builder";
 import { isXltVerified, xltScenario } from "@/lib/xlt-criteria";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -35,10 +36,11 @@ const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
 function PlanRow({ label, value }: { label: string; value: string }) {
+  const { text: tx } = useLanguage();
   return (
     <div className="trade-plan-row">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dt>{tx(label)}</dt>
+      <dd>{tx(value)}</dd>
     </div>
   );
 }
@@ -50,9 +52,10 @@ function Section({
   title: string;
   children: ReactNode;
 }) {
+  const { text: tx } = useLanguage();
   return (
     <section className="trade-plan-section">
-      <h2>{title}</h2>
+      <h2>{tx(title)}</h2>
       <dl>{children}</dl>
     </section>
   );
@@ -62,8 +65,8 @@ function curveLabel(zone: TradeResult["scorecard"]["curveZone"]): string {
   return zone[0].toUpperCase() + zone.slice(1);
 }
 
-function matrixVerdict(result: TradeResult): string {
-  const objective = result.objective === "long" ? "Buy long" : "Sell short";
+function matrixVerdict(result: TradeResult, tx: (message: string) => string): string {
+  const objective = tx(result.objective === "long" ? "Buy long" : "Sell short");
   const requirement = result.scorecard.requiredProfitZoneRatio;
   if (result.objective === "no-trade") {
     return requirement === null
@@ -115,6 +118,7 @@ export function TradePlanExport({
   inputs: TradeInputs;
   result: TradeResult;
 }) {
+  const { text: tx } = useLanguage();
   const order = result.order;
   const checks = result.checks;
   const zoneKey = inputs.direction === "long" ? "demand" : "supply";
@@ -137,44 +141,39 @@ export function TradePlanExport({
           window.print();
         }}
       >
-        <Printer aria-hidden />
-        Print / save plan
-      </Button>
+        <Printer aria-hidden />{tx("Print / save plan")}</Button>
 
-      <article className="trade-plan-print" aria-label="Printable trade plan">
+      <article className="trade-plan-print" aria-label={tx("Printable trade plan")}>
         <header className="trade-plan-header">
-          <p>Trade Builder</p>
-          <h1>{form.ticker || "Trade"} plan</h1>
-          <p>
-            Prepared {new Date().toLocaleString()} · Review only — verify market
-            conditions and all order details before placing a trade.
-          </p>
+          <p>{tx("Trade Builder")}</p>
+          <h1>{tx("{0} plan", [form.ticker || tx("Trade")])}</h1>
+          <p>{tx("Prepared {0} · Review only — verify market conditions and all order details before placing a trade.", [tx(new Date().toLocaleString())])}</p>
         </header>
 
         <div className="trade-plan-columns">
           <div>
-            <Section title="Trade setup (inputs)">
-              <PlanRow label="Direction" value={inputs.direction === "long" ? "Buy long" : "Sell short"} />
-              <PlanRow label="Trend" value={inputs.trend} />
-              <PlanRow label="Income timeframe" value={inputs.timeframe} />
-              <PlanRow label="Account balance" value={usd.format(inputs.accountBalance)} />
-              <PlanRow label="Risk per trade" value={`${percent.format(inputs.riskTolerancePct * 100)}% (${usd.format(checks?.maxAccountRisk ?? inputs.accountBalance * inputs.riskTolerancePct)})`} />
-              <PlanRow label="Open risk before this trade" value={usd.format(inputs.openTradeRisk ?? 0)} />
-              <PlanRow label="Daily ATR" value={usd.format(inputs.atr)} />
-              <PlanRow label="Stop buffer" value={`${result.math.stopBufferPct}% of ATR (${usd.format(result.math.stopBufferDollar)})`} />
-              <PlanRow label="HTF curve range" value={`Supply: ${usd.format(inputs.curveHigh)} · Demand: ${usd.format(inputs.curveLow)}`} />
-              <PlanRow label="Entry curve position" value={curveLabel(result.scorecard.curveZone)} />
-              <PlanRow label={`${zoneType} zone (proximal / distal)`} value={`${usd.format(inputs.entryProximal)} / ${usd.format(inputs.entryDistal)}`} />
-              <PlanRow label={`${targetZoneType} zone (proximal / distal)`} value={`${usd.format(inputs.targetProximal)} / ${usd.format(inputs.targetDistal)}`} />
-              <PlanRow label="Target method" value={`${inputs.targetMode} · ${bufferDescription(result)}`} />
-              <PlanRow label="XLT chart checks" value={!xlt ? "Not applicable" : isXltVerified(form.xltAcknowledgement, xltCellKey, xlt.items.length) ? `${xlt.title} — verified` : "Not verified"} />
+            <Section title={tx("Trade setup (inputs)")}>
+              <PlanRow label={tx("Direction")} value={inputs.direction === "long" ? "Buy long" : "Sell short"} />
+              <PlanRow label={tx("Trend")} value={inputs.trend} />
+              <PlanRow label={tx("Income timeframe")} value={inputs.timeframe} />
+              <PlanRow label={tx("Account balance")} value={usd.format(inputs.accountBalance)} />
+              <PlanRow label={tx("Risk per trade")} value={`${percent.format(inputs.riskTolerancePct * 100)}% (${usd.format(checks?.maxAccountRisk ?? inputs.accountBalance * inputs.riskTolerancePct)})`} />
+              <PlanRow label={tx("Open risk before this trade")} value={usd.format(inputs.openTradeRisk ?? 0)} />
+              <PlanRow label={tx("Daily ATR")} value={usd.format(inputs.atr)} />
+              <PlanRow label={tx("Stop buffer")} value={`${result.math.stopBufferPct}% of ATR (${usd.format(result.math.stopBufferDollar)})`} />
+              <PlanRow label={tx("HTF curve range")} value={`Supply: ${usd.format(inputs.curveHigh)} · Demand: ${usd.format(inputs.curveLow)}`} />
+              <PlanRow label={tx("Entry curve position")} value={curveLabel(result.scorecard.curveZone)} />
+              <PlanRow label={tx("{0} zone (proximal / distal)", [tx(zoneType)])} value={`${usd.format(inputs.entryProximal)} / ${usd.format(inputs.entryDistal)}`} />
+              <PlanRow label={tx("{0} zone (proximal / distal)", [tx(targetZoneType)])} value={`${usd.format(inputs.targetProximal)} / ${usd.format(inputs.targetDistal)}`} />
+              <PlanRow label={tx("Target method")} value={`${tx(inputs.targetMode)} · ${tx(bufferDescription(result))}`} />
+              <PlanRow label={tx("XLT chart checks")} value={!xlt ? "Not applicable" : isXltVerified(form.xltAcknowledgement, xltCellKey, xlt.items.length) ? tx("{0} — verified", [tx(xlt.title)]) : "Not verified"} />
             </Section>
 
-            <Section title="Matrix verdict">
-              <PlanRow label="Decision Matrix" value={matrixVerdict(result)} />
+            <Section title={tx("Matrix verdict")}>
+              <PlanRow label={tx("Decision Matrix")} value={matrixVerdict(result, tx)} />
               {result.scorecard.requiredProfitZoneRatio !== null ? (
                 <PlanRow
-                  label="Conditional profit-zone requirement"
+                  label={tx("Conditional profit-zone requirement")}
                   value={`${result.scorecard.requiredProfitZoneRatio}:1 required · ${number.format(result.scorecard.profitZoneRatio)}:1 actual`}
                 />
               ) : null}
@@ -182,70 +181,67 @@ export function TradePlanExport({
           </div>
 
           <div>
-            <Section title="Odds-enhancer score">
-              <PlanRow label="Curve" value={`${result.scorecard.curve} / 1 (${result.scorecard.curveZone})`} />
-              <PlanRow label="Trend" value={`${result.scorecard.trend} / 2 (${inputs.trend})`} />
-              <PlanRow label="Profit zone" value={`${result.scorecard.profitZone} / 2 (${number.format(result.scorecard.profitZoneRatio)}:1)`} />
-              <PlanRow label="Strength" value={`${result.scorecard.strength} / 2`} />
-              <PlanRow label="Time" value={`${result.scorecard.time} / 1`} />
-              <PlanRow label="Freshness" value={`${result.scorecard.freshness} / 2`} />
-              <PlanRow label="Total score" value={`${number.format(result.scorecard.total)} / 10`} />
-              <PlanRow label="Entry classification" value={result.entryType === "no-trade" ? "No trade" : `${result.entryType} entry`} />
+            <Section title={tx("Odds-enhancer score")}>
+              <PlanRow label={tx("Curve")} value={`${result.scorecard.curve} / 1 (${tx(result.scorecard.curveZone)})`} />
+              <PlanRow label={tx("Trend")} value={`${result.scorecard.trend} / 2 (${tx(inputs.trend)})`} />
+              <PlanRow label={tx("Profit zone")} value={`${result.scorecard.profitZone} / 2 (${number.format(result.scorecard.profitZoneRatio)}:1)`} />
+              <PlanRow label={tx("Strength")} value={`${result.scorecard.strength} / 2`} />
+              <PlanRow label={tx("Time")} value={`${result.scorecard.time} / 1`} />
+              <PlanRow label={tx("Freshness")} value={`${result.scorecard.freshness} / 2`} />
+              <PlanRow label={tx("Total score")} value={`${number.format(result.scorecard.total)} / 10`} />
+              <PlanRow label={tx("Entry classification")} value={result.entryType === "no-trade" ? "No trade" : tx("{0} entry", [tx(result.entryType)])} />
             </Section>
 
-            <Section title="Order plan">
+            <Section title={tx("Order plan")}>
               {order ? (
                 <>
                   <PlanRow
-                    label="Order type"
+                    label={tx("Order type")}
                     value={
                       result.entryType === "proximal"
-                        ? `${inputs.direction === "long" ? "Buy" : "Sell short"} limit at the proximal line`
-                        : `${inputs.direction === "long" ? "Buy" : "Sell short"} stop-limit 10¢ outside the proximal line`
+                        ? tx("{0} limit at the proximal line", [tx(inputs.direction === "long" ? "Buy" : "Sell short")])
+                        : tx("{0} stop-limit 10¢ outside the proximal line", [tx(inputs.direction === "long" ? "Buy" : "Sell short")])
                     }
                   />
-                  <PlanRow label="Entry" value={usd.format(order.entry)} />
-                  <PlanRow label="Stop" value={usd.format(order.stop)} />
-                  <PlanRow label="Target" value={usd.format(order.target)} />
-                  <PlanRow label="Position size" value={`${order.positionSize} shares`} />
-                  <PlanRow label="Capital required" value={usd.format(order.capitalRequirement)} />
-                  <PlanRow label="Risk per share" value={usd.format(order.riskPerShare)} />
-                  <PlanRow label="Total trade risk" value={usd.format(order.totalTradeRisk)} />
-                  <PlanRow label="Reward : risk" value={`${number.format(order.rewardRisk)} : 1`} />
+                  <PlanRow label={tx("Entry")} value={usd.format(order.entry)} />
+                  <PlanRow label={tx("Stop")} value={usd.format(order.stop)} />
+                  <PlanRow label={tx("Target")} value={usd.format(order.target)} />
+                  <PlanRow label={tx("Position size")} value={`${order.positionSize} shares`} />
+                  <PlanRow label={tx("Capital required")} value={usd.format(order.capitalRequirement)} />
+                  <PlanRow label={tx("Risk per share")} value={usd.format(order.riskPerShare)} />
+                  <PlanRow label={tx("Total trade risk")} value={usd.format(order.totalTradeRisk)} />
+                  <PlanRow label={tx("Reward : risk")} value={`${number.format(order.rewardRisk)} : 1`} />
                 </>
               ) : (
                 <>
-                  <PlanRow label="Order status" value="No executable order" />
-                  <PlanRow label="Reason" value={rejectionReason(result)} />
+                  <PlanRow label={tx("Order status")} value="No executable order" />
+                  <PlanRow label={tx("Reason")} value={rejectionReason(result)} />
                 </>
               )}
             </Section>
 
-            <Section title="Risk checks">
+            <Section title={tx("Risk checks")}>
               {checks ? (
                 <>
-                  <PlanRow label={`Per-trade risk within ${usd.format(checks.maxAccountRisk)} (${checks.riskLimitPct}%)`} value={checks.withinPerTradeRisk ? "PASS" : "FAIL"} />
-                  <PlanRow label="Capital within 50% of balance" value={checks.withinCapitalCap ? "PASS" : "FAIL"} />
-                  <PlanRow label="Reward : risk at least 3:1" value={checks.meetsRewardRisk ? "PASS" : "FAIL"} />
-                  <PlanRow label={`Total open risk within ${usd.format(checks.multiTradeLimit)} (6% rule)`} value={checks.withinMultiTradeRisk ? "PASS" : "FAIL"} />
+                  <PlanRow label={tx("Per-trade risk within {0} ({1}%)", [tx(usd.format(checks.maxAccountRisk)), tx(checks.riskLimitPct)])} value={checks.withinPerTradeRisk ? "PASS" : "FAIL"} />
+                  <PlanRow label={tx("Capital within 50% of balance")} value={checks.withinCapitalCap ? "PASS" : "FAIL"} />
+                  <PlanRow label={tx("Reward : risk at least 3:1")} value={checks.meetsRewardRisk ? "PASS" : "FAIL"} />
+                  <PlanRow label={tx("Total open risk within {0} (6% rule)", [tx(usd.format(checks.multiTradeLimit))])} value={checks.withinMultiTradeRisk ? "PASS" : "FAIL"} />
                 </>
               ) : result.blockedReason === "reward-risk" ? (
-                <PlanRow label="Reward : risk at least 3:1" value="FAIL — minimum not met" />
+                <PlanRow label={tx("Reward : risk at least 3:1")} value="FAIL — minimum not met" />
               ) : result.blockedReason === "risk-too-small" ? (
-                <PlanRow label="Position fits the per-trade risk budget" value="FAIL — budget cannot cover one share" />
+                <PlanRow label={tx("Position fits the per-trade risk budget")} value="FAIL — budget cannot cover one share" />
               ) : result.blockedReason === "capital-too-large" ? (
-                <PlanRow label="Capital within 50% of balance" value="FAIL — one share exceeds the cap" />
+                <PlanRow label={tx("Capital within 50% of balance")} value="FAIL — one share exceeds the cap" />
               ) : (
-                <PlanRow label="Status" value="Not evaluated — no executable order was produced." />
+                <PlanRow label={tx("Status")} value="Not evaluated — no executable order was produced." />
               )}
             </Section>
           </div>
         </div>
 
-        <footer className="trade-plan-footer">
-          This plan is for review and education, not a recommendation or order.
-          Confirm prices, sizing, risk, and current market conditions yourself.
-        </footer>
+        <footer className="trade-plan-footer">{tx("This plan is for review and education, not a recommendation or order. Confirm prices, sizing, risk, and current market conditions yourself.")}</footer>
       </article>
     </>
   );

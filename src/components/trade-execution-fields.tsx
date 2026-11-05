@@ -3,6 +3,7 @@
 import type { TradeLogEntry } from "@/components/trade-builder-app";
 import { Input } from "@/components/ui/input";
 import type { ExecutionField } from "@/lib/trade-execution";
+import { useLanguage } from "@/components/language-provider";
 
 export function TradeExecutionFields({
   entry, onChange,
@@ -10,6 +11,7 @@ export function TradeExecutionFields({
   entry: TradeLogEntry;
   onChange: (id: string, field: ExecutionField, value: string) => void;
 }) {
+  const { text: tx } = useLanguage();
   const now = new Date();
   const maxDate = [
     now.getFullYear(),
@@ -18,7 +20,7 @@ export function TradeExecutionFields({
   ].join("-");
   return (
     <fieldset className="space-y-2 rounded-md border p-3">
-      <legend className="px-1 text-xs font-medium">Actual execution (optional)</legend>
+      <legend className="px-1 text-xs font-medium">{tx("Actual execution (optional)")}</legend>
       <div className="grid gap-3 sm:grid-cols-2">
         {([
           ["openedOn", "Actual opening date", "date"],
@@ -26,9 +28,9 @@ export function TradeExecutionFields({
           ["actualQuantity", "Actual shares", "number"],
         ] as const).map(([field, label, type]) => (
           <label key={field} className="space-y-1">
-            <span className="text-xs font-medium">{label}</span>
+            <span className="text-xs font-medium">{tx(label)}</span>
             <Input
-              aria-label={`${label} for ${entry.ticker}`}
+              aria-label={tx("{0} for {1}", [tx(label), entry.ticker])}
               type={type}
               min={type === "number" ? "0" : undefined}
               max={type === "date" ? maxDate : undefined}

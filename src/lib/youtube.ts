@@ -15,6 +15,20 @@
  * along with this program.  If not, see <https://gnu.org>.
  */
 
+import type { LanguageCode } from "@/lib/languages";
+
+export function tutorialVideoUrl(videoId: string, language: LanguageCode): string {
+    const params = new URLSearchParams({
+        autoplay: "1",
+        rel: "0",
+        controls: "1",
+        enablejsapi: "1",
+        hl: language,
+        cc_lang_pref: language,
+    });
+    return `https://www.youtube.com/embed/${videoId}?${params}`;
+}
+
 export function stopEmbeddedYouTubeVideo(iframe: HTMLIFrameElement | null) {
     if (!iframe?.contentWindow) return;
 

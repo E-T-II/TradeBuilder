@@ -55,6 +55,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DecisionMatrix } from "@/components/decision-matrix";
 import { TradeBackupControls } from "@/components/trade-backup-controls";
+import { LanguageProvider, useLanguage } from "@/components/language-provider";
+import { LanguageSelector } from "@/components/language-selector";
 import {
   FORM_ENUM_VALUES,
   FORM_STORAGE_KEY as STORAGE_KEY,
@@ -452,6 +454,15 @@ export function averageProfitLossRatio(outcomes: number[]): number | null {
 }
 
 export function TradeBuilderApp() {
+  return (
+    <LanguageProvider>
+      <TradeBuilderContent />
+    </LanguageProvider>
+  );
+}
+
+function TradeBuilderContent() {
+  const { text: tx } = useLanguage();
   const [form, setForm] = useState<FormState>(initialState);
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -643,15 +654,14 @@ export function TradeBuilderApp() {
           the stepper centered. */}
       <header className="flex items-center justify-between gap-6 px-5 py-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-10 lg:px-8">
         <span className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight">
-          <Blocks className="size-5 shrink-0 text-primary" aria-hidden />
-          Trade Builder
-        </span>
+          <Blocks className="size-5 shrink-0 text-primary" aria-hidden />{tx("Trade Builder")}</span>
         <div className="hidden lg:block">
           {inForm ? (
             <TopStepper step={step} reachable={reachable} onJump={goToStep} />
           ) : null}
         </div>
         <div className="flex items-center justify-end gap-2 lg:gap-3">
+          <LanguageSelector />
           <TradeBackupControls form={form} tradeLog={tradeLog} onRestore={restoreBackup} />
           {inForm ? (
             <Button
@@ -661,10 +671,10 @@ export function TradeBuilderApp() {
                 update(initialState);
                 goToStep(0);
               }}
-              aria-label="Reset"
+              aria-label={tx("Reset")}
             >
               <RotateCcw aria-hidden />
-              <span className="hidden sm:inline">Reset</span>
+              <span className="hidden sm:inline">{tx("Reset")}</span>
             </Button>
           ) : null}
           <ThemeToggle />
@@ -698,9 +708,7 @@ export function TradeBuilderApp() {
                     ) : null}
                     {result.order ? (
                       <Button className="w-full sm:w-auto" onClick={logTrade}>
-                        <NotebookPen aria-hidden />
-                        Log trade
-                      </Button>
+                        <NotebookPen aria-hidden />{tx("Log trade")}</Button>
                     ) : null}
                   </div>
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
@@ -728,12 +736,12 @@ export function TradeBuilderApp() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0">
                       <div className="flex items-center gap-1">
-                        <CardTitle>Trade log</CardTitle>
+                        <CardTitle>{tx("Trade log")}</CardTitle>
                         <Button
                           variant="ghost"
                           size="icon-sm"
                           aria-expanded={showTradeLog}
-                          aria-label={showTradeLog ? "Hide trade log" : "Show trade log"}
+                          aria-label={tx(showTradeLog ? "Hide trade log" : "Show trade log")}
                           onClick={() => setShowTradeLog((s) => !s)}
                         >
                           {showTradeLog ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
@@ -745,60 +753,52 @@ export function TradeBuilderApp() {
                             ...entry, realizedPnl: realizedOutcome(entry),
                           }))} />
                           <Button variant="ghost" size="sm" onClick={clearTradeLog}>
-                            <Trash2 aria-hidden />
-                            Clear log
-                          </Button>
+                            <Trash2 aria-hidden />{tx("Clear log")}</Button>
                         </div>
                       ) : null}
                     </CardHeader>
                     {showTradeLog ? (
                       <CardContent>
-                        {logSaveError ? <p role="alert" className="mb-3 text-sm text-destructive">{logSaveError}</p> : null}
+                        {logSaveError ? <p role="alert" className="mb-3 text-sm text-destructive">{tx(logSaveError)}</p> : null}
                         <section aria-labelledby="trade-performance-heading" className="mb-5 space-y-3">
                           <div>
                             <div className="mb-1 flex items-center justify-between gap-3">
-                              <h3 id="trade-performance-heading" className="font-medium">
-                                Realized performance
-                              </h3>
+                              <h3 id="trade-performance-heading" className="font-medium">{tx("Realized performance")}</h3>
                               <PnlCalendar outcomes={calendarOutcomes} />
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              Uses entered Profit/Loss, or planned entry and share size less total round-trip fees.
-                            </p>
+                            <p className="text-xs text-muted-foreground">{tx("Uses entered Profit/Loss, or planned entry and share size less total round-trip fees.")}</p>
                           </div>
                           {completedOutcomes.length > 0 ? (
                             <>
                               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Completed trades</p>
-                                  <p className="font-mono tabular-nums">{completedOutcomes.length}</p>
+                                  <p className="text-xs text-muted-foreground">{tx("Completed trades")}</p>
+                                  <p className="font-mono tabular-nums">{tx(completedOutcomes.length)}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Ave P&amp;L ratio</p>
+                                  <p className="text-xs text-muted-foreground">{tx("Ave P&L ratio")}</p>
                                   {profitLossRatio === null ? (
-                                    <p className="text-sm text-muted-foreground">No losing trades yet</p>
+                                    <p className="text-sm text-muted-foreground">{tx("No losing trades yet")}</p>
                                   ) : (
-                                    <p className="font-mono tabular-nums">{profitLossRatio.toFixed(2)}:1</p>
+                                    <p className="font-mono tabular-nums">{tx(profitLossRatio.toFixed(2))}:1</p>
                                   )}
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Win rate</p>
-                                  <p className="font-mono tabular-nums">{exportRatio.format(winRate)}%</p>
+                                  <p className="text-xs text-muted-foreground">{tx("Win rate")}</p>
+                                  <p className="font-mono tabular-nums">{tx(exportRatio.format(winRate))}%</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Net P&amp;L</p>
-                                  <p className="font-mono tabular-nums">{formatSignedUsd(totalRealizedPnl)}</p>
+                                  <p className="text-xs text-muted-foreground">{tx("Net P&L")}</p>
+                                  <p className="font-mono tabular-nums">{tx(formatSignedUsd(totalRealizedPnl))}</p>
                                 </div>
                               </div>
                             </>
                           ) : (
-                            <p className="text-sm text-muted-foreground">
-                              Mark a trade closed and enter Profit/Loss or an exit price to see performance.
-                            </p>
+                            <p className="text-sm text-muted-foreground">{tx("Mark a trade closed and enter Profit/Loss or an exit price to see performance.")}</p>
                           )}
                         </section>
                         {tradeLog.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No trades logged yet.</p>
+                          <p className="text-sm text-muted-foreground">{tx("No trades logged yet.")}</p>
                         ) : (
                           <div className="divide-y">
                             {tradeLog.map((entry) => {
@@ -840,9 +840,7 @@ export function TradeBuilderApp() {
                                           }
                                         >
                                           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                            <span className="font-medium">
-                                              {entry.ticker} | {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares
-                                            </span>
+                                            <span className="font-medium">{tx("{0} | {1} {2} shares", [entry.ticker, tx(entry.direction === "long" ? "Buy" : "Sell short"), tx(entry.positionSize)])}</span>
                                             {outcome !== null ? (
                                               <span className={`font-mono text-xs font-semibold tabular-nums ${
                                                 outcome > 0
@@ -850,16 +848,12 @@ export function TradeBuilderApp() {
                                                   : outcome < 0
                                                     ? "text-red-700 dark:text-red-400"
                                                     : "text-muted-foreground"
-                                              }`}>
-                                                Profit/Loss {formatSignedUsd(outcome)}
-                                              </span>
+                                              }`}>{tx("Profit/Loss {0}", [tx(formatSignedUsd(outcome))])}</span>
                                             ) : null}
                                           </span>
-                                          <span className="block font-mono text-xs tabular-nums text-muted-foreground">
-                                            Entry {exportUsd.format(entry.entry)} | Stop {exportUsd.format(entry.stop)} | Target {exportUsd.format(entry.target)}
-                                          </span>
+                                          <span className="block font-mono text-xs tabular-nums text-muted-foreground">{tx("Entry {0} | Stop {1} | Target {2}", [tx(exportUsd.format(entry.entry)), tx(exportUsd.format(entry.stop)), tx(exportUsd.format(entry.target))])}</span>
                                           <span className="block text-xs text-muted-foreground">
-                                            {new Date(entry.createdAt).toLocaleString()} | O.E. Score {entry.score} / 10 | <span className="whitespace-nowrap">Reward:Risk {exportRatio.format(entry.rewardRisk)}:1</span>
+                                            {new Date(entry.createdAt).toLocaleString()} {tx("| O.E. Score")} {tx(entry.score)} / 10 | <span className="whitespace-nowrap">{tx("Reward:Risk {0}:1", [tx(exportRatio.format(entry.rewardRisk))])}</span>
                                           </span>
                                         </Dialog.Trigger>
                                         <Dialog.Portal>
@@ -867,15 +861,13 @@ export function TradeBuilderApp() {
                                           <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(36rem,96vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none">
                                             <div className="mb-3 flex items-start justify-between gap-4">
                                               <div className="space-y-1">
-                                                <Dialog.Title className="font-medium">
-                                                  {entry.ticker} trade details
-                                                </Dialog.Title>
+                                                <Dialog.Title className="font-medium">{tx("{0} trade details", [entry.ticker])}</Dialog.Title>
                                                 <Dialog.Description className="text-sm text-muted-foreground">
-                                                  {entry.direction === "long" ? "Buy" : "Sell short"} {entry.positionSize} shares · Entry {exportUsd.format(entry.entry)} · Stop {exportUsd.format(entry.stop)} · Target {exportUsd.format(entry.target)} · <span className="whitespace-nowrap">Reward:Risk {exportRatio.format(entry.rewardRisk)}:1</span>
+                                                  {tx(entry.direction === "long" ? "Buy" : "Sell short")} {tx(entry.positionSize)} {tx("shares · Entry")} {tx(exportUsd.format(entry.entry))} {tx("· Stop")} {tx(exportUsd.format(entry.stop))} {tx("· Target")} {tx(exportUsd.format(entry.target))} · <span className="whitespace-nowrap">{tx("Reward:Risk {0}:1", [tx(exportRatio.format(entry.rewardRisk))])}</span>
                                                 </Dialog.Description>
                                               </div>
                                               <Dialog.Close
-                                                render={<Button variant="ghost" size="icon-sm" aria-label={`Close ${entry.ticker} trade details`} />}
+                                                render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close {0} trade details", [entry.ticker])} />}
                                               >
                                                 <X aria-hidden />
                                               </Dialog.Close>
@@ -885,7 +877,7 @@ export function TradeBuilderApp() {
                                                 <>
                                                   <div className="grid gap-3 sm:grid-cols-2">
                                                     <label className="space-y-1">
-                                                      <span className="text-xs font-medium">Profit/Loss ($)</span>
+                                                      <span className="text-xs font-medium">{tx("Profit/Loss ($)")}</span>
                                                       <Input
                                                         aria-label={`Profit/Loss for ${entry.ticker}`}
                                                         aria-invalid={invalidProfitLoss || undefined}
@@ -898,13 +890,11 @@ export function TradeBuilderApp() {
                                                         }
                                                       />
                                                       {invalidProfitLoss ? (
-                                                        <span className="block text-xs text-destructive">
-                                                          Enter a valid amount, including a minus sign for a loss.
-                                                        </span>
+                                                        <span className="block text-xs text-destructive">{tx("Enter a valid amount, including a minus sign for a loss.")}</span>
                                                       ) : null}
                                                     </label>
                                                     <label className="space-y-1">
-                                                      <span className="text-xs font-medium">Closing date</span>
+                                                      <span className="text-xs font-medium">{tx("Closing date")}</span>
                                                       <Input
                                                         aria-label={`Closing date for ${entry.ticker}`}
                                                         type="date"
@@ -919,28 +909,23 @@ export function TradeBuilderApp() {
                                                   </div>
                                                   <div aria-live="polite" className="text-xs">
                                                     {outcome !== null ? (
-                                                      <span>
-                                                        Net P&amp;L <strong>{formatSignedUsd(outcome)}</strong>
+                                                      <span>{tx("Net P&L")}<strong>{tx(formatSignedUsd(outcome))}</strong>
                                                       </span>
                                                     ) : (
-                                                      <span className="text-muted-foreground">
-                                                        Enter Profit/Loss, or add an exit price in Advanced details.
-                                                      </span>
+                                                      <span className="text-muted-foreground">{tx("Enter Profit/Loss, or add an exit price in Advanced details.")}</span>
                                                     )}
                                                   </div>
                                                   <details
                                                     key={openTradeDetailsId}
                                                     className="rounded-md border p-3"
                                                   >
-                                                    <summary className="cursor-pointer text-xs font-medium">
-                                                      Advanced details
-                                                    </summary>
+                                                    <summary className="cursor-pointer text-xs font-medium">{tx("Advanced details")}</summary>
                                                     <div className="mt-3 space-y-3">
                                                       <fieldset className="space-y-2 rounded-md border p-3">
-                                                        <legend className="px-1 text-xs font-medium">Price and fees</legend>
+                                                        <legend className="px-1 text-xs font-medium">{tx("Price and fees")}</legend>
                                                         <div className="grid gap-3 sm:grid-cols-2">
                                                           <label className="space-y-1">
-                                                            <span className="text-xs font-medium">Exit price ($)</span>
+                                                            <span className="text-xs font-medium">{tx("Exit price ($)")}</span>
                                                             <Input
                                                               aria-label={`Exit price for ${entry.ticker}`}
                                                               aria-invalid={invalidExitPrice || undefined}
@@ -954,13 +939,11 @@ export function TradeBuilderApp() {
                                                               }
                                                             />
                                                             {invalidExitPrice ? (
-                                                              <span className="block text-xs text-destructive">
-                                                                Enter a closing price above zero.
-                                                              </span>
+                                                              <span className="block text-xs text-destructive">{tx("Enter a closing price above zero.")}</span>
                                                             ) : null}
                                                           </label>
                                                           <label className="space-y-1">
-                                                            <span className="text-xs font-medium">Fees ($, optional)</span>
+                                                            <span className="text-xs font-medium">{tx("Fees ($, optional)")}</span>
                                                             <Input
                                                               aria-label={`Fees for ${entry.ticker}`}
                                                               aria-invalid={invalidFees || undefined}
@@ -974,9 +957,7 @@ export function TradeBuilderApp() {
                                                               }
                                                             />
                                                             {invalidFees ? (
-                                                              <span className="block text-xs text-destructive">
-                                                                Fees must be zero or more.
-                                                              </span>
+                                                              <span className="block text-xs text-destructive">{tx("Fees must be zero or more.")}</span>
                                                             ) : null}
                                                           </label>
                                                         </div>
@@ -987,11 +968,11 @@ export function TradeBuilderApp() {
                                                 </>
                                               ) : null}
                                               <label className="block space-y-1">
-                                                <span className="text-sm font-medium">Notes</span>
+                                                <span className="text-sm font-medium">{tx("Notes")}</span>
                                                 <textarea
-                                                  aria-label={`Notes for ${entry.ticker}`}
+                                                  aria-label={tx("Notes for {0}", [entry.ticker])}
                                                   className="min-h-28 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                                                  placeholder="Add notes about this trade..."
+                                                  placeholder={tx("Add notes about this trade...")}
                                                   value={entry.notes ?? ""}
                                                   onChange={(event) => updateLogOutcome(entry.id, "notes", event.target.value)}
                                                 />
@@ -1004,7 +985,7 @@ export function TradeBuilderApp() {
                                     <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-1">
                                       <div
                                         role="radiogroup"
-                                        aria-label={`${entry.ticker} trade status`}
+                                        aria-label={tx("{0} trade status", [entry.ticker])}
                                         className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground"
                                       >
                                         <label className="flex items-center gap-1">
@@ -1013,24 +994,20 @@ export function TradeBuilderApp() {
                                             name={`trade-status-${entry.id}`}
                                             checked={entry.isOpen}
                                             onChange={() => setLogEntryOpen(entry.id, true)}
-                                          />
-                                          Open
-                                        </label>
+                                          />{tx("Open")}</label>
                                         <label className="flex items-center gap-1">
                                           <input
                                             type="radio"
                                             name={`trade-status-${entry.id}`}
                                             checked={!entry.isOpen}
                                             onChange={() => setLogEntryOpen(entry.id, false)}
-                                          />
-                                          Closed
-                                        </label>
+                                          />{tx("Closed")}</label>
                                       </div>
                                       <Button
                                         variant="ghost"
                                         size="icon-sm"
-                                        title="Load setup"
-                                        aria-label={`Load ${entry.ticker} setup into builder`}
+                                        title={tx("Load setup")}
+                                        aria-label={tx("Load {0} setup into builder", [entry.ticker])}
                                         onClick={() => loadLogEntry(entry)}
                                       >
                                         <Upload aria-hidden />
@@ -1038,7 +1015,7 @@ export function TradeBuilderApp() {
                                       <Button
                                         variant="ghost"
                                         size="icon-sm"
-                                        aria-label="Delete logged trade"
+                                        aria-label={tx("Delete logged trade")}
                                         onClick={() => deleteLogEntry(entry.id)}
                                       >
                                         <Trash2 aria-hidden />
@@ -1053,40 +1030,32 @@ export function TradeBuilderApp() {
                       </CardContent>
                     ) : null}
                     <CardContent className={showTradeLog ? "pt-0" : undefined}>
-                      <p className="text-center text-xs text-muted-foreground">
-                        Not shared between browsers or devices. Can be lost when
-                        browser site data is cleared. Use Backup in the header to
-                        download or restore your form and trade log.
-                      </p>
+                      <p className="text-center text-xs text-muted-foreground">{tx("Not shared between browsers or devices. Can be lost when browser site data is cleared. Use Backup in the header to download or restore your form and trade log.")}</p>
                     </CardContent>
                   </Card>
                 </>
               ) : (
                 <Card>
                   <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                    {hasNonPositiveBalance(form)
+                    {tx(hasNonPositiveBalance(form)
                       ? "Your account balance needs to be greater than zero to size a trade."
                       : hasNonPositiveAtr(form)
                         ? "The daily ATR needs to be greater than zero to set the stop buffer."
                         : hasNonPositiveRisk(form)
                           ? "Your risk per trade needs to be greater than zero to size a trade."
-                          : "Some inputs don't look like numbers. Go back and check them."}
+                          : "Some inputs don't look like numbers. Go back and check them.")}
                   </CardContent>
                 </Card>
               )}
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => goToStep(0)}>
-                  Edit trade
-                </Button>
+                <Button variant="outline" onClick={() => goToStep(0)}>{tx("Edit trade")}</Button>
                 <Button
                   variant="ghost"
                   onClick={() => {
                     update(initialState);
                     goToStep(0);
                   }}
-                >
-                  Start over
-                </Button>
+                >{tx("Start over")}</Button>
               </div>
             </div>
           )}
@@ -1100,16 +1069,12 @@ export function TradeBuilderApp() {
             target="_blank"
             rel="noreferrer"
             className="underline-offset-2 hover:underline"
-          >
-            Report a problem
-          </a>
+          >{tx("Report a problem")}</a>
           <span aria-hidden="true">•</span>
           <a
             href={REPORT_EMAIL_URL}
             className="underline-offset-2 hover:underline"
-          >
-            Email feedback
-          </a>
+          >{tx("Email feedback")}</a>
         </div>
       </footer>
     </div>

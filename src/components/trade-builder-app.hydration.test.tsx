@@ -23,6 +23,8 @@ import userEvent from "@testing-library/user-event";
 import { TradeBuilderApp, normalizeForm, toInputs } from "@/components/trade-builder-app";
 import { buildTrade } from "@/lib/trade-builder";
 import { createTradeBackup } from "@/lib/trade-backup";
+import { LANGUAGE_STORAGE_KEY } from "@/lib/languages";
+import { translate, translateText } from "@/lib/translations";
 
 const KEY = "tradebuilder-form-v3";
 const TRADE_LOG_KEY = "tradebuilder-log-v1";
@@ -52,6 +54,20 @@ const savedForm = {
 } as const;
 
 afterEach(() => window.localStorage.clear());
+
+test("language preference is available in the app header without changing the setup or resetting the preference", async () => {
+  window.localStorage.setItem(KEY, JSON.stringify(savedForm));
+  const user = userEvent.setup();
+  render(<TradeBuilderApp />);
+  await user.click(screen.getByRole("button", { name: "Language preference" }));
+  await user.selectOptions(screen.getByRole("combobox"), "ar");
+  await user.click(screen.getByRole("button", { name: translate("ar", "closeLanguage") }));
+  expect(screen.getByLabelText(translateText("ar", "Ticker symbol"))).toHaveValue("NVDA");
+  expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("ar");
+  await user.click(screen.getByRole("button", { name: translateText("ar", "Reset") }));
+  expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("ar");
+  expect(screen.getByLabelText(translateText("ar", "Ticker symbol"))).toHaveValue("");
+});
 
 test("the education-only line links to the strategy PDF without replacing the builder", () => {
   render(<TradeBuilderApp />);

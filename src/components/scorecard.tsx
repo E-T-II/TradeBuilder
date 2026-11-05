@@ -29,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/components/language-provider";
 
 const entryTypeLabel = {
   proximal: "Proximal entry",
@@ -82,13 +83,14 @@ function Row({
   positive?: boolean;
   negative?: boolean;
 }) {
+  const { text: tx } = useLanguage();
   return (
     <div className="flex items-center justify-between text-sm">
       <span>
-        {label}
+        {tx(label)}
         {detail ? (
           <span className="ml-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-            {detail}
+            {tx(detail)}
             {positive ? (
               <Check
                 className="size-3.5 text-emerald-700 dark:text-emerald-400"
@@ -104,8 +106,8 @@ function Row({
         ) : null}
       </span>
       <span className="font-mono tabular-nums">
-        {points}
-        <span className="text-muted-foreground"> / {max}</span>
+        {tx(points)}
+        <span className="text-muted-foreground"> / {tx(max)}</span>
       </span>
     </div>
   );
@@ -118,6 +120,7 @@ function formatScore(n: number) {
 }
 
 export function Scorecard({ result }: { result: TradeResult }) {
+  const { text: tx } = useLanguage();
   const s = result.scorecard;
   const ratio =
     s.profitZoneRatio >= 100
@@ -145,13 +148,13 @@ export function Scorecard({ result }: { result: TradeResult }) {
 
   const rows = [
 
-    <Row key="strength" label="Strength" points={s.strength} max={JUDGED_MAX.strength} />,
-    <Row key="time" label="Time" points={s.time} max={JUDGED_MAX.time} />,
-    <Row key="freshness" label="Freshness" points={s.freshness} max={JUDGED_MAX.freshness} />,
+    <Row key="strength" label={tx("Strength")} points={s.strength} max={JUDGED_MAX.strength} />,
+    <Row key="time" label={tx("Time")} points={s.time} max={JUDGED_MAX.time} />,
+    <Row key="freshness" label={tx("Freshness")} points={s.freshness} max={JUDGED_MAX.freshness} />,
 
     <Row
       key="trend"
-      label="Trend"
+      label={tx("Trend")}
       points={s.trend}
       max={2}
       positive={s.trend === 2}
@@ -167,7 +170,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
 
     <Row
       key="curve"
-      label="Curve"
+      label={tx("Curve")}
       points={s.curve}
       max={1}
       positive={s.curve === 1}
@@ -183,7 +186,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
 
     <Row
       key="profit"
-      label="Profit zone"
+      label={tx("Profit zone")}
       points={s.profitZone}
       max={2}
       positive={s.profitZone === 2}
@@ -209,29 +212,29 @@ export function Scorecard({ result }: { result: TradeResult }) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle>Odds enhancers</CardTitle>
+        <CardTitle>{tx("Odds enhancers")}</CardTitle>
         <div className="flex min-w-0 items-center justify-end gap-2">
           <Badge
             className={`${badgeClasses} shrink-0 origin-right transition-all duration-500 ease-out motion-reduce:transition-none! ${shown ? "scale-100 opacity-100" : "scale-90 opacity-0"
               }`}
           >
-            {badgeLabel}
+            {tx(badgeLabel)}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.map((row, i) => (
           <Reveal key={i} delay={80 + i * 60}>
-            {row}
+            {tx(row)}
           </Reveal>
         ))}
 
         <Reveal delay={80 + rows.length * 60}>
           <div className="mt-3 border-t pt-3">
             <div className="flex items-center justify-between font-medium">
-              <span>Total score</span>
+              <span>{tx("Total score")}</span>
               <span className="font-mono tabular-nums">
-                {formatScore(animatedTotal)} / 10
+                {tx(formatScore(animatedTotal))} / 10
               </span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -247,9 +250,7 @@ export function Scorecard({ result }: { result: TradeResult }) {
                 style={{ width: `${barWidth}%` }}
               />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              8.5+ proximal · 7 to 8 confirmation · below 7 no trade
-            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">{tx("8.5+ proximal · 7 to 8 confirmation · below 7 no trade")}</p>
           </div>
         </Reveal>
       </CardContent>

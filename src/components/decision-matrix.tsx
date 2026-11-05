@@ -17,6 +17,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CurveZone, Trend, ZoneType } from "@/lib/trade-builder";
+import { useLanguage } from "@/components/language-provider";
 
 const cellClasses =
     "border border-slate-300 bg-white px-2 py-2 text-center text-sm text-slate-900 first:font-semibold first:text-left dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100";
@@ -88,6 +89,7 @@ function cell(classes: string, highlighted: boolean): string {
 }
 
 export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = false }: DecisionMatrixProps) {
+  const { text: tx } = useLanguage();
     const colOffset = zoneType != null ? ZONE_COL[zoneType] + (trend != null ? TREND_COL[trend] : -1) : -1;
     const activeRow = curve != null ? CURVE_ROW[curve] : -1;
 
@@ -109,95 +111,90 @@ export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = 
                             <tr>
                                 <th className={headerCellClasses} rowSpan={2}>
                                     <div className="flex h-full flex-col items-center justify-between gap-2 py-2">
-                                        <span className="block text-center text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">
-                                            Zone
-                                        </span>
-                                        <span className="block border-t border-slate-300 pt-2 text-center text-[10px] uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                                            Trend
-                                        </span>
+                                        <span className="block text-center text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">{tx("Zone")}</span>
+                                        <span className="block border-t border-slate-300 pt-2 text-center text-[10px] uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:text-slate-300">{tx("Trend")}</span>
                                     </div>
                                 </th>
                                 <th className={headerCellClasses} colSpan={3}>
-                                    <span className="text-rose-600 text-xs">LTF Supply</span>
+                                    <span className="text-rose-600 text-xs">{tx("LTF Supply")}</span>
                                 </th>
                                 <th className={headerCellClasses} colSpan={3}>
-                                    <span className="text-emerald-700 text-xs">LTF Demand</span>
+                                    <span className="text-emerald-700 text-xs">{tx("LTF Demand")}</span>
                                 </th>
                             </tr>
                             <tr>
                                 <th className={itfHeaderCellClasses}>
                                     <span className="text-rose-600">
-                                        <span className="sm:hidden">ITF Down<br />trend</span>
-                                        <span className="hidden sm:inline">ITF Downtrend</span>
+                                        <span className="sm:hidden">{tx("ITF Down")}<br />{tx("trend")}</span>
+                                        <span className="hidden sm:inline">{tx("ITF Downtrend")}</span>
                                     </span>
                                 </th>
-                                <th className={itfHeaderCellClasses}><span className="sm:hidden">ITF Side<br />ways</span><span className="hidden sm:inline">ITF Sideways</span></th>
-                                <th className={itfHeaderCellClasses}><span className="text-emerald-700"><span className="sm:hidden">ITF Up<br />trend</span><span className="hidden sm:inline">ITF Uptrend</span></span></th>
+                                <th className={itfHeaderCellClasses}><span className="sm:hidden">{tx("ITF Side")}<br />{tx("ways")}</span><span className="hidden sm:inline">{tx("ITF Sideways")}</span></th>
+                                <th className={itfHeaderCellClasses}><span className="text-emerald-700"><span className="sm:hidden">{tx("ITF Up")}<br />{tx("trend")}</span><span className="hidden sm:inline">{tx("ITF Uptrend")}</span></span></th>
                                 <th className={itfHeaderCellClasses}>
                                     <span className="text-rose-600">
-                                        <span className="sm:hidden">ITF Down<br />trend</span>
-                                        <span className="hidden sm:inline">ITF Downtrend</span>
+                                        <span className="sm:hidden">{tx("ITF Down")}<br />{tx("trend")}</span>
+                                        <span className="hidden sm:inline">{tx("ITF Downtrend")}</span>
                                     </span>
                                 </th>
-                                <th className={itfHeaderCellClasses}><span className="sm:hidden">ITF Side<br />ways</span><span className="hidden sm:inline">ITF Sideways</span></th>
-                                <th className={itfHeaderCellClasses}><span className="text-emerald-700"><span className="sm:hidden">ITF Up<br />trend</span><span className="hidden sm:inline">ITF Uptrend</span></span></th>
+                                <th className={itfHeaderCellClasses}><span className="sm:hidden">{tx("ITF Side")}<br />{tx("ways")}</span><span className="hidden sm:inline">{tx("ITF Sideways")}</span></th>
+                                <th className={itfHeaderCellClasses}><span className="text-emerald-700"><span className="sm:hidden">{tx("ITF Up")}<br />{tx("trend")}</span><span className="hidden sm:inline">{tx("ITF Uptrend")}</span></span></th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td className={accentCellClasses}>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">HTF</div>
-                                    <div className="font-semibold text-rose-600 dark:text-rose-400">Curve High</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">{tx("HTF")}</div>
+                                    <div className="font-semibold text-rose-600 dark:text-rose-400">{tx("Curve High")}</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-700">Short</span></td>
-                                <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-700">Short</span></td>
+                                <td className={cell(cellClasses, isActive(0, 0))}><span className="font-semibold text-rose-700">{tx("Short")}</span></td>
+                                <td className={cell(cellClasses, isActive(0, 1))}><span className="font-semibold text-rose-700">{tx("Short")}</span></td>
                                 <td className={cell(cellClasses, isActive(0, 2))}>
-                                    <div><span className="font-semibold text-rose-700">Short</span></div>
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
+                                    <div><span className="font-semibold text-rose-700">{tx("Short")}</span></div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{tx("XLT")}</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(0, 3))}>No action</td>
-                                <td className={cell(cellClasses, isActive(0, 4))}>No action</td>
+                                <td className={cell(cellClasses, isActive(0, 3))}>{tx("No action")}</td>
+                                <td className={cell(cellClasses, isActive(0, 4))}>{tx("No action")}</td>
                                 <td className={cell(cellClasses, isActive(0, 5))}>
-                                    <div><span className="font-semibold text-emerald-700">Long<span className="text-xl">*</span></span></div>
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
+                                    <div><span className="font-semibold text-emerald-700">{tx("Long")}<span className="text-xl">*</span></span></div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{tx("XLT")}</div>
                                 </td>
                             </tr>
                             <tr>
                                 <td className={accentCellClasses}>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">HTF</div>
-                                    <div className="font-semibold text-slate-900 dark:text-slate-100">Curve Middle</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">{tx("HTF")}</div>
+                                    <div className="font-semibold text-slate-900 dark:text-slate-100">{tx("Curve Middle")}</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(1, 0))}><span className="font-semibold text-rose-700">Short</span></td>
-                                <td className={cell(cellClasses, isActive(1, 1))}><span className="font-semibold text-rose-700">Short</span></td>
-                                <td className={cell(cellClasses, isActive(1, 2))}>No action</td>
-                                <td className={cell(cellClasses, isActive(1, 3))}>No action</td>
-                                <td className={cell(cellClasses, isActive(1, 4))}><span className="font-semibold text-emerald-700">Long</span></td>
-                                <td className={cell(cellClasses, isActive(1, 5))}><span className="font-semibold text-emerald-700">Long</span></td>
+                                <td className={cell(cellClasses, isActive(1, 0))}><span className="font-semibold text-rose-700">{tx("Short")}</span></td>
+                                <td className={cell(cellClasses, isActive(1, 1))}><span className="font-semibold text-rose-700">{tx("Short")}</span></td>
+                                <td className={cell(cellClasses, isActive(1, 2))}>{tx("No action")}</td>
+                                <td className={cell(cellClasses, isActive(1, 3))}>{tx("No action")}</td>
+                                <td className={cell(cellClasses, isActive(1, 4))}><span className="font-semibold text-emerald-700">{tx("Long")}</span></td>
+                                <td className={cell(cellClasses, isActive(1, 5))}><span className="font-semibold text-emerald-700">{tx("Long")}</span></td>
                             </tr>
                             <tr>
                                 <td className={accentCellClasses}>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">HTF</div>
-                                    <div className="font-semibold text-emerald-700 dark:text-emerald-400">Curve Low</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">{tx("HTF")}</div>
+                                    <div className="font-semibold text-emerald-700 dark:text-emerald-400">{tx("Curve Low")}</div>
                                 </td>
                                 <td className={cell(cellClasses, isActive(2, 0))}>
-                                    <div className="flex flex-col items-center"><span className="font-semibold text-rose-700">Short<span className="text-xl">*</span></span></div>
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
+                                    <div className="flex flex-col items-center"><span className="font-semibold text-rose-700">{tx("Short")}<span className="text-xl">*</span></span></div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{tx("XLT")}</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(2, 1))}>No action</td>
-                                <td className={cell(cellClasses, isActive(2, 2))}>No action</td>
+                                <td className={cell(cellClasses, isActive(2, 1))}>{tx("No action")}</td>
+                                <td className={cell(cellClasses, isActive(2, 2))}>{tx("No action")}</td>
                                 <td className={cell(cellClasses, isActive(2, 3))}>
-                                    <div><span className="font-semibold text-emerald-700">Long</span></div>
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">XLT</div>
+                                    <div><span className="font-semibold text-emerald-700">{tx("Long")}</span></div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{tx("XLT")}</div>
                                 </td>
-                                <td className={cell(cellClasses, isActive(2, 4))}><span className="font-semibold text-emerald-700">Long</span></td>
-                                <td className={cell(cellClasses, isActive(2, 5))}><span className="font-semibold text-emerald-700">Long</span></td>
+                                <td className={cell(cellClasses, isActive(2, 4))}><span className="font-semibold text-emerald-700">{tx("Long")}</span></td>
+                                <td className={cell(cellClasses, isActive(2, 5))}><span className="font-semibold text-emerald-700">{tx("Long")}</span></td>
                             </tr>
                         </tbody>
                     </table>
                     <div className="mt-4">
                         <p className="ml-4 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="text-xl">*</span> Only if Profit Zone ≥ 5:1
-                        </p>
+                            <span className="text-xl">*</span>{tx("Only if Profit Zone ≥ 5:1")}</p>
                     </div>
                 </div>
             </CardContent>
@@ -207,9 +204,9 @@ export function DecisionMatrix({ zoneType, curve, trend, highlights, embedded = 
     return embedded ? content : (
         <Card>
             <CardHeader>
-                <CardTitle>Decision Matrix</CardTitle>
+                <CardTitle>{tx("Decision Matrix")}</CardTitle>
             </CardHeader>
-            {content}
+            {tx(content)}
         </Card>
     );
 }

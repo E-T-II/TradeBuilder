@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 
 const THEME_KEY = "tradebuilder-theme";
 
@@ -27,6 +28,7 @@ const THEME_KEY = "tradebuilder-theme";
 // hydration mismatch with the layout's pre-paint theme script. aria-pressed
 // is filled in after mount (undefined during SSR) for the same reason.
 export function ThemeToggle() {
+  const { text: tx } = useLanguage();
   const [isDark, setIsDark] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     const sync = () =>
@@ -50,7 +52,7 @@ export function ThemeToggle() {
       size="icon-sm"
       onClick={toggle}
       aria-pressed={isDark}
-      aria-label="Toggle dark theme"
+      aria-label={tx("Toggle dark theme")}
     >
       <Moon className="dark:hidden" aria-hidden />
       <Sun className="hidden dark:block" aria-hidden />

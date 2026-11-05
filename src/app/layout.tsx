@@ -18,6 +18,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SplashIntro } from "@/components/splash-intro";
+import { LanguageProvider } from "@/components/language-provider";
 
 export const metadata: Metadata = {
   title: "Trade Builder",
@@ -83,8 +84,10 @@ export default function RootLayout({
               "(function(){try{var t=localStorage.getItem('tradebuilder-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();",
           }}
         />
-        <SplashIntro />
-        {children}
+        <LanguageProvider>
+          <SplashIntro />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

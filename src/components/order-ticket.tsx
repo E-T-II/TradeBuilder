@@ -23,6 +23,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/language-provider";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -41,6 +42,7 @@ function Line({
   value: string;
   strong?: boolean;
 }) {
+  const { text: tx } = useLanguage();
   return (
     <div
       className={cn(
@@ -48,8 +50,8 @@ function Line({
         strong && "font-medium",
       )}
     >
-      <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
-      <span className="font-mono tabular-nums">{value}</span>
+      <span className={strong ? "" : "text-muted-foreground"}>{tx(label)}</span>
+      <span className="font-mono tabular-nums">{tx(value)}</span>
     </div>
   );
 }
@@ -73,15 +75,16 @@ function targetBufferText(math: TradeResult["math"]): string {
 // Shown under the built order, and again on the no-trade screen, where the
 // wrapper greys the whole block so the numbers read as context, not an order.
 function MathLines({ math }: { math: TradeResult["math"] }) {
+  const { text: tx } = useLanguage();
   return (
     <>
-      <Line label="Target buffer %" value={targetBufferText(math)} />
+      <Line label={tx("Target buffer %")} value={targetBufferText(math)} />
       {math.targetBufferDollar !== null ? (
-        <Line label="Target buffer $" value={usd.format(math.targetBufferDollar)} />
+        <Line label={tx("Target buffer $")} value={usd.format(math.targetBufferDollar)} />
       ) : null}
-      <Line label="Daily ATR" value={usd.format(math.dailyAtr)} />
-      <Line label="Stop buffer %" value={`${math.stopBufferPct}%`} />
-      <Line label="Stop buffer $" value={usd.format(math.stopBufferDollar)} />
+      <Line label={tx("Daily ATR")} value={usd.format(math.dailyAtr)} />
+      <Line label={tx("Stop buffer %")} value={`${math.stopBufferPct}%`} />
+      <Line label={tx("Stop buffer $")} value={usd.format(math.stopBufferDollar)} />
     </>
   );
 }
@@ -93,6 +96,7 @@ export function OrderTicket({
   result: TradeResult;
   direction: Direction;
 }) {
+  const { text: tx } = useLanguage();
   if (!result.order) {
     // Seven ways to land here: the matrix vetoed the setup, the score didn't
     // qualify, the zones are too tight, the position rounds to zero shares
@@ -138,8 +142,8 @@ export function OrderTicket({
     return (
       <div className="space-y-3">
         <Alert>
-          <AlertTitle>No trade</AlertTitle>
-          <AlertDescription>{reason}</AlertDescription>
+          <AlertTitle>{tx("No trade")}</AlertTitle>
+          <AlertDescription>{tx(reason)}</AlertDescription>
         </Alert>
         {/* The math still applies even without an order (per Eugene): show it in
             gray so the ATR and buffers behind the rejected setup stay visible.
@@ -149,7 +153,7 @@ export function OrderTicket({
             the heading gives the standalone rows the context the order card gets
             from the order lines above them. */}
         <div className="space-y-2 rounded-lg border bg-card px-2.5 py-2 text-muted-foreground">
-          <p className="text-sm font-medium">Behind the numbers</p>
+          <p className="text-sm font-medium">{tx("Behind the numbers")}</p>
           <MathLines math={result.math} />
         </div>
       </div>
@@ -166,24 +170,22 @@ export function OrderTicket({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your S.E.T.S. order</CardTitle>
+        <CardTitle>{tx("Your S.E.T.S. order")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Line label="Stop loss" value={usd.format(o.stop)} strong />
-        <Line label="Entry price" value={usd.format(o.entry)} strong />
-        <Line label="Target price" value={usd.format(o.target)} strong />
-        <p className="text-sm font-medium">
-          {verb} {o.positionSize} shares, {orderKind}
-        </p>
+        <Line label={tx("Stop loss")} value={usd.format(o.stop)} strong />
+        <Line label={tx("Entry price")} value={usd.format(o.entry)} strong />
+        <Line label={tx("Target price")} value={usd.format(o.target)} strong />
+        <p className="text-sm font-medium">{tx("{0} {1} shares, {2}", [tx(verb), tx(o.positionSize), tx(orderKind)])}</p>
         <div className="my-3 border-t" />
         <Line
-          label="Capital required"
+          label={tx("Capital required")}
           value={usd.format(o.capitalRequirement)}
         />
-        <Line label="Risk per share" value={usd.format(o.riskPerShare)} />
-        <Line label="Total trade risk" value={usd.format(o.totalTradeRisk)} />
+        <Line label={tx("Risk per share")} value={usd.format(o.riskPerShare)} />
+        <Line label={tx("Total trade risk")} value={usd.format(o.totalTradeRisk)} />
         <Line
-          label="Reward : risk (needs 3:1)"
+          label={tx("Reward : risk (needs 3:1)")}
           value={`${ratio.format(o.rewardRisk)} : 1`}
         />
         <div className="my-3 border-t" />

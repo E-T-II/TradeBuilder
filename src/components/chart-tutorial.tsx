@@ -21,6 +21,7 @@ import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { usePrefersReducedMotion } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 
 // The four things the user reads off their own chart, revealed in order.
 // Direction decides which zone is the entry and which is the target.
@@ -31,6 +32,7 @@ export function ChartTutorial({
   curveHigh?: string;
   curveLow?: string;
 }) {
+  const { text: tx } = useLanguage();
   // Client-only (mounted inside an opened dialog), so read the preference on the
   // first render to avoid a flash of motion for reduced-motion users.
   const reduced = usePrefersReducedMotion(true);
@@ -69,59 +71,59 @@ export function ChartTutorial({
           viewBox="0 0 430 270"
           className="block h-auto w-full text-foreground"
           role="img"
-          aria-label="A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal."
+          aria-label={tx("A price chart split into wholesale, equilibrium and retail thirds, pointing out the curve high and low and the demand and supply zones. The supply zone's top edge is Supply distal and its bottom is Supply proximal; the demand zone's top edge is Demand proximal and its bottom is Demand distal.")}
         >
-          <text x="60" y="28" textAnchor="end" fontSize="11" className="fill-muted-foreground">{highLabel}</text>
-          <text x="60" y="252" textAnchor="end" fontSize="11" className="fill-muted-foreground">{lowLabel}</text>
+          <text x="60" y="28" textAnchor="end" fontSize="11" className="fill-muted-foreground">{tx(highLabel)}</text>
+          <text x="60" y="252" textAnchor="end" fontSize="11" className="fill-muted-foreground">{tx(lowLabel)}</text>
           <rect x="70" y="24" width="180" height="224" fill="none" className="stroke-border" />
           <line x1="70" y1={upperBoundaryY} x2="250" y2={upperBoundaryY} className="stroke-border" strokeDasharray="3 3" />
           <line x1="70" y1={lowerBoundaryY} x2="250" y2={lowerBoundaryY} className="stroke-border" strokeDasharray="3 3" />
-          <text x="60" y={upperBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(upperBoundary)}</text>
-          <text x="60" y={lowerBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{truncatePrice(lowerBoundary)}</text>
-          <text x="78" y="68" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">retail</text>
-          <text x="78" y="139" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">equilibrium</text>
-          <text x="78" y="210" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">wholesale</text>
+          <text x="60" y={upperBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{tx(truncatePrice(upperBoundary))}</text>
+          <text x="60" y={lowerBoundaryY + 4} textAnchor="end" fontSize="10" className="fill-muted-foreground">{tx(truncatePrice(lowerBoundary))}</text>
+          <text x="78" y="68" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">{tx("retail")}</text>
+          <text x="78" y="139" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">{tx("equilibrium")}</text>
+          <text x="78" y="210" fontSize="10.5" fontStyle="italic" className="fill-muted-foreground">{tx("wholesale")}</text>
 
           <g style={cue(2.1)}>
             <line x1="70" y1="24" x2="250" y2="24" className="stroke-red-700" strokeWidth="3" />
             <circle cx="250" cy="24" r="3" className="fill-red-700" />
             <line x1="250" y1="24" x2="266" y2="24" className="stroke-border" />
-            <text x="272" y="28" fontSize="12.5" className="fill-foreground">Curve high</text>
+            <text x="272" y="28" fontSize="12.5" className="fill-foreground">{tx("Curve high")}</text>
           </g>
           <g style={cue(3.0)}>
             <line x1="70" y1="248" x2="250" y2="248" className="stroke-emerald-700" strokeWidth="3" />
             <circle cx="250" cy="248" r="3" className="fill-emerald-700" />
             <line x1="250" y1="248" x2="266" y2="248" className="stroke-border" />
-            <text x="272" y="252" fontSize="12.5" className="fill-foreground">Curve low</text>
+            <text x="272" y="252" fontSize="12.5" className="fill-foreground">{tx("Curve low")}</text>
           </g>
           <g style={cue(0.3)}>
             <rect x="70" y="24" width="180" height="14.9" className="fill-red-500/15 stroke-red-600" />
-            <text x="160" y="20" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
-            <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
-            <text x="272" y="44" fontSize="12.5" className="fill-foreground">Supply zone</text>
+            <text x="160" y="20" textAnchor="middle" fontSize="10" className="fill-muted-foreground">{tx("distal")}</text>
+            <text x="160" y="50" textAnchor="middle" fontSize="10" className="fill-muted-foreground">{tx("proximal")}</text>
+            <text x="272" y="44" fontSize="12.5" className="fill-foreground">{tx("Supply zone")}</text>
           </g>
           <g style={cue(1.2)}>
             <rect x="70" y="233.1" width="180" height="14.9" className="fill-emerald-500/18 stroke-emerald-600" />
-            <text x="160" y="229" textAnchor="middle" fontSize="10" className="fill-muted-foreground">proximal</text>
-            <text x="160" y="264" textAnchor="middle" fontSize="10" className="fill-muted-foreground">distal</text>
-            <text x="272" y="237" fontSize="12.5" className="fill-foreground">Demand zone</text>
+            <text x="160" y="229" textAnchor="middle" fontSize="10" className="fill-muted-foreground">{tx("proximal")}</text>
+            <text x="160" y="264" textAnchor="middle" fontSize="10" className="fill-muted-foreground">{tx("distal")}</text>
+            <text x="272" y="237" fontSize="12.5" className="fill-foreground">{tx("Demand zone")}</text>
           </g>
         </svg>
       </div>
 
       <div className="grid grid-cols-3 gap-1 rounded-lg border bg-muted/30 px-2 py-2 text-xs sm:px-3 sm:text-sm">
         <div>
-          <span className="text-muted-foreground">Curve high</span>
-          <div className="font-mono tabular-nums">${highLabel}</div>
+          <span className="text-muted-foreground">{tx("Curve high")}</span>
+          <div className="font-mono tabular-nums">${tx(highLabel)}</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Curve low</span>
-          <div className="font-mono tabular-nums">${lowLabel}</div>
+          <span className="text-muted-foreground">{tx("Curve low")}</span>
+          <div className="font-mono tabular-nums">${tx(lowLabel)}</div>
         </div>
         <div>
-          <span className="text-muted-foreground">Curve factor</span>
+          <span className="text-muted-foreground">{tx("Curve factor")}</span>
           <div className="font-mono tabular-nums">
-            {curveFactorLabel}
+            {tx(curveFactorLabel)}
           </div>
         </div>
       </div>
@@ -129,9 +131,7 @@ export function ChartTutorial({
       {!reduced ? (
         <div className="flex justify-end">
           <Button variant="ghost" size="sm" onClick={() => setRunId((n) => n + 1)}>
-            <RotateCcw aria-hidden />
-            Replay
-          </Button>
+            <RotateCcw aria-hidden />{tx("Replay")}</Button>
         </div>
       ) : null}
     </div>

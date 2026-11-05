@@ -19,6 +19,7 @@ import { StrengthReference } from "@/components/strength-reference";
 import { TimeReference } from "@/components/time-reference";
 import { FreshnessReference } from "@/components/freshness-reference";
 import { ComputedEnhancerReference } from "@/components/computed-enhancer-reference";
+import { useLanguage } from "@/components/language-provider";
 
 const factors = {
   strength: { label: "Strength", Reference: StrengthReference },
@@ -180,6 +181,7 @@ export function ZoneScorecard({
   onChange: (patch: Partial<ZoneRatings>) => void;
   opposing?: boolean;
 }) {
+  const { text: tx } = useLanguage();
   const computedScores = computeZoneScores(form, direction);
   const total = zoneTotal(computedScores, ratings);
   const entryLabel = total === null ? null : ENTRY_LABELS[entryType(total)];
@@ -190,7 +192,7 @@ export function ZoneScorecard({
 
   return (
     <section
-      aria-label={`${name} scorecard`}
+      aria-label={tx("{0} scorecard", [tx(name)])}
       className={`min-w-0 space-y-4 rounded-xl border border-t-4 bg-linear-to-b p-2 transition-shadow duration-300 motion-reduce:transition-none sm:p-4 ${
         demand
           ? "border-emerald-200 border-t-emerald-500 from-emerald-50/80 to-background hover:shadow-[0_0_20px_-6px_rgba(16,185,129,0.3)] dark:border-emerald-900 dark:border-t-emerald-400 dark:from-emerald-950/40"
@@ -204,39 +206,34 @@ export function ZoneScorecard({
             : "bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200"
         }`}>
           <DirectionIcon className="size-3.5" aria-hidden />
-          {demand ? "Demand · Buy" : "Supply · Sell"}
+          {tx(demand ? "Demand · Buy" : "Supply · Sell")}
         </span>
-        <h3 className="text-base font-semibold">{name}</h3>
-        <p className="text-xs text-muted-foreground">
-          {direction === "long" ? "Demand" : "Supply"} zone
-          {opposing ? " - for comparison only" : " - used for your trade"}
-        </p>
+        <h3 className="text-base font-semibold">{tx(name)}</h3>
+        <p className="text-xs text-muted-foreground">{tx("{0} zone {1}", [tx(direction === "long" ? "Demand" : "Supply"), tx(opposing ? " - for comparison only" : " - used for your trade")])}</p>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 gap-y-3 lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3">
-        <div className="text-xs font-medium text-muted-foreground">Odds Enhancer</div>
-        <div className="text-center text-xs font-medium text-muted-foreground">Score</div>
-        <div className="text-center text-xs font-medium text-muted-foreground">Max</div>
+        <div className="text-xs font-medium text-muted-foreground">{tx("Odds Enhancer")}</div>
+        <div className="text-center text-xs font-medium text-muted-foreground">{tx("Score")}</div>
+        <div className="text-center text-xs font-medium text-muted-foreground">{tx("Max")}</div>
         {(["strength", "time", "freshness"] as const).map((key) => {
           const { label, Reference } = factors[key];
           const id = `${prefix}${key}`;
           return (
             <Fragment key={key}>
-              <Label id={`${id}-label`}>{label}</Label>
+              <Label id={`${id}-label`}>{tx(label)}</Label>
               <ScoreSelector
                 id={id}
-                label={label}
+                label={tx(label)}
                 value={ratings[key]}
                 direction={direction}
                 Reference={Reference}
                 onChange={(value) => onChange({ [key]: value })}
               />
-              <div className="text-center font-mono text-sm tabular-nums">{JUDGED_MAX[key]}</div>
+              <div className="text-center font-mono text-sm tabular-nums">{tx(JUDGED_MAX[key])}</div>
             </Fragment>
           );
         })}
-        <div className="col-span-3 mt-1 border-t pt-3 text-xs font-medium text-muted-foreground">
-          Auto-scored odds enhancers
-        </div>
+        <div className="col-span-3 mt-1 border-t pt-3 text-xs font-medium text-muted-foreground">{tx("Auto-scored odds enhancers")}</div>
         {([
           ["trend", "Trend", 2],
           ["curve", "Curve", 1],
@@ -244,21 +241,20 @@ export function ZoneScorecard({
         ] as const).map(([key, label, max]) => (
           <Fragment key={key}>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              {label}
+              {tx(label)}
               <ComputedEnhancerReference enhancer={key} direction={direction} score={computedScores?.[key] ?? null} />
               {key === "profitZone" && computedScores ? (
                 <span
                   className="ml-auto whitespace-nowrap text-xs tabular-nums"
-                  aria-label={`Profit zone ratio ${formatRatio(computedScores.ratio)}`}
-                >
-                  Ratio <span className="font-mono">{formatRatio(computedScores.ratio)}</span>
+                  aria-label={tx("Profit zone ratio {0}", [tx(formatRatio(computedScores.ratio))])}
+                >{tx("Ratio")} <span className="font-mono">{tx(formatRatio(computedScores.ratio))}</span>
                 </span>
               ) : null}
             </span>
-            <output className="text-center font-mono text-sm tabular-nums" aria-label={`${label} score`}>
-              {computedScores?.[key] ?? "-"}
+            <output className="text-center font-mono text-sm tabular-nums" aria-label={tx("{0} score", [tx(label)])}>
+              {tx(computedScores?.[key] ?? "-")}
             </output>
-            <div className="text-center font-mono text-sm tabular-nums">{max}</div>
+            <div className="text-center font-mono text-sm tabular-nums">{tx(max)}</div>
           </Fragment>
         ))}
         <span className={`col-span-3 mt-1 grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 rounded-lg border-t px-1 py-3 font-medium lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3 ${
@@ -266,17 +262,15 @@ export function ZoneScorecard({
             ? "border-emerald-200 bg-emerald-100/60 dark:border-emerald-900 dark:bg-emerald-950/50"
             : "border-red-200 bg-red-100/60 dark:border-red-900 dark:bg-red-950/50"
         }`}>
-          <span className="flex items-center gap-1">
-            Total score
-            <ComputedEnhancerReference enhancer={demand ? "total" : "totalSupply"} direction={direction} score={total} />
+          <span className="flex items-center gap-1">{tx("Total score")}<ComputedEnhancerReference enhancer={demand ? "total" : "totalSupply"} direction={direction} score={total} />
             {entryLabel ? (
-              <span className="ml-auto whitespace-nowrap text-xs" aria-label={`Entry type ${entryLabel}`}>
-                {entryLabel}
+              <span className="ml-auto whitespace-nowrap text-xs" aria-label={tx("Entry type {0}", [tx(entryLabel)])}>
+                {tx(entryLabel)}
               </span>
             ) : null}
           </span>
-          <output className="text-center font-mono text-sm tabular-nums" aria-label="Total odds-enhancer score">
-            {total ?? "-"}
+          <output className="text-center font-mono text-sm tabular-nums" aria-label={tx("Total odds-enhancer score")}>
+            {tx(total ?? "-")}
           </output>
           <span className="text-center font-mono text-sm tabular-nums">10</span>
         </span>

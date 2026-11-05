@@ -55,6 +55,7 @@ import { ChartTutorialButton } from "@/components/chart-tutorial-dialog";
 import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog";
 import { ZoneScorecard, computeZoneScores, zoneTotal } from "@/components/zone-scorecard";
 import { XltChecklistDialog } from "@/components/xlt-checklist-dialog";
+import { useLanguage } from "@/components/language-provider";
 
 interface TradeFormProps {
   form: FormState;
@@ -108,18 +109,19 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  const { text: tx } = useLanguage();
   return (
     <div className="space-y-1.5">
       <Label id={`${id}-label`} htmlFor={group ? undefined : id}>
-        {label}
+        {tx(label)}
       </Label>
       {children}
       {error ? (
         <p id={`${id}-error`} className="text-xs text-destructive">
-          {error}
+          {tx(error)}
         </p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="text-xs text-muted-foreground">{tx(hint)}</p>
       ) : null}
     </div>
   );
@@ -188,6 +190,7 @@ function NumberInput({
   /** Rewrites the value to two decimal places on blur, e.g. "22" -> "22.00". */
   formatOnBlur?: boolean;
 }) {
+  const { text: tx } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingCaret = useRef<number | null>(null);
   const display = formatNumber(value);
@@ -218,7 +221,7 @@ function NumberInput({
       autoComplete="off"
       aria-invalid={invalid || undefined}
       aria-describedby={invalid ? `${id}-error` : undefined}
-      placeholder={placeholder}
+      placeholder={tx(placeholder)}
       value={display}
       disabled={disabled}
       onChange={(e) => {
@@ -257,13 +260,14 @@ function PriceField({
   error?: string;
   placeholder?: string;
 }) {
+  const { text: tx } = useLanguage();
   return (
-    <Field id={id} label={label} hint={hint} error={error}>
+    <Field id={id} label={tx(label)} hint={tx(hint)} error={error}>
       <NumberInput
         id={id}
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
+        placeholder={tx(placeholder)}
         invalid={!!error}
       />
     </Field>
@@ -279,8 +283,9 @@ export function TopStepper({
   reachable: number;
   onJump: (step: number) => void;
 }) {
+  const { text: tx } = useLanguage();
   return (
-    <nav aria-label="Steps" className="flex items-center">
+    <nav aria-label={tx("Steps")} className="flex items-center">
       {STEPS.map((s, i) => {
         const done = i < step;
         const current = i === step;
@@ -317,7 +322,7 @@ export function TopStepper({
                   : "text-muted-foreground"
                   }`}
               >
-                {s.title}
+                {tx(s.title)}
               </span>
             </button>
           </Fragment>
@@ -338,6 +343,7 @@ export function TradeForm({
   autoOpenTradeRisk,
   onToggleAutoOpenTradeRisk,
 }: TradeFormProps) {
+  const { text: tx } = useLanguage();
   const updateForm = (patch: Partial<FormState>) => {
     const xltResetFields = new Set([
       "curveLow",
@@ -455,7 +461,8 @@ export function TradeForm({
     zoneStepError ? "Zones" : null,
   ]
     .filter(Boolean)
-    .join(" and ");
+    .map((name) => tx(name))
+    .join(tx(" and "));
 
   // Move focus to the new step's heading so keyboard and screen-reader users
   // aren't stranded on the old Next button. Skip the initial mount.
@@ -471,9 +478,7 @@ export function TradeForm({
 
   return (
     <div className={`mx-auto flex w-full flex-col px-5 py-10 lg:py-14 ${step === 4 ? "max-w-5xl" : "max-w-xl"}`}>
-      <p className="text-xs font-medium text-muted-foreground lg:hidden">
-        Step {step + 1} of {STEPS.length}
-      </p>
+      <p className="text-xs font-medium text-muted-foreground lg:hidden">{tx("Step {0} of {1}", [tx(step + 1), tx(STEPS.length)])}</p>
 
       <div className="mt-4 flex gap-1.5 lg:hidden">
         {STEPS.map((s, i) => (
@@ -492,7 +497,7 @@ export function TradeForm({
             tabIndex={-1}
             className="text-2xl font-semibold tracking-tight outline-none"
           >
-            {STEPS[step].title}
+            {tx(STEPS[step].title)}
           </h2>
           {step === 1 ? (
             <CurveVideoDialog />
@@ -505,7 +510,7 @@ export function TradeForm({
           ) : null}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {STEPS[step].blurb}
+          {tx(STEPS[step].blurb)}
         </p>
       </div>
 
@@ -514,15 +519,15 @@ export function TradeForm({
           <>
             <Field
               id="ticker"
-              label="Ticker symbol"
-              hint="The asset symbol to identify this trade in your log"
+              label={tx("Ticker symbol")}
+              hint={tx("The asset symbol to identify this trade in your log")}
             >
               <Input
                 id="ticker"
                 type="text"
                 autoCapitalize="characters"
                 autoComplete="off"
-                placeholder="NVDA"
+                placeholder={tx("NVDA")}
                 value={form.ticker}
                 onChange={(event) =>
                   onChange({
@@ -534,12 +539,12 @@ export function TradeForm({
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 id="balance"
-                label="Account balance ($)"
-                hint="Your balance with your broker, used for all risk limits"
+                label={tx("Account balance ($)")}
+                hint={tx("Your balance with your broker, used for all risk limits")}
               >
                 <NumberInput
                   id="balance"
-                  placeholder="600"
+                  placeholder={tx("600")}
                   value={form.accountBalance}
                   onChange={(accountBalance) => onChange({ accountBalance })}
                   allowNegative
@@ -547,25 +552,20 @@ export function TradeForm({
               </Field>
               <Field
                 id="atr"
-                label="Daily ATR ($)"
+                label={tx("Daily ATR ($)")}
                 hint={
-                  <>
-                    From{" "}
+                  <>{tx("From")}{tx(" ")}
                     <a
                       href="https://finviz.com/"
                       target="_blank"
                       rel="noreferrer"
                       className="underline underline-offset-2 hover:text-foreground"
-                    >
-                      finviz.com
-                    </a>{" "}
-                    (14-day Average True Range)
-                  </>
+                    >{tx("finviz.com")}</a>{tx(" ")}{tx("(14-day Average True Range)")}</>
                 }
               >
                 <NumberInput
                   id="atr"
-                  placeholder="5.93"
+                  placeholder={tx("5.93")}
                   value={form.atr}
                   onChange={(atr) => onChange({ atr })}
                 />
@@ -573,8 +573,8 @@ export function TradeForm({
             </div>
             <Field
               id="timeframe"
-              label="Income objective"
-              hint="Sets the stop buffer: 2% or 10% of Daily ATR"
+              label={tx("Income objective")}
+              hint={tx("Sets the stop buffer: 2% or 10% of Daily ATR")}
               group
             >
               <SegmentedControl
@@ -592,16 +592,14 @@ export function TradeForm({
               type="button"
               className="text-xs text-muted-foreground underline-offset-2 hover:underline"
               onClick={onToggleAdvanced}
-            >
-              {showAdvanced ? "Hide" : "Show"} advanced settings
-            </button>
+            >{tx(showAdvanced ? "Hide advanced settings" : "Show advanced settings")}</button>
 
             {showAdvanced ? (
               <>
                 <Field
                   id="targetMode"
-                  label="Target mode"
-                  hint={`Percentage buffer, a mechanical 3:1, or Auto (the better of a ${TARGET_BUFFER_MAX_PCT}% buffer and 3:1)`}
+                  label={tx("Target mode")}
+                  hint={tx("Percentage buffer, a mechanical 3:1, or Auto (the better of a {0}% buffer and 3:1)", [tx(TARGET_BUFFER_MAX_PCT)])}
                   group
                 >
                   <SegmentedControl
@@ -633,8 +631,8 @@ export function TradeForm({
                   // two fields' positions.
                   <Field
                     id="buffer"
-                    label="Target buffer (%)"
-                    hint={`Between ${TARGET_BUFFER_MIN_PCT}% and ${TARGET_BUFFER_MAX_PCT}%`}
+                    label={tx("Target buffer (%)")}
+                    hint={tx("Between {0}% and {1}%", [tx(TARGET_BUFFER_MIN_PCT), tx(TARGET_BUFFER_MAX_PCT)])}
                   >
                     <Input
                       id="buffer"
@@ -659,8 +657,8 @@ export function TradeForm({
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field
                     id="risk"
-                    label="Risk per trade (%)"
-                    hint="Up to 2%, to preserve the account"
+                    label={tx("Risk per trade (%)")}
+                    hint={tx("Up to 2%, to preserve the account")}
                   >
                     <Input
                       id="risk"
@@ -680,11 +678,11 @@ export function TradeForm({
                   </Field>
                   <Field
                     id="openRisk"
-                    label="Risk in open trades ($)"
+                    label={tx("Risk in open trades ($)")}
                     hint={
-                      autoOpenTradeRisk
+                      tx(autoOpenTradeRisk
                         ? "Auto-filled from open trades in the Trade log"
-                        : "For the 6% rule. Leave 0 if this is your only trade"
+                        : "For the 6% rule. Leave 0 if this is your only trade")
                     }
                   >
                     <NumberInput
@@ -702,9 +700,7 @@ export function TradeForm({
                     className="size-4 accent-primary"
                     checked={autoOpenTradeRisk}
                     onChange={onToggleAutoOpenTradeRisk}
-                  />
-                  Auto-fill open trade risk from the Trade log
-                </Label>
+                  />{tx("Auto-fill open trade risk from the Trade log")}</Label>
               </>
             ) : null}
           </>
@@ -715,15 +711,15 @@ export function TradeForm({
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="curveHigh"
-                label="Curve high ($)"
-                hint="HTF supply zone distal line"
+                label={tx("Curve high ($)")}
+                hint={tx("HTF supply zone distal line")}
                 value={form.curveHigh}
                 onChange={(curveHigh) => updateForm({ curveHigh })}
               />
               <PriceField
                 id="curveLow"
-                label="Curve low ($)"
-                hint="HTF demand zone distal line"
+                label={tx("Curve low ($)")}
+                hint={tx("HTF demand zone distal line")}
                 value={form.curveLow}
                 onChange={(curveLow) => updateForm({ curveLow })}
                 error={zoneErrors.curveLow}
@@ -739,7 +735,7 @@ export function TradeForm({
         ) : null}
 
         {step === 2 ? (
-          <Field id="trend" label="Trend" group>
+          <Field id="trend" label={tx("Trend")} group>
             <SegmentedControl
               aria-labelledby="trend-label"
               value={form.trend}
@@ -773,16 +769,16 @@ export function TradeForm({
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="supplyHigh"
-                label="Supply distal ($)"
-                hint="Top edge of the supply zone"
+                label={tx("Supply distal ($)")}
+                hint={tx("Top edge of the supply zone")}
                 value={form.supplyHigh}
                 onChange={(supplyHigh) => updateForm({ supplyHigh })}
                 error={zoneErrors.supplyHigh}
               />
               <PriceField
                 id="supplyLow"
-                label="Supply proximal ($)"
-                hint="Bottom edge of the supply zone"
+                label={tx("Supply proximal ($)")}
+                hint={tx("Bottom edge of the supply zone")}
                 value={form.supplyLow}
                 onChange={(supplyLow) => updateForm({ supplyLow })}
                 error={zoneErrors.supplyLow}
@@ -791,16 +787,16 @@ export function TradeForm({
             <div className="grid gap-4 sm:grid-cols-2">
               <PriceField
                 id="demandHigh"
-                label="Demand proximal ($)"
-                hint="Top edge of the demand zone"
+                label={tx("Demand proximal ($)")}
+                hint={tx("Top edge of the demand zone")}
                 value={form.demandHigh}
                 onChange={(demandHigh) => updateForm({ demandHigh })}
                 error={zoneErrors.demandHigh}
               />
               <PriceField
                 id="demandLow"
-                label="Demand distal ($)"
-                hint="Bottom edge of the demand zone"
+                label={tx("Demand distal ($)")}
+                hint={tx("Bottom edge of the demand zone")}
                 value={form.demandLow}
                 onChange={(demandLow) => updateForm({ demandLow })}
                 error={zoneErrors.demandLow}
@@ -817,7 +813,7 @@ export function TradeForm({
             </div>
             {/* Direction comes after the zone lines: mark the zones as they
                 appear on the chart, then decide which way to trade them. */}
-            <Field id="direction" label="Direction" group>
+            <Field id="direction" label={tx("Direction")} group>
               <SegmentedControl
                 aria-labelledby="direction-label"
                 value={form.direction}
@@ -839,9 +835,9 @@ export function TradeForm({
               />
             </Field>
             <p className="text-xs text-muted-foreground">
-              {long
+              {tx(long
                 ? "You enter at the demand zone and target the supply zone."
-                : "You enter at the supply zone and target the demand zone."}
+                : "You enter at the supply zone and target the demand zone.")}
             </p>
           </>
         ) : null}
@@ -850,7 +846,7 @@ export function TradeForm({
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground" aria-live="polite">
-                {long ? "Buy long: enter at demand, target supply." : "Sell short: enter at supply, target demand."}
+                {tx(long ? "Buy long: enter at demand, target supply." : "Sell short: enter at supply, target demand.")}
               </p>
               <Button
                 variant="outline"
@@ -865,7 +861,7 @@ export function TradeForm({
                 })}
               >
                 <ArrowLeftRight aria-hidden />
-                {long ? "Switch to sell short" : "Switch to buy long"}
+                {tx(long ? "Switch to sell short" : "Switch to buy long")}
               </Button>
             </div>
             <div className="grid items-start gap-6 min-[480px]:grid-cols-2 min-[480px]:gap-4 lg:gap-8">
@@ -911,35 +907,27 @@ export function TradeForm({
 
       {xltScoreProblems.length > 0 ? (
         <Alert className="mx-auto mt-6 max-w-xl">
-          <AlertTitle>XLT score requirements not met</AlertTitle>
+          <AlertTitle>{tx("XLT score requirements not met")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc space-y-1 pl-5">
               {xltScoreProblems.map((problem) => (
-                <li key={problem}>{problem}</li>
+                <li key={problem}>{tx(problem)}</li>
               ))}
-            </ul>
-            Update the scorecard or choose another setup before continuing.
-          </AlertDescription>
+            </ul>{tx("Update the scorecard or choose another setup before continuing.")}</AlertDescription>
         </Alert>
       ) : null}
 
       {entryScoreTooLow ? (
         <Alert className="mx-auto mt-6 max-w-xl">
-          <AlertTitle>Unqualified Entry Zone</AlertTitle>
-          <AlertDescription>
-            The trade strategy calls for no action on a score below 7 (70%).
-            Choose and score a different entry zone to continue.
-          </AlertDescription>
+          <AlertTitle>{tx("Unqualified Entry Zone")}</AlertTitle>
+          <AlertDescription>{tx("The trade strategy calls for no action on a score below 7 (70%). Choose and score a different entry zone to continue.")}</AlertDescription>
         </Alert>
       ) : null}
 
       {/* On the last step the erroring zone fields aren't visible, so point
           the user back to fix them. */}
       {isLast && hasZoneErrors ? (
-        <p className="mt-6 text-center text-xs text-destructive">
-          Some values are inconsistent. Go back to {errorSteps} to fix the
-          highlighted fields.
-        </p>
+        <p className="mt-6 text-center text-xs text-destructive">{tx("Some values are inconsistent. Go back to {0} to fix the highlighted fields.", [tx(errorSteps)])}</p>
       ) : null}
 
       {/* On mobile the footer sits behind the fixed action bar, so repeat it
@@ -959,9 +947,7 @@ export function TradeForm({
           // field labels above; the mobile bar keeps its inset.
           className={`lg:-ml-2.5 ${step === 0 ? "hidden lg:inline-flex lg:invisible" : ""}`}
         >
-          <ChevronLeft aria-hidden />
-          Back
-        </Button>
+          <ChevronLeft aria-hidden />{tx("Back")}</Button>
         <Button
           onClick={onNext}
           disabled={disableNext}
@@ -969,8 +955,8 @@ export function TradeForm({
           className="flex-1 lg:flex-none"
         >
           {remaining > 0
-            ? `${remaining} field${remaining === 1 ? "" : "s"} left`
-            : blockedByZones
+            ? tx(remaining === 1 ? "{0} field left" : "{0} fields left", [remaining])
+            : tx(blockedByZones
               ? "Check the highlighted values"
               : xltScoreBlocked
                 ? "XLT score requirements not met"
@@ -980,7 +966,7 @@ export function TradeForm({
                   ? "Confirm XLT criteria"
                   : isLast
                     ? "See my trade"
-                    : "Next"}
+                    : "Next")}
           {!disableNext ? <ArrowRight aria-hidden /> : null}
         </Button>
       </div>

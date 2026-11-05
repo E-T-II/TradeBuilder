@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/components/language-provider";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -41,9 +42,10 @@ function RuleRow({
   label: string;
   failLabel?: string;
 }) {
+  const { text: tx } = useLanguage();
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">{tx(label)}</span>
       <span
         className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
           ok
@@ -56,35 +58,36 @@ function RuleRow({
         ) : (
           <X className="size-3.5" aria-hidden />
         )}
-        {ok ? "OK" : failLabel}
+        {tx(ok ? "OK" : failLabel)}
       </span>
     </div>
   );
 }
 
 export function RiskChecks({ result }: { result: TradeResult }) {
+  const { text: tx } = useLanguage();
   if (!result.checks) return null;
   const c = result.checks;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Risk rules</CardTitle>
+        <CardTitle>{tx("Risk rules")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <RuleRow
           ok={c.withinPerTradeRisk}
-          label={`Risk within ${usd.format(c.maxAccountRisk)} (${c.riskLimitPct}% per trade)`}
+          label={tx("Risk within {0} ({1}% per trade)", [tx(usd.format(c.maxAccountRisk)), tx(c.riskLimitPct)])}
         />
-        <RuleRow ok={c.withinCapitalCap} label="Capital within 50% of balance" />
+        <RuleRow ok={c.withinCapitalCap} label={tx("Capital within 50% of balance")} />
         <RuleRow
           ok={c.meetsRewardRisk}
-          label="Reward : risk at least 3:1"
+          label={tx("Reward : risk at least 3:1")}
           failLabel="Below 3:1"
         />
         <RuleRow
           ok={c.withinMultiTradeRisk}
-          label={`Open risk within ${usd.format(c.multiTradeLimit)} (6% rule)`}
+          label={tx("Open risk within {0} (6% rule)", [tx(usd.format(c.multiTradeLimit))])}
         />
       </CardContent>
     </Card>

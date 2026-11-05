@@ -16,6 +16,7 @@
  */
 
 import type { Direction } from "@/lib/trade-builder";
+import { useLanguage } from "@/components/language-provider";
 
 export function TimeReference({
     selected,
@@ -26,32 +27,27 @@ export function TimeReference({
     onSelect?: (score: number) => void;
     direction?: Direction;
 }) {
+  const { text: tx } = useLanguage();
     const short = direction === "short";
     return (
         <figure className="odds-reference-graphic w-full rounded-lg border border-slate-700 bg-[#252b40] p-1">
             <svg
                 viewBox="0 0 634 250"
                 role="img"
-                aria-label={`Time reference for a ${short ? "Supply Sell Setup (Short)" : "Demand Buy Setup (Long)"}: Best equals 1 for one to three basing candles, Good equals 0.5 for four to six basing candles, and Poor equals 0 for more than six basing candles.`}
+                aria-label={tx("Time reference for a {0}: Best equals 1 for one to three basing candles, Good equals 0.5 for four to six basing candles, and Poor equals 0 for more than six basing candles.", [tx(short ? "Supply Sell Setup (Short)" : "Demand Buy Setup (Long)")])}
                 className="mx-auto block h-auto w-full text-slate-100 [shape-rendering:geometricPrecision]"
             >
                 <rect width="634" height="250" fill="#252b40" />
-                <text x="317" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">
-                    How much time did price spend at the zone?
-                </text>
-                <text x="20" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">Zone</text>
-                <text x="20" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "Supply" : "Demand"}</text>
-                <text x="20" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "Sell Setup" : "Buy Setup"}</text>
-                <text x="20" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{short ? "(Short)" : "(Long)"}</text>
-                <TimePanel direction={direction} x={95} title="Best" score="1" value={1} caption="1–3 Basing Candles" selected={selected === 1} onSelect={onSelect} />
-                <TimePanel direction={direction} x={253} title="Good" score="0.5" value={0.5} caption="4–6 Basing Candles" selected={selected === 0.5} onSelect={onSelect} />
-                <TimePanel direction={direction} x={434} title="Poor" score="0" value={0} caption=">6 Basing Candles" selected={selected === 0} onSelect={onSelect} />
-                <text x="317" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
-                    The less time price spends at a zone,
-                </text>
-                <text x="317" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">
-                    the more out-of-balance the supply or demand is at the zone
-                </text>
+                <text x="317" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("How much time did price spend at the zone?")}</text>
+                <text x="20" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("Zone")}</text>
+                <text x="20" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Supply" : "Demand")}</text>
+                <text x="20" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Sell Setup" : "Buy Setup")}</text>
+                <text x="20" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "(Short)" : "(Long)")}</text>
+                <TimePanel direction={direction} x={95} title={tx("Best")} score="1" value={1} caption="1–3 Basing Candles" selected={selected === 1} onSelect={onSelect} />
+                <TimePanel direction={direction} x={253} title={tx("Good")} score="0.5" value={0.5} caption="4–6 Basing Candles" selected={selected === 0.5} onSelect={onSelect} />
+                <TimePanel direction={direction} x={434} title={tx("Poor")} score="0" value={0} caption=">6 Basing Candles" selected={selected === 0} onSelect={onSelect} />
+                <text x="317" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("The less time price spends at a zone,")}</text>
+                <text x="317" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("the more out-of-balance the supply or demand is at the zone")}</text>
             </svg>
         </figure>
     );
@@ -76,6 +72,7 @@ function TimePanel({
     onSelect?: (score: number) => void;
     direction: Direction;
 }) {
+  const { text: tx } = useLanguage();
     const short = direction === "short";
     const width = title === "Good" ? 160 : title === "Poor" ? 160 : 138;
     const chartLeft = x + 11;
@@ -85,7 +82,7 @@ function TimePanel({
         <g
             role={onSelect ? "button" : undefined}
             tabIndex={onSelect ? 0 : undefined}
-            aria-label={onSelect ? `${title} time, ${score} points` : undefined}
+            aria-label={tx(onSelect ? `${title} time, ${score} points` : undefined)}
             onClick={onSelect ? () => onSelect(value) : undefined}
             onKeyDown={onSelect ? (event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -97,15 +94,15 @@ function TimePanel({
         >
             <rect x={x} y={27} width={width} height={153} fill="none" stroke={selected ? "#fb744c" : "#394158"} />
             <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="16" fontWeight="700">
-                {selected ? "✓ " : ""}{title} = {score}
+                {tx(selected ? "✓ " : "")}{tx(title)} = {tx(score)}
             </text>
             <g transform={short ? "translate(0 250) scale(1 -1)" : undefined}>
                 <g transform={`translate(0 ${short ? 70 : 38})`}>
-                    <BestTimeChart chartLeft={chartLeft} chartRight={chartRight} short={short} title={title} />
+                    <BestTimeChart chartLeft={chartLeft} chartRight={chartRight} short={short} title={tx(title)} />
                 </g>
             </g>
             <rect x={x} y={27} width={width} height={153} fill="transparent" pointerEvents="all" />
-            <text x={x + width / 2} y={174} textAnchor="middle" fill="#9ba2e9" fontSize="11" fontWeight="600">{caption}</text>
+            <text x={x + width / 2} y={174} textAnchor="middle" fill="#9ba2e9" fontSize="11" fontWeight="600">{tx(caption)}</text>
         </g>
     );
 }

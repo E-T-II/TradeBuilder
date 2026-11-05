@@ -5,6 +5,7 @@ import { Printer } from "lucide-react";
 import type { TradeLogEntry } from "@/components/trade-builder-app";
 import { Button } from "@/components/ui/button";
 import { roundToCent } from "@/lib/trade-builder";
+import { useLanguage } from "@/components/language-provider";
 
 type PrintEntry = TradeLogEntry & { realizedPnl: number | null };
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -13,6 +14,7 @@ const optionalPrice = (value: string | undefined) =>
   value?.trim() && Number.isFinite(Number(value)) ? usd.format(Number(value)) : "—";
 
 export function TradeLogExport({ entries }: { entries: PrintEntry[] }) {
+  const { text: tx } = useLanguage();
   const [printError, setPrintError] = useState("");
   const completed = entries.filter((entry) => entry.realizedPnl !== null);
   const total = roundToCent(completed.reduce((sum, entry) => sum + (entry.realizedPnl ?? 0), 0));
@@ -40,55 +42,48 @@ export function TradeLogExport({ entries }: { entries: PrintEntry[] }) {
   return (
     <div>
       <Button variant="ghost" size="sm" onClick={print}>
-        <Printer aria-hidden />
-        Print / Save PDF
-      </Button>
-      {printError ? <p role="alert" className="max-w-64 text-xs text-destructive">{printError}</p> : null}
-      <article className="trade-log-print" aria-label="Printable trade log">
+        <Printer aria-hidden />{tx("Print / Save PDF")}</Button>
+      {printError ? <p role="alert" className="max-w-64 text-xs text-destructive">{tx(printError)}</p> : null}
+      <article className="trade-log-print" aria-label={tx("Printable trade log")}>
         <header>
-          <h1>Trade Builder — Trade journal</h1>
-          <p>Generated {new Date().toLocaleDateString("en-US")} | USD</p>
+          <h1>{tx("Trade Builder — Trade journal")}</h1>
+          <p>{tx("Generated {0} | USD", [tx(new Date().toLocaleDateString("en-US"))])}</p>
           <p>
-            {entries.length} logged trades | {entries.filter((entry) => entry.isOpen).length} open |
-            {" "}{completed.length} completed with P&amp;L | Net P&amp;L {signedUsd(total)}
+            {tx(entries.length)} {tx("logged trades |")} {entries.filter((entry) => entry.isOpen).length} {tx("open |")}{" "}{tx(completed.length)} {tx("completed with P&L | Net P&L")} {tx(signedUsd(total))}
           </p>
         </header>
         <table>
-          <caption>All logged trades, including open trades and unfinished entries</caption>
+          <caption>{tx("All logged trades, including open trades and unfinished entries")}</caption>
           <thead>
             <tr>{["Trade / status", "Logged / closing date", "Planned entry / stop / target", "Planned shares", "Exit / fees", "Profit/Loss"].map((label) =>
-              <th key={label} scope="col">{label}</th>,
+              <th key={label} scope="col">{tx(label)}</th>,
             )}</tr>
           </thead>
           <tbody>
             {entries.map((entry) => (
               <Fragment key={entry.id}>
                 <tr>
-                  <th scope="row">{entry.ticker}<br />{entry.direction === "long" ? "Buy" : "Sell short"}<br />{entry.isOpen ? "Open" : "Closed"}</th>
-                  <td>{new Date(entry.createdAt).toLocaleString()}<br />{entry.closedOn || "—"}</td>
-                  <td>{usd.format(entry.entry)} / {usd.format(entry.stop)} / {usd.format(entry.target)}</td>
-                  <td>{entry.positionSize}</td>
-                  <td>{optionalPrice(entry.exitPrice)} / {optionalPrice(entry.fees)}</td>
-                  <td>{entry.realizedPnl === null ? "—" : signedUsd(entry.realizedPnl)}</td>
+                  <th scope="row">{entry.ticker}<br />{tx(entry.direction === "long" ? "Buy" : "Sell short")}<br />{tx(entry.isOpen ? "Open" : "Closed")}</th>
+                  <td>{new Date(entry.createdAt).toLocaleString()}<br />{tx(entry.closedOn || "—")}</td>
+                  <td>{tx(usd.format(entry.entry))} / {tx(usd.format(entry.stop))} / {tx(usd.format(entry.target))}</td>
+                  <td>{tx(entry.positionSize)}</td>
+                  <td>{tx(optionalPrice(entry.exitPrice))} / {tx(optionalPrice(entry.fees))}</td>
+                  <td>{tx(entry.realizedPnl === null ? "—" : signedUsd(entry.realizedPnl))}</td>
                 </tr>
                 <tr className="trade-log-entry-end">
-                  <td colSpan={6}>
-                    Capital {usd.format(entry.capitalRequirement)} | Risk {usd.format(entry.totalTradeRisk)} |
-                    {" "}Reward:Risk {entry.rewardRisk.toFixed(2)}:1 | O.E. Score {entry.score} / 10
+                  <td colSpan={6}>{tx("Capital")} {tx(usd.format(entry.capitalRequirement))} {tx("| Risk")} {tx(usd.format(entry.totalTradeRisk))} |
+                    {tx(" ")}{tx("Reward:Risk")} {tx(entry.rewardRisk.toFixed(2))}{tx(":1 | O.E. Score")} {tx(entry.score)} / 10
                     {entry.openedOn || entry.actualEntryPrice || entry.actualQuantity ? (
-                      <p>Actual opening date: {entry.openedOn || "—"} | Actual opening price: {optionalPrice(entry.actualEntryPrice)} | Actual shares: {entry.actualQuantity || "—"}</p>
+                      <p>{tx("Actual opening date: {0} | Actual opening price: {1} | Actual shares: {2}", [tx(entry.openedOn || "—"), tx(optionalPrice(entry.actualEntryPrice)), tx(entry.actualQuantity || "—")])}</p>
                     ) : null}
-                    {entry.notes ? <p className="trade-log-notes">Notes: {entry.notes}</p> : null}
+                    {entry.notes ? <p className="trade-log-notes">{tx("Notes: {0}", [entry.notes])}</p> : null}
                   </td>
                 </tr>
               </Fragment>
             ))}
           </tbody>
         </table>
-        <footer>
-          P&amp;L uses the entered Profit/Loss, or planned entry and shares less fees when no amount was entered.
-          A dash means no value was recorded. This journal includes all trades regardless of Closing date.
-        </footer>
+        <footer>{tx("P&L uses the entered Profit/Loss, or planned entry and shares less fees when no amount was entered. A dash means no value was recorded. This journal includes all trades regardless of Closing date.")}</footer>
       </article>
     </div>
   );

@@ -18,6 +18,7 @@
 "use client";
 
 import { useRef } from "react";
+import { useLanguage } from "@/components/language-provider";
 
 interface RatingChipsProps {
   /** null means unanswered: no chip is highlighted, unlike a deliberate 0. */
@@ -42,6 +43,7 @@ export function RatingChips({
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledby,
 }: RatingChipsProps) {
+  const { text: tx } = useLanguage();
   const steps: number[] = [];
   for (let v = 0; v <= max; v += step) steps.push(v);
 
@@ -77,7 +79,7 @@ export function RatingChips({
     <div className="w-fit space-y-1.5">
       <div
         role="radiogroup"
-        aria-label={ariaLabel}
+        aria-label={tx(ariaLabel)}
         aria-labelledby={ariaLabelledby}
         onKeyDown={onKeyDown}
         className="flex flex-wrap gap-1.5"
@@ -101,15 +103,15 @@ export function RatingChips({
                   : "bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
               }`}
             >
-              {step}
+              {tx(step)}
             </button>
           );
         })}
       </div>
       {lowLabel || highLabel ? (
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{lowLabel}</span>
-          <span>{highLabel}</span>
+          <span>{tx(lowLabel)}</span>
+          <span>{tx(highLabel)}</span>
         </div>
       ) : null}
     </div>

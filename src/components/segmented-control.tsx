@@ -19,6 +19,7 @@
 
 import { useRef } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 
 interface SegmentOption<T extends string> {
   value: T;
@@ -52,6 +53,7 @@ export function SegmentedControl<T extends string>({
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledby,
 }: SegmentedControlProps<T>) {
+  const { text: tx } = useLanguage();
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = Math.max(
     0,
@@ -83,7 +85,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="radiogroup"
-      aria-label={ariaLabel}
+      aria-label={tx(ariaLabel)}
       aria-labelledby={ariaLabelledby}
       onKeyDown={onKeyDown}
       className="flex w-full rounded-lg border bg-muted/40 p-1"
@@ -100,7 +102,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={option.ariaLabel}
+            aria-label={tx(option.ariaLabel)}
             tabIndex={index === selectedIndex ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm transition-colors ${
@@ -117,7 +119,7 @@ export function SegmentedControl<T extends string>({
                 aria-hidden
               />
             ) : null}
-            {option.label}
+            {tx(option.label)}
           </button>
         );
       })}

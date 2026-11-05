@@ -10,6 +10,18 @@ Optional **actual opening date**, **actual opening price**, and **actual shares*
 
 The **Engineered Risk Trading Strategy** link in the education-only disclaimer opens the included strategy PDF in a new tab without leaving the current setup.
 
+### Interface language
+
+Use **Language** in the header to choose English, Arabic, Bengali, Dutch, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malayalam, Polish, Portuguese, Punjabi, Russian, Spanish, Tamil, Telugu, or Ukrainian. The preference is saved locally in this browser, separate from trade data, and is not included in backups.
+
+Changing languages translates application labels, instructions, dialogs, validation and storage messages, accessibility labels, and printable reports. Calendar month and weekday names follow the selected language. Arabic and Hebrew use right-to-left layout. Trading calculations, USD amounts, ticker symbols, notes, and saved trade inputs are unchanged.
+
+The bundled catalogs are machine-generated using a locally run NLLB translation model, not native-speaker reviewed. No application text or trade data is sent to a translation service, and translation does not require a network connection. Reference screenshots and the included strategy PDF retain their original English text; the surrounding reference descriptions are translated. YouTube content and browser-owned file/print controls depend on their own language support.
+
+When adding interface copy, use `useLanguage().text(...)` and update the English source catalog and every translated catalog in [src/lib/locales](./src/lib/locales). Keep interpolation placeholders such as `{0}` and numeric trading rules unchanged. Localization tests check catalog completeness, placeholders, numeric thresholds, real translated forms, and right-to-left switching.
+
+All four YouTube tutorials request the selected language for player controls and caption preferences. Caption availability depends on YouTube and the video; this does not turn captions on automatically. **The app cannot force a dubbed audio track**. In each video's **Settings > Audio track**, choose the desired language if that track is available. Changing languages does not change trade calculations, stored inputs, or notes.
+
 ### Review and print a trade plan
 
 On the results screen, select **Print / save plan** to open the browser's print dialog. Print the plan or choose **Save as PDF** to download it. The plan includes the setup assumptions, score breakdown, Decision Matrix verdict, order details when an order qualifies, and risk-check outcomes. Rejected setups are also exportable, with the reason no order was produced. Review the plan and confirm current prices and conditions before placing any order.

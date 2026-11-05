@@ -21,13 +21,14 @@ import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { CirclePlay, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { stopEmbeddedYouTubeVideo } from "@/lib/youtube";
+import { stopEmbeddedYouTubeVideo, tutorialVideoUrl } from "@/lib/youtube";
+import { useLanguage } from "@/components/language-provider";
+import { TutorialLanguageHint } from "@/components/tutorial-language-hint";
 
 const YOUTUBE_CURVE_VIDEO_ID = "7YBiZB5RIUc";
-const YOUTUBE_CURVE_VIDEO_URL =
-    `https://www.youtube.com/embed/${YOUTUBE_CURVE_VIDEO_ID}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&enablejsapi=1`;
 
 export function CurveVideoDialog() {
+    const { language, text: tx } = useLanguage();
     const [open, setOpen] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -40,29 +41,26 @@ export function CurveVideoDialog() {
             <Dialog.Trigger
                 render={<Button variant="ghost" size="sm" className="text-muted-foreground" />}
             >
-                <CirclePlay aria-hidden />
-                Watch curve video
-            </Dialog.Trigger>
+                <CirclePlay aria-hidden />{tx("Watch curve video")}</Dialog.Trigger>
 
             <Dialog.Portal>
                 <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0" />
                 <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(40rem,92vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-5 shadow-lg outline-none transition-all data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
                     <div className="mb-3 flex items-center justify-between">
-                        <Dialog.Title className="text-sm font-medium">Curve tutorial</Dialog.Title>
+                        <Dialog.Title className="text-sm font-medium">{tx("Curve tutorial")}</Dialog.Title>
                         <Dialog.Close
-                            render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}
+                            render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close")} />}
                         >
                             <X aria-hidden />
                         </Dialog.Close>
                     </div>
-                    <Dialog.Description className="sr-only">
-                        A YouTube video explaining how to set the curve on the high time frame.
-                    </Dialog.Description>
+                    <Dialog.Description className="sr-only">{tx("A YouTube video explaining how to set the curve on the high time frame.")}</Dialog.Description>
+                    <TutorialLanguageHint />
                     <div className="overflow-hidden rounded-2xl border border-border bg-black">
                         <iframe
                             ref={iframeRef}
-                            src={YOUTUBE_CURVE_VIDEO_URL}
-                            title="Curve tutorial video"
+                            src={tutorialVideoUrl(YOUTUBE_CURVE_VIDEO_ID, language)}
+                            title={tx("Curve tutorial video")}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="aspect-video w-full"
