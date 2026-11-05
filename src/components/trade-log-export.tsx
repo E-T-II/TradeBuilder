@@ -71,7 +71,7 @@ export function TradeLogExport({ entries }: { entries: PrintEntry[] }) {
                   <td>{optionalPrice(entry.exitPrice)} / {optionalPrice(entry.fees)}</td>
                   <td>{entry.realizedPnl === null ? "—" : signedUsd(entry.realizedPnl)}</td>
                 </tr>
-                <tr>
+                <tr className="trade-log-entry-end">
                   <td colSpan={6}>
                     Capital {usd.format(entry.capitalRequirement)} | Risk {usd.format(entry.totalTradeRisk)} |
                     {" "}Reward:Risk {entry.rewardRisk.toFixed(2)}:1 | O.E. Score {entry.score} / 10

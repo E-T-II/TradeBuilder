@@ -256,6 +256,11 @@
     vertical-align: top;
   }
 
+  .trade-log-print tbody tr:nth-child(even) td {
+    border-bottom: 3px solid #111;
+    padding-bottom: 8pt;
+  }
+
   .trade-log-notes {
     white-space: pre-wrap;
   }

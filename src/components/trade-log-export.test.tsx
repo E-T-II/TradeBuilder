@@ -31,6 +31,7 @@ test("prints all trades with notes and the same realized outcomes as performance
   ])} />);
   const report = screen.getByRole("article", { name: "Printable trade log" });
   expect(within(report).getAllByRole("rowheader")).toHaveLength(4);
+  expect(report.querySelectorAll("tr.trade-log-entry-end")).toHaveLength(4);
   expect(report).toHaveTextContent("Net P&L -$17.47");
   expect(report).toHaveTextContent("1 open");
   expect(report).toHaveTextContent("2 completed with P&L");
