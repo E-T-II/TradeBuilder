@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/components/language-provider";
+import { useCurrency } from "@/components/currency-provider";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -46,7 +47,7 @@ function Line({
   return (
     <div
       className={cn(
-        "flex items-center justify-between text-sm",
+        "flex flex-wrap items-center justify-between gap-2 text-sm",
         strong && "font-medium",
       )}
     >
@@ -76,6 +77,7 @@ function targetBufferText(math: TradeResult["math"]): string {
 // wrapper greys the whole block so the numbers read as context, not an order.
 function MathLines({ math }: { math: TradeResult["math"] }) {
   const { text: tx } = useLanguage();
+  const usd = useCurrency();
   return (
     <>
       <Line label={tx("Target buffer %")} value={targetBufferText(math)} />
@@ -97,6 +99,7 @@ export function OrderTicket({
   direction: Direction;
 }) {
   const { text: tx } = useLanguage();
+  const display = useCurrency();
   if (!result.order) {
     // Seven ways to land here: the matrix vetoed the setup, the score didn't
     // qualify, the zones are too tight, the position rounds to zero shares
@@ -173,17 +176,17 @@ export function OrderTicket({
         <CardTitle>{tx("Your S.E.T.S. order")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Line label={tx("Stop loss")} value={usd.format(o.stop)} strong />
-        <Line label={tx("Entry price")} value={usd.format(o.entry)} strong />
-        <Line label={tx("Target price")} value={usd.format(o.target)} strong />
+        <Line label={tx("Stop loss")} value={display.format(o.stop)} strong />
+        <Line label={tx("Entry price")} value={display.format(o.entry)} strong />
+        <Line label={tx("Target price")} value={display.format(o.target)} strong />
         <p className="text-sm font-medium">{tx("{0} {1} shares, {2}", [tx(verb), tx(o.positionSize), tx(orderKind)])}</p>
         <div className="my-3 border-t" />
         <Line
           label={tx("Capital required")}
-          value={usd.format(o.capitalRequirement)}
+          value={display.format(o.capitalRequirement)}
         />
-        <Line label={tx("Risk per share")} value={usd.format(o.riskPerShare)} />
-        <Line label={tx("Total trade risk")} value={usd.format(o.totalTradeRisk)} />
+        <Line label={tx("Risk per share")} value={display.format(o.riskPerShare)} />
+        <Line label={tx("Total trade risk")} value={display.format(o.totalTradeRisk)} />
         <Line
           label={tx("Reward : risk (needs 3:1)")}
           value={`${ratio.format(o.rewardRisk)} : 1`}

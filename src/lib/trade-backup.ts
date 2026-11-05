@@ -1,5 +1,6 @@
 import type { FormState, TradeLogEntry } from "@/components/trade-builder-app";
 import { EXECUTION_FIELDS } from "@/lib/trade-execution";
+import { isDisplayRate } from "@/lib/display-currency";
 
 export const FORM_STORAGE_KEY = "tradebuilder-form-v3";
 export const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
@@ -110,6 +111,7 @@ function isTradeLogEntry(value: unknown): value is TradeLogEntry {
     isOutcomeField(value.exitPrice, false) &&
     isOutcomeField(value.fees, true) &&
     isProfitLossField(value.profitLoss) &&
+    (value.displayRate === undefined || isDisplayRate(value.displayRate)) &&
     (value.notes === undefined || typeof value.notes === "string") &&
     EXECUTION_FIELDS.every((field) => value[field] === undefined || typeof value[field] === "string") &&
     (value.form === undefined || isForm(value.form, true))

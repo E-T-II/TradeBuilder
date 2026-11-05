@@ -9,6 +9,7 @@ import {
   restoreTradeBackup,
   TRADE_LOG_STORAGE_KEY,
 } from "@/lib/trade-backup";
+import type { DisplayRate } from "@/lib/display-currency";
 
 const form = normalizeForm({
   ticker: "NVDA",
@@ -55,6 +56,14 @@ afterEach(() => {
 });
 
 describe("backup validation", () => {
+  test("preserves saved exchange rates in backups and rejects invalid rate snapshots", () => {
+    const displayRate: DisplayRate = {
+      currency: "EUR", rate: 0.9, asOf: "2026-10-22", checkedAt: "2026-10-22T12:00:00Z", source: "Frankfurter",
+    };
+    expect(parseTradeBackup(createTradeBackup(form, [{ ...entry, displayRate }])).tradeLog[0].displayRate).toEqual(displayRate);
+    const backup = { ...payload(), tradeLog: [{ ...entry, displayRate: { ...displayRate, rate: -1 } }] };
+    expect(() => parseTradeBackup(JSON.stringify(backup))).toThrow(/Trade 1/);
+  });
   test("round-trips the whole form, outcomes, and setup snapshots without modification", () => {
     const backup = parseTradeBackup(createTradeBackup(form, [entry]));
     expect(backup).toMatchObject({ format: "tradebuilder-backup", version: 1, form, tradeLog: [entry] });

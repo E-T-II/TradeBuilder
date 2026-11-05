@@ -24,11 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLanguage } from "@/components/language-provider";
-
-const usd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { useCurrency } from "@/components/currency-provider";
 
 // Most rules are ceilings, so a failure reads as "Over the limit". The
 // reward:risk rule is a floor (at least 3:1), where a failure is being *below*
@@ -66,6 +62,7 @@ function RuleRow({
 
 export function RiskChecks({ result }: { result: TradeResult }) {
   const { text: tx } = useLanguage();
+  const usd = useCurrency();
   if (!result.checks) return null;
   const c = result.checks;
 

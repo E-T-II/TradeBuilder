@@ -57,6 +57,11 @@ import { DecisionMatrix } from "@/components/decision-matrix";
 import { TradeBackupControls } from "@/components/trade-backup-controls";
 import { LanguageProvider, useLanguage } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
+import { CurrencyProvider, useCurrency } from "@/components/currency-provider";
+import { CurrencySelector } from "@/components/currency-selector";
+import { CurrencyNote, CurrencyAmountHint } from "@/components/currency-note";
+import { formatHistoricalTotal, isDisplayRate, type DisplayRate } from "@/lib/display-currency";
+import { currencyText } from "@/lib/currency-translations";
 import {
   FORM_ENUM_VALUES,
   FORM_STORAGE_KEY as STORAGE_KEY,
@@ -136,6 +141,8 @@ const REPORT_ISSUE_URL = "https://github.com/E-T-II/trade-builder-feedback/issue
 const REPORT_EMAIL_URL = "mailto:tradebuilderfeedback@protonmail.com?subject=Trade%20Builder%20Report";
 
 export interface TradeLogEntry extends ExecutionDetails {
+  /** Display-only rate captured when logged; never used by trading calculations. */
+  displayRate?: DisplayRate;
   id: string;
   createdAt: string;
   ticker: string;
@@ -161,6 +168,8 @@ export interface TradeLogEntry extends ExecutionDetails {
   /** The builder inputs that produced this entry, so it can be reloaded later. Absent on pre-v2 saves. */
   form?: Partial<FormState>;
 }
+
+class SavedExchangeRateError extends Error {}
 
 function sanitizeOutcomeField(value: unknown, allowZero: boolean): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -199,6 +208,9 @@ export function loadTradeLog(): TradeLogEntry[] {
       const fees = sanitizeOutcomeField(candidate.fees, true);
       const profitLoss = sanitizeProfitLoss(candidate.profitLoss);
       const cleanCandidate = { ...candidate };
+      if (cleanCandidate.displayRate !== undefined && !isDisplayRate(cleanCandidate.displayRate)) {
+        throw new SavedExchangeRateError("Invalid saved exchange rate in trade log.");
+      }
       delete cleanCandidate.exitPrice;
       delete cleanCandidate.fees;
       delete cleanCandidate.profitLoss;
@@ -217,7 +229,8 @@ export function loadTradeLog(): TradeLogEntry[] {
         form: sanitizeFormPatch(candidate.form) ?? undefined,
       } as TradeLogEntry];
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof SavedExchangeRateError) throw error;
     return [];
   }
 }
@@ -397,15 +410,9 @@ export function toInputs(form: FormState): TradeInputs | null {
 
 const RESULTS_STEP = STEPS.length;
 
-const exportUsd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
 const exportRatio = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
-const formatSignedUsd = (value: number) =>
-  value > 0 ? `+${exportUsd.format(value)}` : exportUsd.format(value);
 
 export function realizedOutcome(entry: TradeLogEntry): number | null {
   if (entry.isOpen) return null;
@@ -456,18 +463,22 @@ export function averageProfitLossRatio(outcomes: number[]): number | null {
 export function TradeBuilderApp() {
   return (
     <LanguageProvider>
-      <TradeBuilderContent />
+      <CurrencyProvider>
+        <TradeBuilderContent />
+      </CurrencyProvider>
     </LanguageProvider>
   );
 }
 
 function TradeBuilderContent() {
-  const { text: tx } = useLanguage();
+  const { text: tx, language } = useLanguage();
+  const { currency, rate, format } = useCurrency();
   const [form, setForm] = useState<FormState>(initialState);
   const [step, setStep] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [tradeLog, setTradeLog] = useState<TradeLogEntry[]>([]);
   const [logSaveError, setLogSaveError] = useState("");
+  const [logRateError, setLogRateError] = useState(false);
   const [showTradeLog, setShowTradeLog] = useState(true);
   const [autoOpenTradeRisk, setAutoOpenTradeRisk] = useState(false);
   const [openTradeDetailsId, setOpenTradeDetailsId] = useState<string | null>(null);
@@ -486,8 +497,12 @@ function TradeBuilderContent() {
   useEffect(() => {
     // The log is independent of the in-progress form, so Reset never reads,
     // writes, or clears it.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
-    setTradeLog(loadTradeLog());
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+      setTradeLog(loadTradeLog());
+    } catch {
+      setLogRateError(true);
+    }
   }, []);
 
   // Persist on change. Skip the first run so we don't overwrite the stored
@@ -551,6 +566,7 @@ function TradeBuilderContent() {
   };
 
   const persistTradeLog = (updated: TradeLogEntry[]) => {
+    if (logRateError) return;
     try {
       saveTradeLog(updated);
       setTradeLog(updated);
@@ -586,6 +602,7 @@ function TradeBuilderContent() {
       rewardRisk: result.order.rewardRisk,
       score: result.scorecard.total,
       isOpen: true,
+      ...(rate ? { displayRate: { ...rate } } : {}),
       form: { ...form },
     };
     persistTradeLog([entry, ...tradeLog]);
@@ -623,6 +640,7 @@ function TradeBuilderContent() {
     setForm(backup.form);
     setTradeLog(backup.tradeLog);
     setLogSaveError("");
+    setLogRateError(false);
     setShowTradeLog(true);
     goToStep(0);
   };
@@ -635,11 +653,9 @@ function TradeBuilderContent() {
   });
   const calendarOutcomes = tradeLog.flatMap((entry) => {
     const outcome = realizedOutcome(entry);
-    return outcome !== null ? [{ closedOn: entry.closedOn, pnl: outcome }] : [];
+    return outcome !== null ? [{ closedOn: entry.closedOn, pnl: outcome, displayRate: entry.displayRate }] : [];
   });
-  const totalRealizedPnl = roundToCent(
-    completedOutcomes.reduce((sum, outcome) => sum + outcome, 0),
-  );
+  const historicalAmounts = calendarOutcomes.map((outcome) => ({ amount: outcome.pnl, displayRate: outcome.displayRate }));
   const profitLossRatio = averageProfitLossRatio(completedOutcomes);
   const winRate = completedOutcomes.length
     ? (completedOutcomes.filter((outcome) => outcome > 0).length /
@@ -652,7 +668,7 @@ function TradeBuilderContent() {
       {/* Mobile: brand left, actions right (the center stepper is hidden, so a
           two-end flex keeps the icons flush right). Desktop: 3-column grid with
           the stepper centered. */}
-      <header className="flex items-center justify-between gap-6 px-5 py-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-10 lg:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-2 px-3 py-4 sm:px-5 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-10 lg:px-8">
         <span className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight">
           <Blocks className="size-5 shrink-0 text-primary" aria-hidden />{tx("Trade Builder")}</span>
         <div className="hidden lg:block">
@@ -662,6 +678,7 @@ function TradeBuilderContent() {
         </div>
         <div className="flex items-center justify-end gap-2 lg:gap-3">
           <LanguageSelector />
+          <CurrencySelector />
           <TradeBackupControls form={form} tradeLog={tradeLog} onRestore={restoreBackup} />
           {inForm ? (
             <Button
@@ -680,6 +697,8 @@ function TradeBuilderContent() {
           <ThemeToggle />
         </div>
       </header>
+      {currency !== "USD" ? <div className="px-5 pb-2 lg:px-8"><CurrencyNote /></div> : null}
+      {logRateError ? <p role="alert" className="px-5 text-sm text-destructive">{currencyText(language, "logError")}</p> : null}
 
       {/* Inset rounded panel on large screens; mobile is full-bleed. */}
       <div className="flex flex-1 flex-col lg:px-4 lg:pb-4">
@@ -767,6 +786,7 @@ function TradeBuilderContent() {
                               <PnlCalendar outcomes={calendarOutcomes} />
                             </div>
                             <p className="text-xs text-muted-foreground">{tx("Uses entered Profit/Loss, or planned entry and share size less total round-trip fees.")}</p>
+                            {currency !== "USD" ? <p className="text-xs text-muted-foreground">{currencyText(language, "mixed")}</p> : null}
                           </div>
                           {completedOutcomes.length > 0 ? (
                             <>
@@ -789,7 +809,7 @@ function TradeBuilderContent() {
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">{tx("Net P&L")}</p>
-                                  <p className="font-mono tabular-nums">{tx(formatSignedUsd(totalRealizedPnl))}</p>
+                                  <p className="font-mono tabular-nums">{formatHistoricalTotal(historicalAmounts, currency, language)}</p>
                                 </div>
                               </div>
                             </>
@@ -848,10 +868,10 @@ function TradeBuilderContent() {
                                                   : outcome < 0
                                                     ? "text-red-700 dark:text-red-400"
                                                     : "text-muted-foreground"
-                                              }`}>{tx("Profit/Loss {0}", [tx(formatSignedUsd(outcome))])}</span>
+                                              }`}>{tx("Profit/Loss {0}", [format(outcome, entry.displayRate ?? null, true)])}</span>
                                             ) : null}
                                           </span>
-                                          <span className="block font-mono text-xs tabular-nums text-muted-foreground">{tx("Entry {0} | Stop {1} | Target {2}", [tx(exportUsd.format(entry.entry)), tx(exportUsd.format(entry.stop)), tx(exportUsd.format(entry.target))])}</span>
+                                          <span className="block font-mono text-xs tabular-nums text-muted-foreground">{tx("Entry {0} | Stop {1} | Target {2}", [format(entry.entry, entry.displayRate ?? null), format(entry.stop, entry.displayRate ?? null), format(entry.target, entry.displayRate ?? null)])}</span>
                                           <span className="block text-xs text-muted-foreground">
                                             {new Date(entry.createdAt).toLocaleString()} {tx("| O.E. Score")} {tx(entry.score)} / 10 | <span className="whitespace-nowrap">{tx("Reward:Risk {0}:1", [tx(exportRatio.format(entry.rewardRisk))])}</span>
                                           </span>
@@ -863,7 +883,7 @@ function TradeBuilderContent() {
                                               <div className="space-y-1">
                                                 <Dialog.Title className="font-medium">{tx("{0} trade details", [entry.ticker])}</Dialog.Title>
                                                 <Dialog.Description className="text-sm text-muted-foreground">
-                                                  {tx(entry.direction === "long" ? "Buy" : "Sell short")} {tx(entry.positionSize)} {tx("shares · Entry")} {tx(exportUsd.format(entry.entry))} {tx("· Stop")} {tx(exportUsd.format(entry.stop))} {tx("· Target")} {tx(exportUsd.format(entry.target))} · <span className="whitespace-nowrap">{tx("Reward:Risk {0}:1", [tx(exportRatio.format(entry.rewardRisk))])}</span>
+                                                  {tx(entry.direction === "long" ? "Buy" : "Sell short")} {tx(entry.positionSize)} {tx("shares · Entry")} {format(entry.entry, entry.displayRate ?? null)} {tx("· Stop")} {format(entry.stop, entry.displayRate ?? null)} {tx("· Target")} {format(entry.target, entry.displayRate ?? null)} · <span className="whitespace-nowrap">{tx("Reward:Risk {0}:1", [tx(exportRatio.format(entry.rewardRisk))])}</span>
                                                 </Dialog.Description>
                                               </div>
                                               <Dialog.Close
@@ -873,6 +893,7 @@ function TradeBuilderContent() {
                                               </Dialog.Close>
                                             </div>
                                             <div className="space-y-4">
+                                              <CurrencyNote savedRate={entry.displayRate ?? null} />
                                               {!entry.isOpen ? (
                                                 <>
                                                   <div className="grid gap-3 sm:grid-cols-2">
@@ -889,6 +910,7 @@ function TradeBuilderContent() {
                                                           updateLogOutcome(entry.id, "profitLoss", event.target.value)
                                                         }
                                                       />
+                                                      <CurrencyAmountHint value={profitLossValue} savedRate={entry.displayRate ?? null} />
                                                       {invalidProfitLoss ? (
                                                         <span className="block text-xs text-destructive">{tx("Enter a valid amount, including a minus sign for a loss.")}</span>
                                                       ) : null}
@@ -909,7 +931,7 @@ function TradeBuilderContent() {
                                                   </div>
                                                   <div aria-live="polite" className="text-xs">
                                                     {outcome !== null ? (
-                                                      <span>{tx("Net P&L")}<strong>{tx(formatSignedUsd(outcome))}</strong>
+                                                      <span>{tx("Net P&L")}<strong>{format(outcome, entry.displayRate ?? null, true)}</strong>
                                                       </span>
                                                     ) : (
                                                       <span className="text-muted-foreground">{tx("Enter Profit/Loss, or add an exit price in Advanced details.")}</span>
@@ -938,6 +960,7 @@ function TradeBuilderContent() {
                                                                 updateLogOutcome(entry.id, "exitPrice", event.target.value)
                                                               }
                                                             />
+                                                            <CurrencyAmountHint value={exitValue} savedRate={entry.displayRate ?? null} />
                                                             {invalidExitPrice ? (
                                                               <span className="block text-xs text-destructive">{tx("Enter a closing price above zero.")}</span>
                                                             ) : null}
@@ -956,6 +979,7 @@ function TradeBuilderContent() {
                                                                 updateLogOutcome(entry.id, "fees", event.target.value)
                                                               }
                                                             />
+                                                            <CurrencyAmountHint value={feesValue} savedRate={entry.displayRate ?? null} />
                                                             {invalidFees ? (
                                                               <span className="block text-xs text-destructive">{tx("Fees must be zero or more.")}</span>
                                                             ) : null}

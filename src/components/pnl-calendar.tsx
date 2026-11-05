@@ -8,14 +8,15 @@ import { Input } from "@/components/ui/input";
 import { roundToCent } from "@/lib/trade-builder";
 import { isTradeDate } from "@/lib/trade-execution";
 import { useLanguage } from "@/components/language-provider";
+import { useCurrency } from "@/components/currency-provider";
+import { formatHistoricalTotal, type DisplayRate, type HistoricalAmount } from "@/lib/display-currency";
+import { currencyText } from "@/lib/currency-translations";
 
 interface CalendarOutcome {
   closedOn?: string;
   pnl: number;
+  displayRate?: DisplayRate;
 }
-
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const signedUsd = (value: number) => value > 0 ? `+${usd.format(value)}` : usd.format(value);
 
 function currentMonth() {
   const now = new Date();
@@ -24,6 +25,8 @@ function currentMonth() {
 
 export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
   const { text: tx, language } = useLanguage();
+  const { currency } = useCurrency();
+  const signedTotal = (items: HistoricalAmount[]) => formatHistoricalTotal(items, currency, language);
   const weekdays = Array.from({ length: 7 }, (_, index) =>
     new Date(2026, 0, 4 + index).toLocaleDateString(language, { weekday: "short" }),
   );
@@ -33,7 +36,7 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
   const firstDay = new Date(year, monthNumber - 1, 1);
   const daysInMonth = new Date(year, monthNumber, 0).getDate();
   const monthLabel = firstDay.toLocaleDateString(language, { month: "long", year: "numeric" });
-  const daily = new Map<string, { pnl: number; count: number }>();
+  const daily = new Map<string, { pnl: number; count: number; amounts: HistoricalAmount[] }>();
   let undatedCount = 0;
   for (const outcome of outcomes) {
     if (!isTradeDate(outcome.closedOn)) {
@@ -45,11 +48,12 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
     daily.set(outcome.closedOn, {
       pnl: roundToCent((previous?.pnl ?? 0) + outcome.pnl),
       count: (previous?.count ?? 0) + 1,
+      amounts: [...(previous?.amounts ?? []), { amount: outcome.pnl, displayRate: outcome.displayRate }],
     });
   }
   const values = [...daily.values()];
   const maxMagnitude = Math.max(1, ...values.map((day) => Math.abs(day.pnl)));
-  const monthPnl = roundToCent(values.reduce((sum, day) => sum + day.pnl, 0));
+  const monthPnl = signedTotal(values.flatMap((day) => day.amounts));
   const tradeCount = values.reduce((sum, day) => sum + day.count, 0);
   const weekCount = Math.ceil((firstDay.getDay() + daysInMonth) / 7);
   const changeMonth = (offset: number) => {
@@ -69,6 +73,7 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
             <div className="space-y-1">
               <Dialog.Title className="text-xl font-semibold">{tx("P&L Analysis")}</Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">{tx("Daily net P&L from closed trades, grouped by Closing date. Entered Profit/Loss takes priority; otherwise exit price and fees are used.")}</Dialog.Description>
+              {currency !== "USD" ? <p className="text-xs text-muted-foreground">{currencyText(language, "mixed")}</p> : null}
             </div>
             <Dialog.Close render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close P&L Analysis")} />}>
               <X aria-hidden />
@@ -98,7 +103,7 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
               <Button variant="ghost" size="sm" onClick={() => setMonth(currentMonth())}>{tx("Today")}</Button>
             </div>
             <div aria-live="polite" className="text-right">
-              <p className="font-mono text-lg font-semibold tabular-nums">{tx(signedUsd(monthPnl))}</p>
+              <p className="font-mono text-lg font-semibold tabular-nums">{monthPnl}</p>
               <p className="text-xs text-muted-foreground">{tx("{0} closed {1} · {2} trading {3}", [tx(tradeCount), tx(tradeCount === 1 ? "trade" : "trades"), tx(daily.size), tx(daily.size === 1 ? "day" : "days")])}</p>
             </div>
           </div>
@@ -124,7 +129,7 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
                       const intensity = result ? 0.1 + 0.4 * Math.abs(result.pnl) / maxMagnitude : 0;
                       return (
                         <td key={weekday}
-                          aria-label={`${date}: ${result ? `${signedUsd(result.pnl)}, ${result.count} ${tx(result.count === 1 ? "trade" : "trades")}` : tx("No trades")}`}
+                          aria-label={`${date}: ${result ? `${signedTotal(result.amounts)}, ${result.count} ${tx(result.count === 1 ? "trade" : "trades")}` : tx("No trades")}`}
                           className="h-28 border p-2 align-top sm:h-32 sm:p-3"
                           style={result && result.pnl !== 0 ? {
                             backgroundImage: `linear-gradient(135deg, rgba(${color}, ${intensity}), rgba(${color}, ${intensity * 0.45}))`,
@@ -132,7 +137,7 @@ export function PnlCalendar({ outcomes }: { outcomes: CalendarOutcome[] }) {
                           <time dateTime={date} className="text-sm font-medium">{day}</time>
                           {result ? (
                             <div className="mt-4 space-y-1">
-                              <p className="break-all font-mono text-xs font-semibold tabular-nums sm:text-sm">{tx(signedUsd(result.pnl))}</p>
+                              <p className="break-all font-mono text-xs font-semibold tabular-nums sm:text-sm">{signedTotal(result.amounts)}</p>
                               <p className="text-xs text-muted-foreground">{tx(result.count)} {tx(result.count === 1 ? "trade" : "trades")}</p>
                             </div>
                           ) : null}

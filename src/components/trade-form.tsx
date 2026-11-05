@@ -56,6 +56,7 @@ import { OddsEnhancerVideoDialog } from "@/components/odds-enhancer-video-dialog
 import { ZoneScorecard, computeZoneScores, zoneTotal } from "@/components/zone-scorecard";
 import { XltChecklistDialog } from "@/components/xlt-checklist-dialog";
 import { useLanguage } from "@/components/language-provider";
+import { CurrencyAmountHint } from "@/components/currency-note";
 
 interface TradeFormProps {
   form: FormState;
@@ -192,6 +193,7 @@ function NumberInput({
 }) {
   const { text: tx } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
+  const monetary = ["balance", "atr", "openRisk", "curveHigh", "curveLow", "supplyHigh", "supplyLow", "demandHigh", "demandLow"].includes(id);
   const pendingCaret = useRef<number | null>(null);
   const display = formatNumber(value);
 
@@ -213,6 +215,7 @@ function NumberInput({
   }, [editCount]);
 
   return (
+    <>
     <Input
       id={id}
       ref={inputRef}
@@ -239,6 +242,8 @@ function NumberInput({
           : undefined
       }
     />
+    {monetary ? <CurrencyAmountHint value={value} /> : null}
+    </>
   );
 }
 

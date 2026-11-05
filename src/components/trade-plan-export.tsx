@@ -27,11 +27,8 @@ import {
 import { isXltVerified, xltScenario } from "@/lib/xlt-criteria";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/language-provider";
-
-const usd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { useCurrency } from "@/components/currency-provider";
+import { CurrencyNote } from "@/components/currency-note";
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
@@ -119,6 +116,7 @@ export function TradePlanExport({
   result: TradeResult;
 }) {
   const { text: tx } = useLanguage();
+  const usd = useCurrency();
   const order = result.order;
   const checks = result.checks;
   const zoneKey = inputs.direction === "long" ? "demand" : "supply";
@@ -148,6 +146,7 @@ export function TradePlanExport({
           <p>{tx("Trade Builder")}</p>
           <h1>{tx("{0} plan", [form.ticker || tx("Trade")])}</h1>
           <p>{tx("Prepared {0} · Review only — verify market conditions and all order details before placing a trade.", [tx(new Date().toLocaleString())])}</p>
+          <CurrencyNote />
         </header>
 
         <div className="trade-plan-columns">

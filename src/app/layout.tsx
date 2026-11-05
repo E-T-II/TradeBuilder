@@ -20,6 +20,7 @@ import "./globals.css";
 import { SplashIntro } from "@/components/splash-intro";
 import { LanguageProvider } from "@/components/language-provider";
 import { TranslationReviewNotice } from "@/components/translation-review-notice";
+import { CurrencyProvider } from "@/components/currency-provider";
 
 export const metadata: Metadata = {
   title: "Trade Builder",
@@ -86,9 +87,11 @@ export default function RootLayout({
           }}
         />
         <LanguageProvider>
-          <SplashIntro />
-          <TranslationReviewNotice />
-          {children}
+          <CurrencyProvider>
+            <SplashIntro />
+            <TranslationReviewNotice />
+            {children}
+          </CurrencyProvider>
         </LanguageProvider>
       </body>
     </html>

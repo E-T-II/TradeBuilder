@@ -4,6 +4,7 @@ import type { TradeLogEntry } from "@/components/trade-builder-app";
 import { Input } from "@/components/ui/input";
 import type { ExecutionField } from "@/lib/trade-execution";
 import { useLanguage } from "@/components/language-provider";
+import { CurrencyAmountHint } from "@/components/currency-note";
 
 export function TradeExecutionFields({
   entry, onChange,
@@ -39,6 +40,7 @@ export function TradeExecutionFields({
               value={entry[field] ?? ""}
               onChange={(event) => onChange(entry.id, field, event.target.value)}
             />
+            {field === "actualEntryPrice" ? <CurrencyAmountHint value={entry[field] ?? ""} savedRate={entry.displayRate ?? null} /> : null}
           </label>
         ))}
       </div>
