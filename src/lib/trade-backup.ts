@@ -1,5 +1,5 @@
 import type { FormState, TradeLogEntry } from "@/components/trade-builder-app";
-import { EXECUTION_FIELDS } from "@/lib/trade-tax-report";
+import { EXECUTION_FIELDS } from "@/lib/trade-execution";
 
 export const FORM_STORAGE_KEY = "tradebuilder-form-v3";
 export const TRADE_LOG_STORAGE_KEY = "tradebuilder-log-v1";
@@ -74,6 +74,11 @@ function isOutcomeField(value: unknown, allowZero: boolean): boolean {
   return Number.isFinite(number) && (allowZero ? number >= 0 : number > 0);
 }
 
+function isProfitLossField(value: unknown): boolean {
+  if (value === undefined || value === "") return true;
+  return typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value));
+}
+
 function isTradeLogEntry(value: unknown): value is TradeLogEntry {
   if (!isRecord(value)) return false;
   return (
@@ -104,6 +109,7 @@ function isTradeLogEntry(value: unknown): value is TradeLogEntry {
     value.score <= 10 &&
     isOutcomeField(value.exitPrice, false) &&
     isOutcomeField(value.fees, true) &&
+    isProfitLossField(value.profitLoss) &&
     (value.notes === undefined || typeof value.notes === "string") &&
     EXECUTION_FIELDS.every((field) => value[field] === undefined || typeof value[field] === "string") &&
     (value.form === undefined || isForm(value.form, true))

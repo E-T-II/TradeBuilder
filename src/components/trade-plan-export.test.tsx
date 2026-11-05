@@ -97,8 +97,10 @@ describe("given TradePlanExport", () => {
     expect(screen.getByText("Reward : risk")).toBeInTheDocument();
     expect(screen.getAllByText("PASS")).toHaveLength(4);
 
+    document.body.dataset.printReport = "trade-log";
     await user.click(screen.getByRole("button", { name: "Print / save plan" }));
     expect(print).toHaveBeenCalledOnce();
+    expect(document.body.dataset.printReport).toBeUndefined();
   });
 
   test("given a matrix veto: should export the rejection instead of presenting an order", () => {

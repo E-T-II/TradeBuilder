@@ -20,7 +20,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { TradeBuilderApp, normalizeForm, toInputs, tradeLogTsv } from "@/components/trade-builder-app";
+import { TradeBuilderApp, normalizeForm, toInputs } from "@/components/trade-builder-app";
 import { buildTrade } from "@/lib/trade-builder";
 import { createTradeBackup } from "@/lib/trade-backup";
 
@@ -128,11 +128,11 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject(setup);
 });
 
-test("opposing-zone ratings persist without changing the original scorecard, order, copied log, or logged trade", async () => {
+test("opposing-zone ratings persist without changing the original scorecard, order, printed log, or logged trade", async () => {
   const setup = { ...savedForm, strength: "2", time: "1", freshness: "2" };
   window.localStorage.setItem(KEY, JSON.stringify(setup));
   const user = userEvent.setup();
-  const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  const print = vi.spyOn(window, "print").mockImplementation(() => {});
   const expected = buildTrade(toInputs(normalizeForm(setup))!);
   expect(expected.order).not.toBeNull();
   const { unmount } = render(<TradeBuilderApp />);
@@ -162,8 +162,15 @@ test("opposing-zone ratings persist without changing the original scorecard, ord
   const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];
   expect(logged.score).toBe(expected.scorecard.total);
   expect(logged.entry).toBe(expected.order!.entry);
-  await user.click(screen.getByRole("button", { name: "Copy log" }));
-  expect(writeText).toHaveBeenCalledWith(tradeLogTsv([logged]));
+  expect(screen.queryByRole("button", { name: "Copy log" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Print / Save PDF" }));
+  expect(print).toHaveBeenCalledOnce();
+  expect(document.body.dataset.printReport).toBe("trade-log");
+  expect(screen.getByRole("article", { name: "Printable trade log" })).toHaveTextContent(
+    `O.E. Score ${expected.scorecard.total} / 10`,
+  );
+  fireEvent(window, new Event("afterprint"));
+  print.mockRestore();
   expect(logged.form).toMatchObject({
     strength: "2", time: "1", freshness: "2",
     opposingStrength: "1", opposingTime: "0.5", opposingFreshness: "0",
@@ -181,7 +188,6 @@ test("opposing-zone ratings persist without changing the original scorecard, ord
   expect(JSON.parse(window.localStorage.getItem(KEY)!)).toMatchObject({
     opposingStrength: "", opposingTime: "", opposingFreshness: "",
   });
-  writeText.mockRestore();
 });
 
 test("hydrating a saved half-point strength: snaps the rendered selection onto a valid step", async () => {
@@ -262,7 +268,7 @@ test("loading a logged setup: repopulates the builder with that entry's inputs",
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
 
   expect(screen.getByRole("button", { name: /O\.E\. Score 8\.5 \/ 10 \| Reward:Risk 5\.77:1/ })).toBeInTheDocument();
-  expect(screen.getByText("Click to edit trade details and notes")).toBeInTheDocument();
+  expect(screen.queryByText("Click to edit trade details and notes")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Load AAPL setup into builder" }));
 
   expect(screen.getByLabelText("Ticker symbol")).toHaveValue("AAPL");
@@ -336,17 +342,22 @@ test("recording a closed trade outcome: updates performance and persists the clo
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   await user.click(screen.getByRole("radio", { name: "Closed" }));
   await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
+  await user.type(screen.getByRole("spinbutton", { name: "Profit/Loss for NVDA" }), "17.25");
+  fireEvent.change(screen.getByLabelText("Closing date for NVDA"), { target: { value: "2026-09-08" } });
+  expect(screen.getByText("Advanced details").closest("details")).not.toHaveAttribute("open");
+  await user.click(screen.getByText("Advanced details"));
   await user.type(screen.getByRole("spinbutton", { name: "Exit price for NVDA" }), "110");
   await user.type(screen.getByRole("spinbutton", { name: "Fees for NVDA" }), "2");
-  await user.click(screen.getByText("Advanced details"));
   await user.type(screen.getByLabelText("Actual opening price ($) for NVDA"), "108.5");
   await user.type(screen.getByLabelText("Actual shares for NVDA"), "10");
   fireEvent.change(screen.getByLabelText("Actual opening date for NVDA"), { target: { value: "2026-09-07" } });
-  fireEvent.change(screen.getByLabelText("Actual closing date for NVDA"), { target: { value: "2026-09-08" } });
   await user.type(screen.getByLabelText("Notes for NVDA"), "Waited for confirmation");
 
   expect(screen.getByText("Completed trades")).toBeInTheDocument();
-  expect(screen.getAllByText("+$18.00")).toHaveLength(2);
+  expect(screen.queryByRole("region", { name: "Tax supporting report" })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Closing year")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Print trade log/ })).not.toBeInTheDocument();
+  expect(within(screen.getByRole("dialog", { name: "NVDA trade details" })).getByText("+$17.25")).toBeInTheDocument();
   expect(screen.queryByText(/Average R|Actual R/)).not.toBeInTheDocument();
   expect(screen.queryByRole("columnheader", { name: "Setup" })).not.toBeInTheDocument();
   expect(screen.queryByText("Proximal · Uptrend · 8.5–10")).not.toBeInTheDocument();
@@ -355,6 +366,7 @@ test("recording a closed trade outcome: updates performance and persists the clo
     isOpen: false,
     exitPrice: "110",
     fees: "2",
+    profitLoss: "17.25",
     actualEntryPrice: "108.5",
     actualQuantity: "10",
     openedOn: "2026-09-07",
@@ -363,8 +375,16 @@ test("recording a closed trade outcome: updates performance and persists the clo
   });
 
   await user.click(screen.getByRole("button", { name: "Close NVDA trade details" }));
+  expect(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ })).toHaveTextContent("Profit/Loss +$17.25");
+  expect(within(screen.getByRole("region", { name: "Realized performance" })).getByText("+$17.25")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "P&L Analysis" }));
+  fireEvent.change(screen.getByLabelText("Calendar month"), { target: { value: "2026-09" } });
+  expect(screen.getByRole("cell", { name: "2026-09-08: +$17.25, 1 trade" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Close P&L Analysis" }));
   await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
   expect(screen.getByRole("button", { name: "Close NVDA trade details" })).toBeVisible();
+  expect(screen.getByRole("spinbutton", { name: "Profit/Loss for NVDA" })).toHaveValue(17.25);
+  expect(screen.getByLabelText("Closing date for NVDA")).toHaveValue("2026-09-08");
   expect(screen.getByText("Advanced details").closest("details")).not.toHaveAttribute("open");
 
   unmount();
@@ -374,14 +394,15 @@ test("recording a closed trade outcome: updates performance and persists the clo
   }
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   await user.click(screen.getByRole("button", { name: /NVDA \| Buy 10 shares/ }));
-  expect(screen.getByRole("spinbutton", { name: "Exit price for NVDA" })).toHaveValue(110);
-  expect(screen.getByRole("spinbutton", { name: "Fees for NVDA" })).toHaveValue(2);
+  expect(screen.getByRole("spinbutton", { name: "Profit/Loss for NVDA" })).toHaveValue(17.25);
+  expect(screen.getByLabelText("Closing date for NVDA")).toHaveValue("2026-09-08");
   expect(screen.getByText("Advanced details").closest("details")).not.toHaveAttribute("open");
   await user.click(screen.getByText("Advanced details"));
+  expect(screen.getByRole("spinbutton", { name: "Exit price for NVDA" })).toHaveValue(110);
+  expect(screen.getByRole("spinbutton", { name: "Fees for NVDA" })).toHaveValue(2);
   expect(screen.getByLabelText("Actual opening price ($) for NVDA")).toHaveValue(108.5);
   expect(screen.getByLabelText("Actual shares for NVDA")).toHaveValue(10);
   expect(screen.getByLabelText("Actual opening date for NVDA")).toHaveValue("2026-09-07");
-  expect(screen.getByLabelText("Actual closing date for NVDA")).toHaveValue("2026-09-08");
   expect(screen.getByLabelText("Notes for NVDA")).toHaveValue("Waited for confirmation");
 });
 
@@ -425,7 +446,14 @@ test("shows the average winning trade against the average losing trade", async (
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
 
   expect(screen.getByText("Ave P&L ratio").nextElementSibling).toHaveTextContent("4.00:1");
-  expect(screen.getAllByText("Click to edit trade details and notes")).toHaveLength(1);
+  expect(screen.getAllByRole("button", { name: /NVDA \| Buy 10 shares/ }).map((button) => button.textContent))
+    .toEqual(expect.arrayContaining([
+      expect.stringContaining("Profit/Loss +$40.00"),
+      expect.stringContaining("Profit/Loss +$20.00"),
+      expect.stringContaining("Profit/Loss -$10.00"),
+      expect.stringContaining("Profit/Loss -$5.00"),
+    ]));
+  expect(screen.queryByText("Click to edit trade details and notes")).not.toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: /NVDA \| Buy 10 shares/ })).toHaveLength(4);
 });
 

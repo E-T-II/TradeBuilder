@@ -29,7 +29,6 @@ import {
   realizedOutcome,
   snapStep,
   toInputs,
-  tradeLogTsv,
   type FormState,
   type TradeLogEntry,
 } from "@/components/trade-builder-app";
@@ -82,86 +81,6 @@ describe("given toInputs and the risk cap", () => {
   });
 });
 
-describe("given tradeLogTsv", () => {
-  const entry: TradeLogEntry = {
-    id: "entry-1",
-    createdAt: "2026-09-07T12:00:00.000Z",
-    ticker: "NVDA",
-    direction: "long",
-    entry: 108,
-    stop: 105.92,
-    target: 120,
-    positionSize: 11,
-    capitalRequirement: 1188,
-    totalTradeRisk: 22.88,
-    rewardRisk: 5.77,
-    score: 8.5,
-    isOpen: true,
-  };
-
-  test("given a logged trade: should copy it as a header row plus a data row", () => {
-    const [headers, values] = tradeLogTsv([entry]).split("\n");
-
-    expect(headers.split("\t")).toEqual([
-      "Date",
-      "Ticker",
-      "Direction",
-      "Entry",
-      "Stop",
-      "Target",
-      "Position size",
-      "Capital required",
-      "Total trade risk",
-      "Reward : risk",
-      "Score",
-      "Status",
-      "Exit price",
-      "Fees",
-      "Realized P&L",
-      "Actual opening date",
-      "Actual closing date",
-      "Actual opening price",
-      "Actual shares",
-      "Notes",
-    ]);
-    const cells = values.split("\t");
-    expect(cells[1]).toBe("NVDA");
-    expect(cells[2]).toBe("Buy");
-    expect(cells[11]).toBe("Open");
-  });
-
-  test("given a closed trade: should report its status as Closed", () => {
-    const [, values] = tradeLogTsv([{ ...entry, isOpen: false }]).split("\n");
-
-    expect(values.split("\t")[11]).toBe("Closed");
-  });
-
-  test("given an outcome: should export its exit, fees, and net P&L", () => {
-    const [, values] = tradeLogTsv([
-      { ...entry, isOpen: false, exitPrice: "110", fees: "2" },
-    ]).split("\n");
-    const cells = values.split("\t");
-
-    expect(cells.slice(12)).toEqual(["$110.00", "$2.00", "$20.00", "", "", "", "", ""]);
-  });
-
-  test("appends actual execution fields without replacing planned values", () => {
-    const [, values] = tradeLogTsv([{
-      ...entry, openedOn: "2026-09-01", closedOn: "2026-09-03", notes: "Waited for setup",
-      actualEntryPrice: "108.25", actualQuantity: "10.5",
-    }]).split("\n");
-    const cells = values.split("\t");
-    expect(cells[3]).toBe("$108.00");
-    expect(cells.slice(15)).toEqual(["2026-09-01", "2026-09-03", "108.25", "10.5", "Waited for setup"]);
-  });
-
-  test("given no logged trades: should copy only the header row", () => {
-    expect(tradeLogTsv([])).toBe(
-      "Date\tTicker\tDirection\tEntry\tStop\tTarget\tPosition size\tCapital required\tTotal trade risk\tReward : risk\tScore\tStatus\tExit price\tFees\tRealized P&L\tActual opening date\tActual closing date\tActual opening price\tActual shares\tNotes",
-    );
-  });
-});
-
 describe("given realizedOutcome", () => {
   const entry: TradeLogEntry = {
     id: "entry-1",
@@ -181,6 +100,12 @@ describe("given realizedOutcome", () => {
 
   test("given a long close and fees: should calculate net P&L", () => {
     expect(realizedOutcome({ ...entry, exitPrice: "110", fees: "2" })).toBe(20);
+  });
+
+  test("given an entered Profit/Loss: should use the exact realized amount instead of deriving it", () => {
+    expect(realizedOutcome({ ...entry, exitPrice: "110", fees: "2", profitLoss: "-35.47" })).toBe(-35.47);
+    expect(realizedOutcome({ ...entry, profitLoss: "0" })).toBe(0);
+    expect(realizedOutcome({ ...entry, profitLoss: "invalid" })).toBeNull();
   });
 
   test("given a short close without fees: should calculate net P&L", () => {

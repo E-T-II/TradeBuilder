@@ -229,8 +229,7 @@
   }
 
   .trade-log-print header,
-  .trade-log-print footer,
-  .trade-log-totals {
+  .trade-log-print footer {
     margin: 8pt 0;
   }
 
@@ -252,14 +251,13 @@
   .trade-log-print td {
     border-bottom: 1px solid #aaa;
     padding: 5pt 3pt;
-    text-align: right;
+    text-align: left;
     overflow-wrap: anywhere;
     vertical-align: top;
   }
 
-  .trade-log-print th:first-child,
-  .trade-log-print td:nth-child(2) {
-    text-align: left;
+  .trade-log-notes {
+    white-space: pre-wrap;
   }
 
   .trade-log-print footer {
