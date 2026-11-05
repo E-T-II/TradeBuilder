@@ -1,4 +1,5 @@
 {
+  "Translations still need native-speaker review.": "অনুবাদগুলো এখনও মাতৃভাষীদের পর্যালোচনা প্রয়োজন।",
   "_blank": "_ খালি",
   "- for comparison only": "- শুধুমাত্র তুলনা করার জন্য",
   "- used for your trade": "- আপনার ব্যবসায়ের জন্য ব্যবহৃত",
@@ -8,7 +9,7 @@
   "(14-day Average True Range)": "(14- দিনের গড় সত্য পরিসীমা)",
   "(Long)": "(দীর্ঘ)",
   "(PDF, opens in a new tab)": "(পিডিএফ, নতুন ট্যাবে খোলে)",
-  "(Short)": "(কর্ট)",
+  "(Short)": "(শর্ট)",
   "{0} — approved by the Decision Matrix.": "{0}  সিদ্ধান্তের ম্যাট্রিক্স দ্বারা অনুমোদিত।",
   "{0} — conditional cell met ({1}:1 required; {2}:1 actual).": "{0}  শর্তসাপেক্ষ সেল পূরণ ({1}:1 প্রয়োজন; প্রকৃত {2}:1) ।",
   "{0} — verified": "{0}  যাচাই করা হয়েছে",
@@ -370,7 +371,7 @@
   "Pierced Greater Than 50%": "ছুঁড়ে ফেলা চেয়ে বড় 50%",
   "Planned entry / stop / target": "পরিকল্পিত প্রবেশ / স্টপ / লক্ষ্য",
   "Planned shares": "পরিকল্পনাকৃত শেয়ার",
-  "Poor": "দরিদ্র",
+  "Poor": "দুর্বল",
   "Poor = 0": "দরিদ্র = 0",
   "Position fits the per-trade risk budget": "অবস্থান প্রতি ট্রেডের ঝুঁকি বাজেটের সাথে সামঞ্জস্যপূর্ণ",
   "Position size": "অবস্থান আকার",

@@ -30,6 +30,7 @@ describe("RootLayout", () => {
         );
 
         expect(screen.getByText("Trade content")).toBeInTheDocument();
+        expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
         expect(document.documentElement.className).toContain("h-full");
         expect(document.documentElement.className).toContain("antialiased");
     });

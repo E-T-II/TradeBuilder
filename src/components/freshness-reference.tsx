@@ -17,6 +17,7 @@
 
 import type { Direction } from "@/lib/trade-builder";
 import { useLanguage } from "@/components/language-provider";
+import { IllustrationText, IllustrationZoneText } from "@/components/illustration-text";
 
 export function FreshnessReference({
     selected,
@@ -38,16 +39,16 @@ export function FreshnessReference({
                 className="mx-auto block h-auto w-full text-slate-100 [shape-rendering:geometricPrecision]"
             >
                 <rect width="580" height="250" fill="#252b40" />
-                <text x="290" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("Has price returned to the zone?")}</text>
-                <text x="18" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("Zone")}</text>
-                <text x="18" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Supply" : "Demand")}</text>
-                <text x="18" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Sell Setup" : "Buy Setup")}</text>
-                <text x="18" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "(Short)" : "(Long)")}</text>
-                <FreshnessPanel direction={direction} x={95} width={138} title={tx("Best")} score="2" value={2} caption="Zone not Pierced" selected={selected === 2} onSelect={onSelect} />
-                <FreshnessPanel direction={direction} x={253} width={142} title={tx("Good")} score="1" value={1} caption="Pierced 50% or Less" selected={selected === 1} onSelect={onSelect} />
-                <FreshnessPanel direction={direction} x={415} width={145} title={tx("Poor")} score="0" value={0} caption="Pierced Greater Than 50%" selected={selected === 0} onSelect={onSelect} />
-                <text x="290" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("Scoring Freshness is based on how far,")}</text>
-                <text x="290" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("if at all, price has pierced the zone.")}</text>
+                <IllustrationText maxWidth={544} x="290" y="17" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("Has price returned to the zone?")}</IllustrationText>
+                <IllustrationText maxWidth={70} x="18" y="48" fill="#f8fafc" fontSize="16" fontWeight="700">{tx("Zone")}</IllustrationText>
+                <IllustrationText maxWidth={70} x="18" y="108" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Supply" : "Demand")}</IllustrationText>
+                <IllustrationText maxWidth={70} x="18" y="123" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "Sell Setup" : "Buy Setup")}</IllustrationText>
+                <IllustrationText maxWidth={70} x="18" y="138" fill={short ? "#ff0000" : "#4ade80"} fontSize="16">{tx(short ? "(Short)" : "(Long)")}</IllustrationText>
+                <FreshnessPanel direction={direction} x={95} width={138} title="Best" score="2" value={2} caption="Zone not Pierced" selected={selected === 2} onSelect={onSelect} />
+                <FreshnessPanel direction={direction} x={253} width={142} title="Good" score="1" value={1} caption="Pierced 50% or Less" selected={selected === 1} onSelect={onSelect} />
+                <FreshnessPanel direction={direction} x={415} width={145} title="Poor" score="0" value={0} caption="Pierced Greater Than 50%" selected={selected === 0} onSelect={onSelect} />
+                <IllustrationText maxWidth={544} x="290" y="226" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("Scoring Freshness is based on how far,")}</IllustrationText>
+                <IllustrationText maxWidth={544} x="290" y="243" textAnchor="middle" fill="#f8fafc" fontSize="16" fontWeight="600">{tx("if at all, price has pierced the zone.")}</IllustrationText>
             </svg>
         </figure>
     );
@@ -88,7 +89,7 @@ function FreshnessPanel({
         <g
             role={onSelect ? "button" : undefined}
             tabIndex={onSelect ? 0 : undefined}
-            aria-label={tx(onSelect ? `${title} freshness, ${score} points` : undefined)}
+            aria-label={onSelect ? tx("{0} freshness, {1} points", [tx(title), score]) : undefined}
             onClick={onSelect ? () => onSelect(value) : undefined}
             onKeyDown={onSelect ? (event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -99,13 +100,13 @@ function FreshnessPanel({
             className={onSelect ? "cursor-pointer" : undefined}
         >
             <rect x={x} y={27} width={width} height={153} fill="none" stroke={selected ? "#fb744c" : "#394158"} />
-            <text x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="16" fontWeight="700">
+            <IllustrationText maxWidth={width - 12} x={x + width / 2} y={48} textAnchor="middle" fill={selected ? "#fb744c" : "#f8fafc"} fontSize="16" fontWeight="700">
                 {tx(selected ? "✓ " : "")}{tx(title)} = {tx(score)}
-            </text>
+            </IllustrationText>
             <g transform={short ? "translate(0 234) scale(1 -1)" : "translate(0 -16)"}>
                 <line x1={chartLeft} y1={154} x2={chartRight} y2={154} stroke={short ? "#ff0000" : "#53d67b"} />
                 <line x1={chartLeft} y1={177} x2={chartRight} y2={177} stroke={short ? "#ff0000" : "#53d67b"} />
-                <text x={zoneX + zoneWidth / 2 - 12} y={short ? 162 : 170} transform={short ? "translate(0 324) scale(1 -1)" : undefined} textAnchor="middle" fill={short ? "#ff0000" : "#51d477"} fontSize="11">{tx(short ? "SZ" : "DZ")}</text>
+                <IllustrationZoneText short={short} x={zoneX + zoneWidth / 2 - 12} y={short ? 162 : 170} transform={short ? "translate(0 324) scale(1 -1)" : undefined} textAnchor="middle" fill={short ? "#ff0000" : "#51d477"} fontSize="11" />
                 {title !== "Best" && <line x1={zoneX + 17} y1={166} x2={zoneX + 79} y2={166} stroke={short ? "#ff0000" : "#53d67b"} strokeDasharray="2 2" />}
                 <g transform={short ? "translate(0 8)" : undefined}>
                     <line x1={chartLeft + 6.5} y1={short ? 154 : 145} x2={chartLeft + 6.5} y2={short ? 134 : 157} stroke="#9ca3af" strokeWidth="1" />
@@ -180,7 +181,7 @@ function FreshnessPanel({
                 ) : null}
             </g>
             <rect x={x} y={27} width={width} height={153} fill="transparent" pointerEvents="all" />
-            <text x={x + width / 2} y={174} textAnchor="middle" fill="#9ba2e9" fontSize="11" fontWeight="600">{tx(caption)}</text>
+            <IllustrationText maxWidth={width - 8} x={x + width / 2} y={174} textAnchor="middle" fill="#9ba2e9" fontSize="11" fontWeight="600">{tx(caption)}</IllustrationText>
         </g>
     );
 }

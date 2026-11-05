@@ -19,6 +19,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SplashIntro } from "@/components/splash-intro";
 import { LanguageProvider } from "@/components/language-provider";
+import { TranslationReviewNotice } from "@/components/translation-review-notice";
 
 export const metadata: Metadata = {
   title: "Trade Builder",
@@ -86,6 +87,7 @@ export default function RootLayout({
         />
         <LanguageProvider>
           <SplashIntro />
+          <TranslationReviewNotice />
           {children}
         </LanguageProvider>
       </body>

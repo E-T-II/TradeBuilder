@@ -212,9 +212,11 @@ export function ZoneScorecard({
         <p className="text-xs text-muted-foreground">{tx("{0} zone {1}", [tx(direction === "long" ? "Demand" : "Supply"), tx(opposing ? " - for comparison only" : " - used for your trade")])}</p>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_1.5rem] items-center gap-x-2 gap-y-3 lg:grid-cols-[minmax(0,1fr)_3rem_4rem] lg:gap-x-3">
-        <div className="text-xs font-medium text-muted-foreground">{tx("Odds Enhancer")}</div>
-        <div className="text-center text-xs font-medium text-muted-foreground">{tx("Score")}</div>
-        <div className="text-center text-xs font-medium text-muted-foreground">{tx("Max")}</div>
+        <div className="whitespace-nowrap text-[0.625rem] font-medium text-muted-foreground min-[360px]:text-xs">{tx("Odds Enhancer")}</div>
+        <div className="col-span-2 flex items-center gap-2 justify-self-end text-xs font-medium text-muted-foreground lg:gap-3">
+          <span className="min-w-11 shrink-0 whitespace-nowrap text-center lg:min-w-12">{tx("Score")}</span>
+          <span className="min-w-6 shrink-0 whitespace-nowrap text-center lg:min-w-16">{tx("Max")}</span>
+        </div>
         {(["strength", "time", "freshness"] as const).map((key) => {
           const { label, Reference } = factors[key];
           const id = `${prefix}${key}`;
@@ -223,7 +225,7 @@ export function ZoneScorecard({
               <Label id={`${id}-label`}>{tx(label)}</Label>
               <ScoreSelector
                 id={id}
-                label={tx(label)}
+                label={label}
                 value={ratings[key]}
                 direction={direction}
                 Reference={Reference}

@@ -2,9 +2,29 @@
 import { useState } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { ZoneScorecard, type ZoneRatings } from "@/components/zone-scorecard";
 import { normalizeForm } from "@/components/trade-builder-app";
+import { LanguageProvider } from "@/components/language-provider";
+import { LANGUAGES, LANGUAGE_STORAGE_KEY } from "@/lib/languages";
+import { translateText } from "@/lib/translations";
+
+afterEach(() => window.localStorage.clear());
+
+test.each(LANGUAGES)("moves only $name headings while preserving the original score columns", ({ code }) => {
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+  const { container } = render(<LanguageProvider><ZoneScorecard form={form} direction="long"
+    ratings={{ strength: "", time: "", freshness: "" }} onChange={() => {}} /></LanguageProvider>);
+  const grid = container.querySelector("section > div.grid")!;
+  expect(grid).toHaveClass("grid-cols-[minmax(0,1fr)_2.75rem_1.5rem]", "lg:grid-cols-[minmax(0,1fr)_3rem_4rem]");
+  expect(grid.children[0]).toHaveTextContent(translateText(code, "Odds Enhancer"));
+  expect(grid.children[1]).toHaveClass("col-span-2", "justify-self-end");
+  for (const [index, heading] of ["Score", "Max"].entries()) {
+    expect(grid.children[1].children[index]).toHaveTextContent(translateText(code, heading));
+    expect(grid.children[1].children[index]).toHaveClass("whitespace-nowrap");
+  }
+  expect(grid.querySelector("span.col-span-3")).toHaveClass("grid-cols-[minmax(0,1fr)_2.75rem_1.5rem]", "lg:grid-cols-[minmax(0,1fr)_3rem_4rem]");
+});
 
 const form = normalizeForm({
   ticker: "TEST", accountBalance: "2500", atr: "4",

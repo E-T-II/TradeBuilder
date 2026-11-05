@@ -24,6 +24,7 @@ import { Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { entryType, type Direction } from "@/lib/trade-builder";
 import { useLanguage } from "@/components/language-provider";
+import { OddsIllustrationOverlay } from "@/components/odds-illustration-overlay";
 
 export type ComputedEnhancer = "trend" | "curve" | "profitZone" | "total" | "totalSupply";
 
@@ -160,7 +161,7 @@ export function ComputedEnhancerReference({
   direction: Direction;
   score?: number | null;
 }) {
-  const { text: tx } = useLanguage();
+  const { text: tx, language } = useLanguage();
   const reference = references[enhancer];
   const { label, options, summary, description } = reference;
   const image = (direction === "short" && supplyPhotos[enhancer]) || reference.photo;
@@ -205,8 +206,9 @@ export function ComputedEnhancerReference({
                 unoptimized
                 className="block h-auto w-full rounded-lg"
               />
+              {language !== "en" ? <OddsIllustrationOverlay {...image} selected={selected} /> : null}
               {selected !== null && (
-                <SelectionOverlay photo={image} index={selected} option={options[selected]} />
+                <SelectionOverlay photo={image} index={selected} option={options[selected]} recolorHeading={language === "en"} />
               )}
             </div>
           </figure>
@@ -220,7 +222,7 @@ export function ComputedEnhancerReference({
 // around the panel, a checkmark, and the panel heading recolored orange. The
 // heading is a filtered copy of the photo clipped to the heading, so it keeps
 // the screenshot's own font.
-function SelectionOverlay({ photo, index, option }: { photo: Photo; index: number; option: string }) {
+function SelectionOverlay({ photo, index, option, recolorHeading }: { photo: Photo; index: number; option: string; recolorHeading: boolean }) {
   const id = useId().replace(/:/g, "");
   const scale = photo.width > 1000 ? 2 : 1;
   const [px1, py1, px2, py2] = photo.panels[index];
@@ -253,13 +255,13 @@ function SelectionOverlay({ photo, index, option }: { photo: Photo; index: numbe
           <feComposite in2="text" operator="in" />
         </filter>
       </defs>
-      <image
+      {recolorHeading ? <image
         href={photo.src}
         width={photo.width}
         height={photo.height}
         clipPath={`url(#${id}-heading)`}
         filter={`url(#${id}-orange)`}
-      />
+      /> : null}
       <rect
         x={px1}
         y={py1}
