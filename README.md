@@ -10,6 +10,42 @@ Optional **actual opening date**, **actual opening price**, and **actual shares*
 
 The **Engineered Risk Trading Strategy** link in the education-only disclaimer opens the included strategy PDF in a new tab without leaving the current setup.
 
+### My Trade Plan worksheet
+
+Click the footer's **Page N of 19** counter to open a list of page numbers and titles and jump directly to a page without losing edits. The menu supports keyboard navigation; **Previous** and **Next** remain available.
+
+On the income and wealth goals pages, **+ Add** adds another goal row. Use the trashcan icon on a goal's row to delete it. At least one row must remain on each page; its delete button is disabled when it is the only row. **Use notes only** beside **Additional Notes** saves an independent preference without hiding or clearing the goal rows. Changes save with the rest of the worksheet.
+
+On the markets page, each row pairs **Asset Class** with **Market Watch List Rules**. Use **+ Add** for additional markets or a row's trashcan to remove it; at least one row remains. **Use notes only** beside the additional market considerations saves a separate preference without clearing market selections or rules. Older saved asset-class selections are retained as the first market row.
+
+The accounts page starts with two account listings. Use **+ Add** to add more or a row's trashcan to remove it; at least one row remains. Extra trailing empty rows beyond the first two are removed when loading a saved plan; entered accounts are preserved. **Use notes only** beside **Additional account information** saves an independent preference without hiding or clearing account entries.
+
+On page 10, **+ Add** adds a trade-type and entry-rules row. Each row has a trashcan; at least one row remains. Saved rules from older plans are retained in the first row. **Use notes only** beside **Additional considerations for rules of entry** saves an independent preference without hiding or clearing the trade types or entry rules.
+
+Select **Create my trade plan** (book icon) above **Ticker symbol** in Pre-steps to open a nineteen-page planning document. Each page displays its title. Use **Previous** and **Next** to navigate between document information, motivation, strengths, improvement areas, income and wealth goals, markets, accounts, multiple-timeframe analysis, entry rules, stop-loss rules, target-exit rules, execution graphics, placing-order rules, risk-management rules, trade management, and checking reports. Checklist selections, dropdowns, and written responses are retained between pages and when the dialog is closed.
+
+Page 11 records separate Income and Wealth Trade stop-loss buffers as percentages of Daily ATR, with additional considerations and an independent **Use notes only** preference. These worksheet values do not change the trade builder's calculations.
+
+Page 12 records target-exit rules with a selectable Income Trades or Wealth Trades purpose and a percentage buffer before the first opposing LTF, ITF, or HTF zone. One **+ Add** button below the table adds a row; trashcans remove rows, retaining at least one. Previously saved rules retain their purposes and values. Additional target-exit considerations include an independent **Use notes only** preference. These values save with the worksheet and do not change the trade builder's calculations.
+
+Page 13 lists Trade Blueprint Steps, Trade Blueprint Flow Chart, 6-Step Trading Process, and Decision Matrix with thumbnails. Each graphic has an inclusion checkbox and an independent **Preceding Paragraph** field. Selections and paragraphs save locally; unchecking a graphic does not clear its paragraph. These preferences are recorded for the plan; document generation is not yet available.
+
+Page 14 records placing-order rules in text boxes. **+ Add** adds a rule and each row's trashcan removes it, retaining at least one row. Rules save with the worksheet; older plans start with one blank rule.
+
+Page 15 records eight independent Risk Management Part 1 checkboxes, a minimum reward ratio from 10:1 to 1:1, and numeric risk percentages for single and simultaneous trades. Unchecking a rule preserves its entered values. Older plans start unchecked with blank values. These worksheet preferences do not change the builder's risk limits or calculations.
+
+Page 16 records five independent Risk Management Part 2 checkboxes covering entry orders, diversification, broker-held orders, backups, and trade reviews. **Additional risk management considerations** includes a saved **Use notes only** preference without hiding or clearing checkbox selections. Selections and notes save independently from Part 1; older plans start unchecked with blank notes.
+
+Page 17 records the reward ratio for moving the stop to break even (10:1 through 1:1) and the timeframe for trailing stops behind new supply/demand zones (LTF, ITF, HTF). **Additional trade management considerations** includes an independent **Use notes only** preference without hiding or clearing the dropdowns. Older plans start with blank selections and notes. These rules do not change trade calculations.
+
+Page 18 records Maximum Risk Parameters for Stocks, Futures, Forex, Options, and Crypto. The first eight rows use nonnegative numeric dollar fields, including the opened-trade limit rows as requested; the final row records independent Yes/No weekend-holding choices. All 45 cells save locally, and older plans start with a blank table. These worksheet values do not change calculations or enforce trading limits. A wider popup, compact fields, and fixed column proportions fit all five markets on desktop screens; the table scrolls horizontally on phones.
+
+Page 19 pairs **Report Name** dropdowns with **Report Notes and Purpose** text boxes. **+ Add** adds a report and each row's trashcan removes it, retaining at least one row. All eleven source options, including **Other**, are available on every row; custom report details can be written in the notes. Website names and saved selections remain unchanged when switching language. Older plans start with one blank report. The completed creator is planned to have 23 pages; pages 20–23 await their content.
+
+The entire worksheet follows the selected interface language, including page descriptions, controls, choices, navigation, validation messages, and the four rebuilt execution diagrams. Arabic and Hebrew use right-to-left worksheet layout without mirroring diagram geometry. Translations are bundled locally and machine-generated; native-speaker review is still needed. User-entered text, saved choice values, and numeric rules are not translated or changed. Its currency symbol labels account amounts in this document only; it does not convert amounts or change the builder's USD calculations. Dollar/percent goal choices are independent for each row.
+
+Changes save locally in the current browser under a separate storage key. The worksheet is **not included in trade backups** and can be lost when browser data is cleared. Read or save failures are displayed with a retry action; unsaved edits remain in memory until the app is reloaded. Account information is not encrypted. Do not enter credentials or account numbers.
+
 ### Interface language
 
 Use **Language** in the header to choose English, Arabic, Bengali, Dutch, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malayalam, Polish, Portuguese, Punjabi, Russian, Spanish, Tamil, Telugu, or Ukrainian. The preference is saved locally in this browser, separate from trade data, and is not included in backups.

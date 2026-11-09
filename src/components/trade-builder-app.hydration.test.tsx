@@ -55,6 +55,14 @@ const savedForm = {
 
 afterEach(() => window.localStorage.clear());
 
+test("My Trade Plan appears above the ticker field instead of in the header", () => {
+  render(<TradeBuilderApp />);
+  const button = screen.getByRole("button", { name: "Create my trade plan" });
+  const ticker = screen.getByLabelText("Ticker symbol");
+  expect(button.closest("header")).toBeNull();
+  expect(button.compareDocumentPosition(ticker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test("language preference is available in the app header without changing the setup or resetting the preference", async () => {
   window.localStorage.setItem(KEY, JSON.stringify(savedForm));
   const user = userEvent.setup();

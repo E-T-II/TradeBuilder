@@ -57,6 +57,7 @@ import { ZoneScorecard, computeZoneScores, zoneTotal } from "@/components/zone-s
 import { XltChecklistDialog } from "@/components/xlt-checklist-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { CurrencyAmountHint } from "@/components/currency-note";
+import { MyTradePlanDialog } from "@/components/my-trade-plan-dialog";
 
 interface TradeFormProps {
   form: FormState;
@@ -522,6 +523,9 @@ export function TradeForm({
       <div className="mt-8 flex-1 space-y-5">
         {step === 0 ? (
           <>
+            <div>
+              <MyTradePlanDialog />
+            </div>
             <Field
               id="ticker"
               label={tx("Ticker symbol")}

@@ -83,3 +83,28 @@ test("rendered JSX text and literal translation calls stay covered by the source
     check(ast);
   }
 });
+
+test("worksheet additions keep static display strings and labels localized", () => {
+  const file = join(process.cwd(), "src/components/my-trade-plan-dialog.tsx");
+  const ast = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  function check(node: ts.Node) {
+    if (ts.isJsxExpression(node) && node.expression && ts.isStringLiteral(node.expression)) {
+      expect(node.expression.text, `Translate worksheet display text: ${node.expression.text}`).not.toMatch(/[a-zA-Z]/);
+    }
+    if (ts.isJsxAttribute(node) && ["label", "aria-label", "title", "alt"].includes(node.name.getText(ast)) &&
+      node.initializer && ts.isStringLiteral(node.initializer)) {
+      expect(Object.hasOwn(source, node.initializer.text), `Worksheet label: ${node.initializer.text}`).toBe(true);
+      expect(node.name.getText(ast), `Translate attribute: ${node.initializer.text}`).toBe("label");
+    }
+    if (ts.isCallExpression(node) && ["textField", "notes"].includes(node.expression.getText(ast))) {
+      const label = node.arguments[1];
+      if (label && ts.isStringLiteral(label)) expect(Object.hasOwn(source, label.text), label.text).toBe(true);
+    }
+    ts.forEachChild(node, check);
+  }
+  check(ast);
+});
+
+test.each(LANGUAGES)("risk reward comparison stays intact in $name", ({ code }) => {
+  expect(translateText(code, "I only take opportunities with a Reward vs. Ratio >=")).toMatch(/>=$/);
+});

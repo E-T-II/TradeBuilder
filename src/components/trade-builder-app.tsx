@@ -676,7 +676,7 @@ function TradeBuilderContent() {
             <TopStepper step={step} reachable={reachable} onJump={goToStep} />
           ) : null}
         </div>
-        <div className="flex items-center justify-end gap-2 lg:gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 lg:gap-3">
           <LanguageSelector />
           <CurrencySelector />
           <TradeBackupControls form={form} tradeLog={tradeLog} onRestore={restoreBackup} />
