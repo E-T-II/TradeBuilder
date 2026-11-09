@@ -1,19 +1,24 @@
 "use client";
 
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Dialog } from "@base-ui/react/dialog";
-import { Menu } from "@base-ui/react/menu";
-import { BookOpen, ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { Combobox } from "@base-ui/react/combobox";
+import { BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/components/language-provider";
 import { TradePlanGraphic } from "@/components/trade-plan-graphic";
+import { MyTradePlanPrint } from "@/components/my-trade-plan-print";
 import { cn } from "@/lib/utils";
 import {
   ACCOUNT_TYPES, ANALYSIS_COLUMNS, ASSET_CLASSES, BROKERS, createMyTradePlan,
+  createEmergencyContact, EMERGENCY_CONTACT_FIELDS, formatScheduleTime,
   GOAL_MARKETS, GOAL_PERIODS, IMPROVEMENTS, MY_TRADE_PLAN_STORAGE_KEY, parseMyTradePlan, PLAN_GRAPHICS,
   REPORT_SOURCES, RISK_PARAMETERS, RISK_PARAMETER_MARKETS, RISK_PART_TWO_RULES, RISK_REWARD_RATIOS, RISK_RULES, WEEKEND_CHOICES,
-  STRENGTHS, TARGET_PURPOSES, TARGET_TIMEFRAMES, TIMEFRAMES, TRADE_TYPES, TRADING_PURPOSES, type GoalRow, type MyTradePlan,
+  SCHEDULE_MARKETS, SCHEDULE_PERIODS, SCHEDULE_PURPOSES, SCHEDULE_TIMES, type ScheduleRow,
+  STRENGTHS, TARGET_PURPOSES, TARGET_TIMEFRAMES, TIMEFRAMES, TRADE_LOG_DESTINATIONS, TRADE_LOG_SCHEDULES,
+  TRADE_TYPES, TRADING_PURPOSES, type GoalRow, type MyTradePlan,
 } from "@/lib/my-trade-plan";
 
 export const PAGE_TITLES = [
@@ -36,7 +41,13 @@ export const PAGE_TITLES = [
   "My Trading Execution – Managing the Trade",
   "My Risk Management Rules Part 3",
   "My Trading Execution – Checking Reports",
+  "My Trading Execution – Logging the Trade",
+  "My Trading Execution – Reviewing Results",
+  "My Trading Schedule and Time Commitment",
+  "Appendix A – Emergency Contact Reference Data",
 ] as const;
+
+const PAGE_NUMBERS = PAGE_TITLES.map((_, index) => index);
 
 const selectClass = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm";
 const textAreaClass = "w-full rounded-lg border border-input bg-background px-3 py-2 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm";
@@ -50,18 +61,19 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function Choice({
-  label, value, options, onChange, className,
+  label, value, options, onChange, className, optionLabel,
 }: {
   label: string;
   value: string;
   options: readonly string[];
   onChange: (value: string) => void;
   className?: string;
+  optionLabel?: (value: string) => string;
 }) {
   const { text: tx } = useLanguage();
   return <select aria-label={tx(label)} value={value} className={cn(selectClass, className)} onChange={(event) => onChange(event.target.value)}>
-    <option value="">{ tx("Select...") }</option>
-    {options.map((option) => <option key={option} value={option}>{tx(option)}</option>)}
+    <option value="">{tx("Select...")}</option>
+    {options.map((option) => <option key={option} value={option}>{optionLabel ? optionLabel(option) : tx(option)}</option>)}
   </select>;
 }
 
@@ -172,7 +184,48 @@ export function MyTradePlanDialog() {
   const [readError, setReadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [printReady, setPrintReady] = useState(false);
+  const [printError, setPrintError] = useState("");
+  const [pageSearch, setPageSearch] = useState("");
+  const originalTitle = useRef<string | null>(null);
   const content = useRef<HTMLDivElement>(null);
+  const pageSearchInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function resetPrint() {
+      if (document.body.dataset.printReport === "my-trade-plan") delete document.body.dataset.printReport;
+      if (originalTitle.current !== null) {
+        document.title = originalTitle.current;
+        originalTitle.current = null;
+      }
+    }
+    function afterPrint() {
+      resetPrint();
+      setPrintReady(false);
+    }
+    window.addEventListener("afterprint", afterPrint);
+    return () => {
+      window.removeEventListener("afterprint", afterPrint);
+      resetPrint();
+    };
+  }, [open]);
+
+  function finishAndDownload() {
+    setPrintError("");
+    flushSync(() => setPrintReady(true));
+    originalTitle.current ??= document.title;
+    document.title = plan.title.trim() || tx("My Trade Plan");
+    document.body.dataset.printReport = "my-trade-plan";
+    try {
+      window.print();
+    } catch {
+      delete document.body.dataset.printReport;
+      document.title = originalTitle.current;
+      originalTitle.current = null;
+      setPrintReady(false);
+      setPrintError("Printing could not be opened. Check your browser settings and try again.");
+    }
+  }
 
   function load() {
     try {
@@ -219,6 +272,7 @@ export function MyTradePlanDialog() {
 
   return <Dialog.Root open={open} onOpenChange={(next) => {
     if (next && !loaded) load();
+    if (!next) setPrintReady(false);
     setOpen(next);
   }}>
     <Dialog.Trigger render={<Button variant="ghost" size="sm" aria-label={tx("Create my trade plan")} />}>
@@ -229,7 +283,7 @@ export function MyTradePlanDialog() {
       <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/50" />
       <Dialog.Popup lang={language} dir={language === "ar" || language === "he" ? "rtl" : "ltr"}
         className={cn("fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(56rem,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-card shadow-lg outline-none",
-          page === 17 && "w-[min(72rem,96vw)]")}>
+          (page === 17 || page === 22) && "w-[min(72rem,96vw)]")}>
         <div className={cn("flex items-start justify-between gap-3 border-b p-5", page === 17 && "p-3")}>
           <Dialog.Title className="text-lg font-semibold">{tx("My Trading Plan Creator")}</Dialog.Title>
           <Dialog.Close render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close My Trade Plan")} />}>
@@ -242,7 +296,13 @@ export function MyTradePlanDialog() {
           </div> : null}
           <fieldset disabled={!loaded} className={cn("min-w-0 space-y-5", page === 17 && "space-y-3")}>
             <legend className="sr-only">{tx(PAGE_TITLES[page])}</legend>
-            <h2 className="text-base font-semibold" tabIndex={-1}>{tx(PAGE_TITLES[page])}</h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="min-w-0 text-base font-semibold" tabIndex={-1}>{tx(PAGE_TITLES[page])}</h2>
+              <Button variant="outline" size="sm" className="shrink-0" disabled={!loaded || !!readError}
+                onClick={finishAndDownload}>
+                <Search aria-hidden />{tx("Preview")}
+              </Button>
+            </div>
             {page === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {tx("Complete the following questions to finalize the formatting of your Trade Plan Document.")}
@@ -407,20 +467,22 @@ export function MyTradePlanDialog() {
                 <em className="text-xs">{tx("Complete the following table to document the timeframes to be used when trading for the various purposes.")}</em>
               </p>
               <div className="overflow-x-auto">
-              <table className="w-full min-w-[42rem] border-collapse text-sm">
-                <caption className="sr-only">{tx("Timeframes by trading purpose")}</caption>
-                <thead><tr>
-                  {["Trading Purpose", ...ANALYSIS_COLUMNS].map((column) => <th key={column} scope="col" className="p-2 text-start">{tx(column)}</th>)}
-                </tr></thead>
-                <tbody>{TRADING_PURPOSES.map((purpose, row) => <tr key={purpose} className="border-t">
-                  <th scope="row" className="p-2 text-start font-medium">{tx(purpose)}</th>
-                  {ANALYSIS_COLUMNS.map((column, col) => <td key={column} className="p-2">
-                    <Choice label={tx("{0} {1}", [tx(purpose), tx(column)])} value={plan.timeframes[row][col]} options={TIMEFRAMES}
-                      onChange={(value) => update({ timeframes: plan.timeframes.map((cells, r) =>
-                        r === row ? cells.map((cell, c) => c === col ? value : cell) : cells) })} />
-                  </td>)}
-                </tr>)}</tbody>
-              </table>
+                <table className="w-full min-w-2xl border-collapse text-sm">
+                  <caption className="sr-only">{tx("Timeframes by trading purpose")}</caption>
+                  <thead><tr>
+                    {["Trading Purpose", ...ANALYSIS_COLUMNS].map((column) => <th key={column} scope="col" className="p-2 text-start">{tx(column)}</th>)}
+                  </tr></thead>
+                  <tbody>{TRADING_PURPOSES.map((purpose, row) => <tr key={purpose} className="border-t">
+                    <th scope="row" className="p-2 text-start font-medium">{tx(purpose)}</th>
+                    {ANALYSIS_COLUMNS.map((column, col) => <td key={column} className="p-2">
+                      <Choice label={tx("{0} {1}", [tx(purpose), tx(column)])} value={plan.timeframes[row][col]} options={TIMEFRAMES}
+                        onChange={(value) => update({
+                          timeframes: plan.timeframes.map((cells, r) =>
+                            r === row ? cells.map((cell, c) => c === col ? value : cell) : cells)
+                        })} />
+                    </td>)}
+                  </tr>)}</tbody>
+                </table>
               </div>
             </> : null}
             {page === 9 ? <>
@@ -556,7 +618,7 @@ export function MyTradePlanDialog() {
                 {tx("Include the following graphics in the Trading Execution section of my Trading Plan")}
               </p>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[36rem] border-collapse text-sm">
+                <table className="w-full min-w-xl border-collapse text-sm">
                   <thead><tr>
                     {["Graphic", "Thumbnail", "Preceding Paragraph"].map((heading) =>
                       <th key={heading} scope="col" className="p-2 text-start">{tx(heading)}</th>)}
@@ -603,8 +665,10 @@ export function MyTradePlanDialog() {
                     <div className="flex items-start gap-3">
                       <textarea aria-label={tx("Placing order rule {0}", [index + 1])} rows={3}
                         className={`min-h-24 ${textAreaClass}`} value={rule}
-                        onChange={(event) => update({ placingOrderRules: plan.placingOrderRules.map((row, i) =>
-                          i === index ? event.target.value : row) })} />
+                        onChange={(event) => update({
+                          placingOrderRules: plan.placingOrderRules.map((row, i) =>
+                            i === index ? event.target.value : row)
+                        })} />
                       <Button variant="ghost" size="icon" aria-label={tx("Delete Order Rule {0}", [index + 1])}
                         title={tx("Delete Order Rule {0}", [index + 1])} disabled={plan.placingOrderRules.length === 1}
                         onClick={() => update({ placingOrderRules: plan.placingOrderRules.filter((_, i) => i !== index) })}>
@@ -630,8 +694,10 @@ export function MyTradePlanDialog() {
                 {RISK_RULES.map((rule) => <div key={rule.id} className="flex items-start gap-2 text-sm">
                   <input type="checkbox" aria-label={tx(rule.text)} className="mt-1 size-4 shrink-0 accent-primary"
                     checked={plan.riskRules.includes(rule.id)}
-                    onChange={(event) => update({ riskRules: event.target.checked
-                      ? [...plan.riskRules, rule.id] : plan.riskRules.filter((id) => id !== rule.id) })} />
+                    onChange={(event) => update({
+                      riskRules: event.target.checked
+                        ? [...plan.riskRules, rule.id] : plan.riskRules.filter((id) => id !== rule.id)
+                    })} />
                   <div className="flex flex-wrap items-center gap-2">
                     <span>{tx(rule.text)}</span>
                     {rule.id === "rewardRatio" ? <>
@@ -663,8 +729,10 @@ export function MyTradePlanDialog() {
                 {RISK_PART_TWO_RULES.map((rule) => <label key={rule} className="flex items-start gap-2 text-sm">
                   <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary"
                     checked={plan.riskPartTwoRules.includes(rule)}
-                    onChange={(event) => update({ riskPartTwoRules: event.target.checked
-                      ? [...plan.riskPartTwoRules, rule] : plan.riskPartTwoRules.filter((value) => value !== rule) })} />
+                    onChange={(event) => update({
+                      riskPartTwoRules: event.target.checked
+                        ? [...plan.riskPartTwoRules, rule] : plan.riskPartTwoRules.filter((value) => value !== rule)
+                    })} />
                   <span>{tx(rule)}</span>
                 </label>)}
               </div>
@@ -711,25 +779,27 @@ export function MyTradePlanDialog() {
                 <em className="text-xs">{tx("Complete the following table to document the Maximum Risk Parameters.")}</em>
               </p>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[36rem] table-fixed border-collapse text-xs sm:min-w-0">
+                <table className="w-full min-w-xl table-fixed border-collapse text-xs sm:min-w-0">
                   <colgroup>
                     <col className="w-[24%]" />
                     {RISK_PARAMETER_MARKETS.map((market) => <col key={market} className="w-[15.2%]" />)}
                   </colgroup>
                   <thead><tr>
-                    <th scope="col" className="break-words p-1.5 text-start">{tx("Risk Parameters")}</th>
+                    <th scope="col" className="wrap-break-word p-1.5 text-start">{tx("Risk Parameters")}</th>
                     {RISK_PARAMETER_MARKETS.map((market) =>
-                      <th key={market} scope="col" className="break-words p-1.5 text-start">{tx(market)}</th>)}
+                      <th key={market} scope="col" className="wrap-break-word p-1.5 text-start">{tx(market)}</th>)}
                   </tr></thead>
                   <tbody>{RISK_PARAMETERS.map((parameter, rowIndex) => <tr key={parameter} className="border-t">
-                    <th scope="row" className="break-words p-1.5 text-start font-medium">{tx(parameter)}</th>
+                    <th scope="row" className="wrap-break-word p-1.5 text-start font-medium">{tx(parameter)}</th>
                     {RISK_PARAMETER_MARKETS.map((market, columnIndex) => {
                       const weekend = rowIndex === RISK_PARAMETERS.length - 1;
                       const label = tx(weekend ? "{0} — {1}" : "{0} — {1} ($)", [tx(parameter), tx(market)]);
                       const value = plan.riskParameters[rowIndex][columnIndex];
                       function updateCell(next: string) {
-                        update({ riskParameters: plan.riskParameters.map((row, i) => i === rowIndex
-                          ? row.map((cell, j) => j === columnIndex ? next : cell) : row) });
+                        update({
+                          riskParameters: plan.riskParameters.map((row, i) => i === rowIndex
+                            ? row.map((cell, j) => j === columnIndex ? next : cell) : row)
+                        });
                       }
                       return <td key={market} className="p-1.5">
                         {weekend ? <Choice label={label} value={value} options={WEEKEND_CHOICES} onChange={updateCell}
@@ -786,9 +856,136 @@ export function MyTradePlanDialog() {
                 <Plus aria-hidden />{tx("Add")}
               </Button>
             </> : null}
+            {page === 19 ? <>
+              <p className="text-sm text-muted-foreground">
+                {tx("Logging Trades is critical to helping me stay disciplined with my trading and help me learn from my mistakes and identify what helps meet my goals.")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <em className="text-xs">{tx("Select the appropriate values for each field to complete your rules for establishing your plan for logging your trades.")}</em>
+              </p>
+              <div className="space-y-4 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{tx("Every closed trade will be logged in")}</span>
+                  <div className="w-full sm:w-80">
+                    <Choice label="Trade log destination" value={plan.tradeLogDestination} options={TRADE_LOG_DESTINATIONS}
+                      onChange={(tradeLogDestination) => update({ tradeLogDestination })} />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{tx("Trades will be logged")}</span>
+                  <div className="w-full sm:w-64">
+                    <Choice label="Trade logging schedule" value={plan.tradeLogSchedule} options={TRADE_LOG_SCHEDULES}
+                      onChange={(tradeLogSchedule) => update({ tradeLogSchedule })} />
+                  </div>
+                  <span>{tx("after the trade has closed.")}</span>
+                </div>
+              </div>
+            </> : null}
+            {page === 20 ? <>
+              <p className="text-sm text-muted-foreground">
+                {tx("I will make sure to not only keep the data results of each trade, but I will also take screen shots with notes. In addition I commit to keeping notes on each trade regarding my feelings, impressions and what I learned from the trade.")}
+              </p>
+              <Notes label="Additional considerations for reviewing results"
+                value={plan.reviewNotes} onChange={(reviewNotes) => update({ reviewNotes })} />
+            </> : null}
+            {page === 21 ? <>
+              <p className="text-sm text-muted-foreground">
+                {tx("The following helps me plan out my “day-in-the-life” or week or month of my time as a trader/investor. I will treat my schedule regimen as a work day and commit to consistently executing my plan on a regular consistent basis.")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <em className="text-xs">{tx("Choose the appropriate fields to complete your time commitment plan. Click on the + to add schedule and time commitment consideration.")}</em>
+              </p>
+              <table className="w-full table-fixed border-collapse text-sm">
+                <thead><tr><th scope="col" className="p-2 text-start">{tx("I Will Devote ...")}</th></tr></thead>
+                <tbody>{plan.schedules.map((schedule, index) => {
+                  function updateSchedule(patch: Partial<ScheduleRow>) {
+                    update({ schedules: plan.schedules.map((row, i) => i === index ? { ...row, ...patch } : row) });
+                  }
+                  return <tr key={index} className="border-t"><td className="p-2">
+                    <div className="flex items-start gap-2">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        <Input aria-label={tx("Schedule {0} hours", [index + 1])} className="w-24"
+                          type="number" min="0" step="any" value={schedule.hours}
+                          onChange={(event) => updateSchedule({ hours: event.target.value })} />
+                        <span>{tx("hours per")}</span>
+                        <div className="w-32"><Choice label={tx("Schedule {0} period", [index + 1])}
+                          value={schedule.period} options={SCHEDULE_PERIODS} onChange={(period) => updateSchedule({ period })} /></div>
+                        <span>{tx("from")}</span>
+                        <div className="w-36"><Choice label={tx("Schedule {0} start time", [index + 1])}
+                          value={schedule.start} options={SCHEDULE_TIMES} optionLabel={(value) => formatScheduleTime(value, language)}
+                          onChange={(start) => updateSchedule({ start })} /></div>
+                        <span>{tx("to")}</span>
+                        <div className="w-36"><Choice label={tx("Schedule {0} end time", [index + 1])}
+                          value={schedule.end} options={SCHEDULE_TIMES} optionLabel={(value) => formatScheduleTime(value, language)}
+                          onChange={(end) => updateSchedule({ end })} /></div>
+                        <span>{tx("to trade")}</span>
+                        <div className="w-44"><Choice label={tx("Schedule {0} market", [index + 1])}
+                          value={schedule.market} options={SCHEDULE_MARKETS} onChange={(market) => updateSchedule({ market })} /></div>
+                        <span>{tx("for")}</span>
+                        <div className="w-32"><Choice label={tx("Schedule {0} purpose", [index + 1])}
+                          value={schedule.purpose} options={SCHEDULE_PURPOSES} onChange={(purpose) => updateSchedule({ purpose })} /></div>
+                      </div>
+                      <Button variant="ghost" size="icon" aria-label={tx("Delete Schedule {0}", [index + 1])}
+                        title={tx("Delete Schedule {0}", [index + 1])} disabled={plan.schedules.length === 1}
+                        onClick={() => update({ schedules: plan.schedules.filter((_, i) => i !== index) })}>
+                        <Trash2 aria-hidden />
+                      </Button>
+                    </div>
+                  </td></tr>;
+                })}</tbody>
+              </table>
+              <Button variant="outline" aria-label={tx("Add Schedule")}
+                onClick={() => update({ schedules: [...plan.schedules, { hours: "", period: "", start: "", end: "", market: "", purpose: "" }] })}>
+                <Plus aria-hidden />{tx("Add")}
+              </Button>
+              <ChecklistNotes label="Additional schedule and time considerations"
+                value={plan.scheduleNotes} onChange={(scheduleNotes) => update({ scheduleNotes })}
+                notesOnly={plan.scheduleNotesOnly} onNotesOnlyChange={(scheduleNotesOnly) => update({ scheduleNotesOnly })} />
+            </> : null}
+            {page === 22 ? <>
+              <p className="text-sm text-muted-foreground">
+                {tx("I must always be ready for emergency situations with contingency plans and the appropriate emergency contact information to quickly address any issue that may arise.")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <em className="text-xs">{tx("Complete the following table to document the emergency contact information. Click on the + to add schedule and time commitment considerations.")}</em>
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-216 table-fixed border-collapse text-sm">
+                  <thead><tr>{EMERGENCY_CONTACT_FIELDS.map(({ key, label }) =>
+                    <th key={key} scope="col" className="p-2 text-start">{tx(label)}</th>)}</tr></thead>
+                  <tbody>{plan.emergencyContacts.map((contact, index) => <tr key={index} className="border-t">
+                    {EMERGENCY_CONTACT_FIELDS.map(({ key, label }) => <td key={key} className="p-2 align-top">
+                      <div className="flex items-start gap-1">
+                        <Input aria-label={tx("Emergency contact {0} — {1}", [index + 1, tx(label)])}
+                          type={key === "phone" ? "tel" : key === "website" ? "url" : "text"}
+                          dir={key === "phone" || key === "website" ? "ltr" : undefined}
+                          value={contact[key]} onChange={(event) => update({
+                            emergencyContacts: plan.emergencyContacts.map((row, i) => i === index
+                              ? { ...row, [key]: event.target.value } : row),
+                          })} />
+                        {key === "primaryContact" ? <Button variant="ghost" size="icon"
+                          aria-label={tx("Delete Emergency Contact {0}", [index + 1])}
+                          title={tx("Delete Emergency Contact {0}", [index + 1])}
+                          disabled={plan.emergencyContacts.length === 1}
+                          onClick={() => update({ emergencyContacts: plan.emergencyContacts.filter((_, i) => i !== index) })}>
+                          <Trash2 aria-hidden />
+                        </Button> : null}
+                      </div>
+                    </td>)}
+                  </tr>)}</tbody>
+                </table>
+              </div>
+              <Button variant="outline" aria-label={tx("Add Emergency Contact")} onClick={() => update({
+                emergencyContacts: [...plan.emergencyContacts, createEmergencyContact()],
+              })}><Plus aria-hidden />{tx("Add")}</Button>
+              <p className="text-xs text-muted-foreground">
+                {tx("Finish and Download opens the print dialog for your complete trading plan. Choose Save as PDF to download it.")}
+              </p>
+            </> : null}
           </fieldset>
         </div>
         <div className={cn("space-y-3 border-t p-5", page === 17 && "p-3")}>
+          {printError ? <p role="alert" className="text-sm text-destructive">{tx(printError)}</p> : null}
           {saveError ? <div role="alert" className="space-y-2 text-sm text-destructive">
             <p>{tx(saveError)}</p>
             <Button variant="outline" onClick={() => save(plan)}>{tx("Retry saving")}</Button>
@@ -798,30 +995,53 @@ export function MyTradePlanDialog() {
               <ChevronLeft aria-hidden className="rtl:rotate-180" />{tx("Previous")}
             </Button>
             <div className="text-center text-xs">
-              <Menu.Root>
-                <Menu.Trigger render={<Button variant="ghost" size="sm" aria-label={tx("Jump to page")} />}>
+              <Combobox.Root items={PAGE_NUMBERS} value={page} inputValue={pageSearch}
+                onInputValueChange={setPageSearch} onOpenChange={() => setPageSearch("")}
+                itemToStringLabel={(index) => tx("{0} — {1}", [index + 1, tx(PAGE_TITLES[index])])}
+                filter={(index, query) => /^\d+$/.test(query.trim())
+                  ? index + 1 === Number(query.trim())
+                  : tx(PAGE_TITLES[index]).toLocaleLowerCase(language).includes(query.trim().toLocaleLowerCase(language))}
+                onValueChange={(index) => { if (index !== null) goToPage(index); }}>
+                <Combobox.Trigger render={<Button variant="outline" size="sm" aria-label={tx("Jump to page")} />}>
                   <span role="status">{tx("Page {0} of {1}", [page + 1, PAGE_TITLES.length])}</span>
-                </Menu.Trigger>
-                <Menu.Portal>
-                  <Menu.Positioner side="top" align="center" sideOffset={8} className="z-60"
+                  <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />
+                </Combobox.Trigger>
+                <Combobox.Portal>
+                  <Combobox.Positioner side="top" align="center" sideOffset={8} className="z-60"
                     lang={language} dir={language === "ar" || language === "he" ? "rtl" : "ltr"}>
-                    <Menu.Popup aria-label={tx("Trading plan pages")}
-                      className="max-h-[min(24rem,var(--available-height))] max-w-[min(28rem,90vw)] overflow-y-auto rounded-lg border bg-card p-1 shadow-lg outline-none">
-                      {PAGE_TITLES.map((title, index) => <Menu.Item key={title}
-                        onClick={() => goToPage(index)} aria-current={page === index ? "page" : undefined}
-                        className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-highlighted:bg-accent aria-[current=page]:font-semibold">
-                        {tx("{0} — {1}", [index + 1, tx(title)])}
-                      </Menu.Item>)}
-                    </Menu.Popup>
-                  </Menu.Positioner>
-                </Menu.Portal>
-              </Menu.Root>
+                    <Combobox.Popup initialFocus={pageSearchInput}
+                      className="flex max-h-[min(24rem,var(--available-height))] w-[min(24rem,90vw)] flex-col overflow-hidden rounded-xl border bg-card shadow-lg outline-none">
+                      <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
+                        <Search aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+                        <Combobox.Input ref={pageSearchInput} aria-label={tx("Search pages")}
+                          placeholder={tx("Search by title or page number")}
+                          className="h-9 w-full min-w-0 bg-transparent text-base outline-none md:text-sm" />
+                      </div>
+                      <Combobox.Empty className="p-4 text-center text-sm text-muted-foreground">
+                        {tx("No pages found")}
+                      </Combobox.Empty>
+                      <Combobox.List aria-label={tx("Trading plan pages")}
+                        className="min-h-0 scroll-py-1 overflow-y-auto p-1">
+                        {(index: number) => <Combobox.Item key={index} value={index}
+                          aria-label={tx("{0} — {1}", [index + 1, tx(PAGE_TITLES[index])])}
+                          aria-current={page === index ? "page" : undefined}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm outline-none data-highlighted:bg-accent data-selected:bg-primary/10 data-selected:font-medium">
+                          <span aria-hidden className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-xs tabular-nums text-muted-foreground">{index + 1}</span>
+                          <span className="min-w-0 flex-1 text-start leading-snug">{tx(PAGE_TITLES[index])}</span>
+                          <Combobox.ItemIndicator className="shrink-0 text-primary"><Check aria-hidden className="size-4" /></Combobox.ItemIndicator>
+                        </Combobox.Item>}
+                      </Combobox.List>
+                    </Combobox.Popup>
+                  </Combobox.Positioner>
+                </Combobox.Portal>
+              </Combobox.Root>
               {saved ? <p className="text-muted-foreground">{tx("Saved in this browser")}</p> : null}
             </div>
             {page < PAGE_TITLES.length - 1 ? <Button onClick={() => goToPage(page + 1)}>
               {tx("Next")}<ChevronRight aria-hidden className="rtl:rotate-180" />
-            </Button> : <Dialog.Close render={<Button />}>{tx("Done")}</Dialog.Close>}
+            </Button> : <Button disabled={!loaded || !!readError} onClick={finishAndDownload}>{tx("Finish and Download")}</Button>}
           </div>
+          {printReady ? <MyTradePlanPrint plan={plan} titles={PAGE_TITLES} /> : null}
         </div>
       </Dialog.Popup>
     </Dialog.Portal>

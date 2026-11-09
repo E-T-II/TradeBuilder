@@ -1,5 +1,27 @@
 export const MY_TRADE_PLAN_STORAGE_KEY = "tradebuilder-my-trade-plan-v1";
 
+export const EMERGENCY_CONTACT_FIELDS = [
+  { key: "purpose", label: "Purpose" },
+  { key: "company", label: "Company Name" },
+  { key: "website", label: "Website" },
+  { key: "serviceHours", label: "Service Hours" },
+  { key: "phone", label: "Phone #" },
+  { key: "primaryContact", label: "Primary Contact" },
+] as const;
+export type EmergencyContact = Record<typeof EMERGENCY_CONTACT_FIELDS[number]["key"], string>;
+
+export function createEmergencyContact(): EmergencyContact {
+  return { purpose: "", company: "", website: "http://", serviceHours: "", phone: "", primaryContact: "" };
+}
+
+export function formatScheduleTime(value: string, language: string): string {
+  if (!value) return "";
+  const formatted = new Intl.DateTimeFormat(language === "en" ? "en-US" : language, {
+    hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC",
+  }).format(new Date(`2000-01-01T${value}:00Z`));
+  return language === "en" ? formatted.toLowerCase() : formatted;
+}
+
 export const STRENGTHS = [
   "Discipline", "Patience", "Coachable", "Decisiveness", "Flexibility", "Committed",
   "Organized", "Goal Oriented", "Planner", "Less Emotional", "Ability to Focus",
@@ -44,6 +66,13 @@ export const RISK_PARAMETERS = [
   "Can Hold Trades Over the Weekend",
 ] as const;
 export const WEEKEND_CHOICES = ["Yes", "No"] as const;
+export const SCHEDULE_PERIODS = ["Day", "Week", "Month"] as const;
+export const SCHEDULE_MARKETS = ["Stocks", "ETFs", "Futures", "Forex", "Options", "Cryptocurrency"] as const;
+export const SCHEDULE_PURPOSES = ["Income", "Wealth"] as const;
+export const SCHEDULE_TIMES = Array.from({ length: 48 }, (_, index) =>
+  `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
+export const TRADE_LOG_DESTINATIONS = ["My trade logs using the Trade Builder", "My personal trade log"] as const;
+export const TRADE_LOG_SCHEDULES = ["Immediately", "Twice a day", "At the end of the day", "At the end of the week"] as const;
 export const REPORT_SOURCES = [
   "Econoday.com", "ForexFactory.com", "EarningsWhispers.com", "SeekingAlpha.com",
   "Finviz.com", "ETF.Stock-Encyclopedia.com", "Yahoo.Finance.com", "GoogleFinance.com",
@@ -136,6 +165,22 @@ export interface MyTradePlan {
   managementNotesOnly: boolean;
   riskParameters: string[][];
   reports: { source: string; notes: string }[];
+  tradeLogDestination: string;
+  tradeLogSchedule: string;
+  reviewNotes: string;
+  schedules: ScheduleRow[];
+  scheduleNotes: string;
+  scheduleNotesOnly: boolean;
+  emergencyContacts: EmergencyContact[];
+}
+
+export interface ScheduleRow {
+  hours: string;
+  period: string;
+  start: string;
+  end: string;
+  market: string;
+  purpose: string;
 }
 
 export function createMyTradePlan(): MyTradePlan {
@@ -163,6 +208,11 @@ export function createMyTradePlan(): MyTradePlan {
     breakEvenRatio: "", managementTimeframe: "", managementNotes: "", managementNotesOnly: false,
     riskParameters: RISK_PARAMETERS.map(() => RISK_PARAMETER_MARKETS.map(() => "")),
     reports: [{ source: "", notes: "" }],
+    tradeLogDestination: "", tradeLogSchedule: "",
+    reviewNotes: "",
+    schedules: [{ hours: "", period: "", start: "", end: "", market: "", purpose: "" }],
+    scheduleNotes: "", scheduleNotesOnly: false,
+    emergencyContacts: [createEmergencyContact()],
     graphics: {
       blueprintSteps: { included: false, precedingParagraph: "" },
       blueprintFlowChart: { included: false, precedingParagraph: "" },
@@ -210,6 +260,17 @@ function isMyTradePlan(value: unknown): value is MyTradePlan {
       typeof defaultValue !== "string" || typeof value[key] === "string",
     ) ||
     !isChecklist(value.strengths, STRENGTHS) ||
+    !Array.isArray(value.emergencyContacts) || value.emergencyContacts.length < 1 ||
+    !value.emergencyContacts.every((row: unknown) => isRecord(row) &&
+      EMERGENCY_CONTACT_FIELDS.every(({ key }) => typeof row[key] === "string")) ||
+    typeof value.scheduleNotesOnly !== "boolean" ||
+    !Array.isArray(value.schedules) || value.schedules.length < 1 ||
+    !value.schedules.every((row: unknown) => isRecord(row) &&
+      isRiskPercentage(row.hours) && isChoice(row.period, SCHEDULE_PERIODS) &&
+      isChoice(row.start, SCHEDULE_TIMES) && isChoice(row.end, SCHEDULE_TIMES) &&
+      isChoice(row.market, SCHEDULE_MARKETS) && isChoice(row.purpose, SCHEDULE_PURPOSES)) ||
+    !isChoice(value.tradeLogDestination, TRADE_LOG_DESTINATIONS) ||
+    !isChoice(value.tradeLogSchedule, TRADE_LOG_SCHEDULES) ||
     !Array.isArray(value.reports) || value.reports.length < 1 ||
     !value.reports.every((row: unknown) => isRecord(row) &&
       isChoice(row.source, REPORT_SOURCES) && typeof row.notes === "string") ||
@@ -276,6 +337,11 @@ function migrateTargetRules(value: unknown): unknown {
 export function parseMyTradePlan(text: string): MyTradePlan {
   const value: unknown = JSON.parse(text);
   const plan = isRecord(value) ? {
+    emergencyContacts: [createEmergencyContact()],
+    schedules: createMyTradePlan().schedules,
+    scheduleNotes: "", scheduleNotesOnly: false,
+    reviewNotes: "",
+    tradeLogDestination: "", tradeLogSchedule: "",
     reports: [{ source: "", notes: "" }],
     riskParameters: createMyTradePlan().riskParameters,
     breakEvenRatio: "", managementTimeframe: "", managementNotes: "", managementNotesOnly: false,

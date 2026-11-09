@@ -1,7 +1,71 @@
 import { describe, expect, test } from "vitest";
-import { createMyTradePlan, parseMyTradePlan } from "@/lib/my-trade-plan";
+import { createEmergencyContact, createMyTradePlan, parseMyTradePlan } from "@/lib/my-trade-plan";
 
 describe("My Trade Plan storage", () => {
+  test("migrates emergency contacts and preserves every contact field verbatim", () => {
+    const { emergencyContacts, ...legacy } = createMyTradePlan();
+    expect(emergencyContacts).toEqual([createEmergencyContact()]);
+    expect(parseMyTradePlan(JSON.stringify(legacy)).emergencyContacts).toEqual(emergencyContacts);
+    const plan = createMyTradePlan();
+    plan.emergencyContacts = [
+      { purpose: "Broker {0}", company: "Example", website: "https://example.test/help?q=a&b=c",
+        serviceHours: "24/7\nUTC", phone: "+1 (555) 010-0100 ext. 3", primaryContact: "Service desk" },
+      createEmergencyContact(),
+    ];
+    expect(parseMyTradePlan(JSON.stringify(plan))).toEqual(plan);
+    expect(createMyTradePlan().emergencyContacts).toEqual([createEmergencyContact()]);
+  });
+
+  test.each([
+    null, [], [{}], [null],
+    ...["purpose", "company", "website", "serviceHours", "phone", "primaryContact"]
+      .map((key) => [{ ...createEmergencyContact(), [key]: 5 }]),
+  ].map((emergencyContacts) => ({ emergencyContacts })))("rejects malformed emergency contacts: %j", (patch) => {
+    expect(() => parseMyTradePlan(JSON.stringify({ ...createMyTradePlan(), ...patch }))).toThrow(/invalid data/);
+  });
+
+  test("migrates older plans to blank schedules and review notes and round-trips edits", () => {
+    const { schedules, scheduleNotes, scheduleNotesOnly, reviewNotes, ...legacy } = createMyTradePlan();
+    expect(scheduleNotes).toBe("");
+    expect(scheduleNotesOnly).toBe(false);
+    expect(reviewNotes).toBe("");
+    const restored = parseMyTradePlan(JSON.stringify(legacy));
+    expect(restored.schedules).toEqual([{ hours: "", period: "", start: "", end: "", market: "", purpose: "" }]);
+    expect(restored.reviewNotes).toBe("");
+    restored.schedules[0] = { hours: "2.5", period: "Week", start: "23:30", end: "00:00", market: "ETFs", purpose: "Wealth" };
+    restored.scheduleNotes = "My schedule\nNotes {0}";
+    restored.scheduleNotesOnly = true;
+    restored.reviewNotes = "Review screenshot";
+    expect(schedules[0].hours).toBe("");
+    expect(parseMyTradePlan(JSON.stringify(restored))).toEqual(restored);
+  });
+
+  test.each([
+    { schedules: null }, { schedules: [] }, { schedules: [{}] },
+    ...[
+      { hours: "-1" }, { hours: "abc" }, { hours: "Infinity" }, { hours: 2 },
+      { period: "Year" }, { start: "12:15" }, { end: "24:00" }, { start: null },
+      { market: "Other" }, { purpose: "Other" },
+    ].map((patch) => ({ schedules: [{ ...createMyTradePlan().schedules[0], ...patch }] })),
+    { scheduleNotes: null }, { scheduleNotesOnly: "true" }, { reviewNotes: 3 },
+  ])("rejects malformed schedule and review data: %j", (patch) => {
+    expect(() => parseMyTradePlan(JSON.stringify({ ...createMyTradePlan(), ...patch }))).toThrow(/invalid data/);
+  });
+
+  test("migrates older plans to blank logging rules and round-trips selections", () => {
+    const { tradeLogDestination, tradeLogSchedule, ...legacy } = createMyTradePlan();
+    expect([tradeLogDestination, tradeLogSchedule]).toEqual(["", ""]);
+    expect(parseMyTradePlan(JSON.stringify(legacy))).toMatchObject({ tradeLogDestination: "", tradeLogSchedule: "" });
+    const plan = { ...createMyTradePlan(), tradeLogDestination: "My personal trade log", tradeLogSchedule: "Twice a day" };
+    expect(parseMyTradePlan(JSON.stringify(plan))).toEqual(plan);
+  });
+
+  test.each([
+    { tradeLogDestination: null }, { tradeLogDestination: "Other" }, { tradeLogDestination: 1 },
+    { tradeLogSchedule: null }, { tradeLogSchedule: "Daily" }, { tradeLogSchedule: false },
+  ])("rejects malformed logging rules: %j", (patch) => {
+    expect(() => parseMyTradePlan(JSON.stringify({ ...createMyTradePlan(), ...patch }))).toThrow(/invalid data/);
+  });
   test("loads older plans with one blank report and round-trips report notes verbatim", () => {
     const { reports, ...legacy } = createMyTradePlan();
     expect(reports).toEqual([{ source: "", notes: "" }]);

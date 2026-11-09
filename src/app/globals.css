@@ -115,7 +115,8 @@ html[dir="rtl"] .font-mono {
 
 @media screen {
   .trade-plan-print,
-  .trade-log-print {
+  .trade-log-print,
+  .my-trade-plan-print {
     display: none;
   }
 }
@@ -129,11 +130,11 @@ html[dir="rtl"] .font-mono {
     margin: 0;
   }
 
-  body:not([data-print-report="trade-log"]) *:not(.trade-plan-print):not(.trade-plan-print *):not(:has(.trade-plan-print)) {
+  body:not([data-print-report="trade-log"]):not([data-print-report="my-trade-plan"]) *:not(.trade-plan-print):not(.trade-plan-print *):not(:has(.trade-plan-print)) {
     display: none !important;
   }
 
-  body:not([data-print-report="trade-log"]) *:has(.trade-plan-print):not(.trade-plan-print) {
+  body:not([data-print-report="trade-log"]):not([data-print-report="my-trade-plan"]) *:has(.trade-plan-print):not(.trade-plan-print) {
     display: contents !important;
   }
 
@@ -274,6 +275,205 @@ html[dir="rtl"] .font-mono {
     border-top: 1px solid #aaa;
     padding-top: 6pt;
     font-size: 7pt;
+  }
+
+  body[data-print-report="my-trade-plan"] *:not(.my-trade-plan-print):not(.my-trade-plan-print *):not(:has(.my-trade-plan-print)) {
+    display: none !important;
+  }
+
+  body[data-print-report="my-trade-plan"] *:has(.my-trade-plan-print):not(.my-trade-plan-print) {
+    display: contents !important;
+    position: static !important;
+    transform: none !important;
+    translate: none !important;
+    contain: none !important;
+    will-change: auto !important;
+  }
+
+  @page my-trading-plan {
+    size: letter;
+    margin: 1in;
+
+    @top-right {
+      font: 9pt Arial, sans-serif;
+      color: #555;
+      vertical-align: bottom;
+      width: 100%;
+      text-align: right;
+      border-bottom: 0.75pt solid #777;
+      padding-bottom: 6pt;
+      margin-bottom: 12pt;
+      overflow-wrap: anywhere;
+    }
+
+    @bottom-center {
+      font: 8pt/1.4 Arial, sans-serif;
+      color: #555;
+      width: 100%;
+      text-align: center;
+      vertical-align: top;
+      padding-top: 8pt;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  body[data-print-report="my-trade-plan"] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  body[data-print-report="my-trade-plan"] .my-trade-plan-print {
+    page: my-trading-plan;
+    display: block !important;
+    color: #111;
+    background: #fff;
+    font: 13pt/1.45 Calibri, Arial, sans-serif;
+    width: 100%;
+    max-width: 6.5in;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+    print-color-adjust: exact;
+  }
+
+  .my-trade-plan-print .worksheet-cover {
+    display: flex;
+    min-height: 8.5in;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    break-after: page;
+  }
+
+  .my-trade-plan-print .worksheet-cover-content {
+    width: 100%;
+    padding-block: 0.5in;
+  }
+
+  .my-trade-plan-print .worksheet-cover-author {
+    font-size: 18pt;
+    margin-block: 30pt 24pt;
+  }
+
+  .my-trade-plan-print .worksheet-cover-details {
+    font-size: 11pt;
+    color: #444;
+  }
+
+  .my-trade-plan-print .worksheet-cover-details div {
+    display: flex;
+    justify-content: center;
+    gap: 8pt;
+    margin-top: 6pt;
+  }
+
+  .my-trade-plan-print .worksheet-cover-details dd {
+    margin: 0;
+  }
+
+  .my-trade-plan-print section {
+    margin-bottom: 20pt;
+  }
+
+  .my-trade-plan-print .worksheet-appendix {
+    break-before: page;
+  }
+
+  .my-trade-plan-print h1 {
+    font-size: 26pt;
+    line-height: 1.2;
+    font-weight: bold;
+  }
+
+  .my-trade-plan-print p {
+    margin-block: 0 9pt;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .my-trade-plan-print .worksheet-introduction {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  .my-trade-plan-print h2 {
+    font-size: 16pt;
+    line-height: 1.25;
+    font-weight: bold;
+    margin-block: 18pt 8pt;
+    break-after: avoid;
+  }
+
+  .my-trade-plan-print h3,
+  .my-trade-plan-print figcaption {
+    font-weight: bold;
+    font-size: 11pt;
+    margin-block: 10pt 4pt;
+    break-after: avoid;
+  }
+
+  .my-trade-plan-print p,
+  .my-trade-plan-print td,
+  .my-trade-plan-print li {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .my-trade-plan-print table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 10pt;
+    line-height: 1.35;
+    margin-block: 10pt 14pt;
+  }
+
+  .my-trade-plan-print thead {
+    display: table-header-group;
+  }
+
+  .my-trade-plan-print th {
+    background: #f0f0f0;
+    font-weight: bold;
+  }
+
+  .my-trade-plan-print [data-plan-page="18"] th:first-child {
+    width: 28%;
+  }
+
+  .my-trade-plan-print th,
+  .my-trade-plan-print td {
+    border: 1px solid #999;
+    padding: 5pt;
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  .my-trade-plan-print tr,
+  .my-trade-plan-print figure {
+    break-inside: avoid;
+  }
+
+  .my-trade-plan-print svg {
+    width: 100%;
+    height: auto;
+    max-height: 7in;
+  }
+
+  .my-trade-plan-print figure {
+    margin: 12pt 0;
+  }
+
+  .my-trade-plan-print ul {
+    list-style: disc;
+    padding-inline-start: 24pt;
+    margin-block: 8pt 12pt;
+  }
+
+  .my-trade-plan-print li {
+    padding-inline-start: 2pt;
+    margin-bottom: 5pt;
   }
 }
 

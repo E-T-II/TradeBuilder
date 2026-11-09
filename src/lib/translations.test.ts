@@ -105,6 +105,25 @@ test("worksheet additions keep static display strings and labels localized", () 
   check(ast);
 });
 
+test("document headings and introductions are translated in every language", () => {
+  const file = join(process.cwd(), "src/components/my-trade-plan-print.tsx");
+  const ast = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  function check(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && ["DOCUMENT_TITLES", "INTRODUCTIONS"].includes(node.name.getText(ast)) &&
+      node.initializer && ts.isObjectLiteralExpression(node.initializer)) {
+      for (const property of node.initializer.properties) {
+        if (ts.isPropertyAssignment(property) && ts.isStringLiteral(property.initializer)) {
+          for (const { code } of LANGUAGES) {
+            expect(Object.hasOwn(allCatalogs[code], property.initializer.text), `${code}: ${property.initializer.text}`).toBe(true);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, check);
+  }
+  check(ast);
+});
+
 test.each(LANGUAGES)("risk reward comparison stays intact in $name", ({ code }) => {
   expect(translateText(code, "I only take opportunities with a Reward vs. Ratio >=")).toMatch(/>=$/);
 });
