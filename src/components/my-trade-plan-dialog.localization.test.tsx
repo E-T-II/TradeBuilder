@@ -11,7 +11,7 @@ import {
   MY_TRADE_PLAN_STORAGE_KEY, PLAN_GRAPHICS, REPORT_SOURCES, RISK_PARAMETERS, RISK_PARAMETER_MARKETS, RISK_PART_TWO_RULES, RISK_RULES, WEEKEND_CHOICES,
   STRENGTHS, TARGET_PURPOSES, TIMEFRAMES, TRADE_LOG_DESTINATIONS, TRADE_LOG_SCHEDULES, TRADE_TYPES, TRADING_PURPOSES,
   SCHEDULE_MARKETS, SCHEDULE_PERIODS, SCHEDULE_PURPOSES,
-  EMERGENCY_CONTACT_FIELDS,
+  EMERGENCY_CONTACT_FIELDS, formatPlanSectionTitle,
 } from "@/lib/my-trade-plan";
 import catalogs from "@/lib/locales";
 import source from "@/lib/locales/en.json";
@@ -72,7 +72,7 @@ test.each(["es", "ar", "he"] as const)("all pages and navigation respond to live
   expect(screen.getByRole("dialog")).toHaveAttribute("dir", language === "es" ? "ltr" : "rtl");
   expect(screen.getByLabelText(tx("Author's name"))).toHaveValue("Untranslated author");
   for (let page = 0; page < PAGE_TITLES.length; page++) {
-    expect(screen.getByRole("heading", { name: tx(PAGE_TITLES[page]) })).toBeVisible();
+    expect(screen.getByRole("heading", { name: formatPlanSectionTitle(page, tx(PAGE_TITLES[page])) })).toBeVisible();
     expect(screen.getByRole("button", { name: tx("Preview") })).toBeVisible();
     if (page === 2) {
       expect(screen.getByRole("checkbox", { name: tx("Discipline") })).toBeVisible();
@@ -143,7 +143,7 @@ test.each(["es", "ar", "he"] as const)("all pages and navigation respond to live
   expect(screen.getByText(tx("No pages found"))).toBeVisible();
   await user.keyboard("{Escape}");
   changeLanguage("en");
-  expect(screen.getByRole("heading", { name: PAGE_TITLES.at(-1)! })).toBeVisible();
+  expect(screen.getByRole("heading", { name: `EQ: ${PAGE_TITLES.at(-1)!}` })).toBeVisible();
   expect(window.localStorage.getItem(MY_TRADE_PLAN_STORAGE_KEY)).toBe(saved);
 }, 15000);
 

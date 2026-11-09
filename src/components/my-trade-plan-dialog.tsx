@@ -13,7 +13,7 @@ import { MyTradePlanPrint } from "@/components/my-trade-plan-print";
 import { cn } from "@/lib/utils";
 import {
   ACCOUNT_TYPES, ANALYSIS_COLUMNS, ASSET_CLASSES, BROKERS, createMyTradePlan,
-  createEmergencyContact, EMERGENCY_CONTACT_FIELDS, formatScheduleTime,
+  createEmergencyContact, EMERGENCY_CONTACT_FIELDS, formatPlanSectionTitle, formatScheduleTime,
   GOAL_MARKETS, GOAL_PERIODS, IMPROVEMENTS, MY_TRADE_PLAN_STORAGE_KEY, parseMyTradePlan, PLAN_GRAPHICS,
   REPORT_SOURCES, RISK_PARAMETERS, RISK_PARAMETER_MARKETS, RISK_PART_TWO_RULES, RISK_REWARD_RATIOS, RISK_RULES, WEEKEND_CHOICES,
   SCHEDULE_MARKETS, SCHEDULE_PERIODS, SCHEDULE_PURPOSES, SCHEDULE_TIMES, type ScheduleRow,
@@ -295,9 +295,9 @@ export function MyTradePlanDialog() {
             <p>{tx("Your trade plan could not be loaded: {0}", [tx(readError)])}</p><Button variant="outline" onClick={load}>{tx("Retry loading")}</Button>
           </div> : null}
           <fieldset disabled={!loaded} className={cn("min-w-0 space-y-5", page === 17 && "space-y-3")}>
-            <legend className="sr-only">{tx(PAGE_TITLES[page])}</legend>
+            <legend className="sr-only">{formatPlanSectionTitle(page, tx(PAGE_TITLES[page]))}</legend>
             <div className="flex items-start justify-between gap-3">
-              <h2 className="min-w-0 text-base font-semibold" tabIndex={-1}>{tx(PAGE_TITLES[page])}</h2>
+              <h2 className="min-w-0 text-base font-semibold" tabIndex={-1}>{formatPlanSectionTitle(page, tx(PAGE_TITLES[page]))}</h2>
               <Button variant="outline" size="sm" className="shrink-0" disabled={!loaded || !!readError}
                 onClick={finishAndDownload}>
                 <Search aria-hidden />{tx("Preview")}
@@ -997,10 +997,10 @@ export function MyTradePlanDialog() {
             <div className="text-center text-xs">
               <Combobox.Root items={PAGE_NUMBERS} value={page} inputValue={pageSearch}
                 onInputValueChange={setPageSearch} onOpenChange={() => setPageSearch("")}
-                itemToStringLabel={(index) => tx("{0} — {1}", [index + 1, tx(PAGE_TITLES[index])])}
+                itemToStringLabel={(index) => tx("{0} — {1}", [index + 1, formatPlanSectionTitle(index, tx(PAGE_TITLES[index]))])}
                 filter={(index, query) => /^\d+$/.test(query.trim())
                   ? index + 1 === Number(query.trim())
-                  : tx(PAGE_TITLES[index]).toLocaleLowerCase(language).includes(query.trim().toLocaleLowerCase(language))}
+                  : formatPlanSectionTitle(index, tx(PAGE_TITLES[index])).toLocaleLowerCase(language).includes(query.trim().toLocaleLowerCase(language))}
                 onValueChange={(index) => { if (index !== null) goToPage(index); }}>
                 <Combobox.Trigger render={<Button variant="outline" size="sm" aria-label={tx("Jump to page")} />}>
                   <span role="status">{tx("Page {0} of {1}", [page + 1, PAGE_TITLES.length])}</span>
@@ -1023,11 +1023,11 @@ export function MyTradePlanDialog() {
                       <Combobox.List aria-label={tx("Trading plan pages")}
                         className="min-h-0 scroll-py-1 overflow-y-auto p-1">
                         {(index: number) => <Combobox.Item key={index} value={index}
-                          aria-label={tx("{0} — {1}", [index + 1, tx(PAGE_TITLES[index])])}
+                          aria-label={tx("{0} — {1}", [index + 1, formatPlanSectionTitle(index, tx(PAGE_TITLES[index]))])}
                           aria-current={page === index ? "page" : undefined}
                           className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm outline-none data-highlighted:bg-accent data-selected:bg-primary/10 data-selected:font-medium">
                           <span aria-hidden className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-xs tabular-nums text-muted-foreground">{index + 1}</span>
-                          <span className="min-w-0 flex-1 text-start leading-snug">{tx(PAGE_TITLES[index])}</span>
+                          <span className="min-w-0 flex-1 text-start leading-snug">{formatPlanSectionTitle(index, tx(PAGE_TITLES[index]))}</span>
                           <Combobox.ItemIndicator className="shrink-0 text-primary"><Check aria-hidden className="size-4" /></Combobox.ItemIndicator>
                         </Combobox.Item>}
                       </Combobox.List>

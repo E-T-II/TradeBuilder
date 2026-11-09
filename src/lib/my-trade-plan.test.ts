@@ -1,5 +1,17 @@
 import { describe, expect, test } from "vitest";
-import { createEmergencyContact, createMyTradePlan, parseMyTradePlan } from "@/lib/my-trade-plan";
+import { createEmergencyContact, createMyTradePlan, formatPlanSectionTitle, parseMyTradePlan, PLAN_SECTION_TAGS } from "@/lib/my-trade-plan";
+
+test("section labels match the reference document, including both parts of its combined risk section", () => {
+  expect(PLAN_SECTION_TAGS).toEqual([
+    "", "YQ", "YQ", "YQ", "YQ", "YQ", "YQ", "IQ", "IQ", "IQ", "EQ", "EQ",
+    "IQ", "EQ", "IQ", "IQ", "EQ", "IQ", "IQ", "EQ", "YQ", "IQ", "EQ",
+  ]);
+  expect(formatPlanSectionTitle(0, "Document information")).toBe("Document information");
+  expect(formatPlanSectionTitle(1, "Translated purpose")).toBe("YQ: Translated purpose");
+  expect(formatPlanSectionTitle(14, "Risk Part 1")).toBe("IQ: Risk Part 1");
+  expect(formatPlanSectionTitle(15, "Risk Part 2")).toBe("IQ: Risk Part 2");
+  expect(formatPlanSectionTitle(22, "Emergency contacts")).toBe("EQ: Emergency contacts");
+});
 
 describe("My Trade Plan storage", () => {
   test("migrates emergency contacts and preserves every contact field verbatim", () => {

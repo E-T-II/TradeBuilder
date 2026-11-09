@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MyTradePlanDialog, PAGE_TITLES } from "@/components/my-trade-plan-dialog";
 import {
   ACCOUNT_TYPES, ANALYSIS_COLUMNS, ASSET_CLASSES, BROKERS, createMyTradePlan, EMERGENCY_CONTACT_FIELDS,
-  GOAL_MARKETS, GOAL_PERIODS, IMPROVEMENTS, MY_TRADE_PLAN_STORAGE_KEY, PLAN_GRAPHICS,
+  formatPlanSectionTitle, GOAL_MARKETS, GOAL_PERIODS, IMPROVEMENTS, MY_TRADE_PLAN_STORAGE_KEY, PLAN_GRAPHICS,
   REPORT_SOURCES, RISK_PARAMETERS, RISK_PARAMETER_MARKETS, RISK_PART_TWO_RULES, RISK_RULES, STRENGTHS, TIMEFRAMES, TRADING_PURPOSES,
 } from "@/lib/my-trade-plan";
 
@@ -38,9 +38,15 @@ test("searchable page picker jumps directly while retaining edits and keyboard n
   expect(await screen.findAllByRole("option")).toHaveLength(PAGE_TITLES.length);
   expect(screen.getByLabelText("Search pages")).toHaveFocus();
   expect(screen.getByRole("option", { name: /^1 —/ })).toHaveAttribute("aria-current", "page");
+  await user.type(screen.getByLabelText("Search pages"), "IQ:");
+  expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(9);
+  for (const option of within(screen.getByRole("listbox")).getAllByRole("option")) {
+    expect(option).toHaveAccessibleName(/^\d+ — IQ:/);
+  }
+  await user.clear(screen.getByLabelText("Search pages"));
   await user.type(screen.getByLabelText("Search pages"), "emergency");
   expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(1);
-  await user.click(screen.getByRole("option", { name: "23 — Appendix A – Emergency Contact Reference Data" }));
+  await user.click(screen.getByRole("option", { name: "23 — EQ: Appendix A – Emergency Contact Reference Data" }));
   expect(screen.getByRole("status")).toHaveTextContent(`Page 23 of ${PAGE_TITLES.length}`);
   expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Finish and Download" })).toBeVisible();
@@ -431,7 +437,7 @@ test("page eleven retains independent stop buffers, notes and notes-only through
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(11);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Rules for Stop (Loss Exit)" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Rules for Stop (Loss Exit)" })).toBeVisible();
   const instructions = screen.getByText("Input the % buffer amount for Income and Wealth Trades.");
   expect(instructions.tagName).toBe("EM");
   expect(instructions).toHaveClass("text-xs");
@@ -467,7 +473,7 @@ test("target rules add, delete and persist independently for each trading purpos
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(12);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Rules for Target(s) (Profit Exit)" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Rules for Target(s) (Profit Exit)" })).toBeVisible();
   expect(screen.getByText("Select the appropriate values for each field to complete your rule for determining the Target for each trading purpose.")).toHaveClass("text-xs");
   expect(screen.getAllByRole("row")).toHaveLength(3);
   expect(options("Target 1 timeframe")).toEqual(["LTF", "ITF", "HTF"]);
@@ -514,7 +520,7 @@ test("graphics appear in supplied order and retain independent selections and pa
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(13);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Including Graphics" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Trading Execution – Including Graphics" })).toBeVisible();
   expect(screen.getByText("Include the following graphics in the Trading Execution section of my Trading Plan")).toBeVisible();
   expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
     "Graphic", "Thumbnail", "Preceding Paragraph",
@@ -548,7 +554,7 @@ test("placing-order rules add, delete and persist with at least one row remainin
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(14);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Placing the Order" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Placing the Order" })).toBeVisible();
   expect(screen.getByText("Placing the order of a trade must be checked and double checked. There is a set process I go through when placing a trade.")).toBeVisible();
   const instructions = screen.getByText("List your complete rules and processes for placing your order.");
   expect(instructions.tagName).toBe("EM");
@@ -579,7 +585,7 @@ test("risk rules have independent checkboxes and restore ratios and numeric perc
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(15);
-  expect(screen.getByRole("heading", { name: "My Risk Management Rules Part 1" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Risk Management Rules Part 1" })).toBeVisible();
   const instructions = screen.getByText("Choose the appropriate fields to complete your Risk Management Part 1 rules.");
   expect(instructions.tagName).toBe("EM");
   expect(instructions).toHaveClass("text-xs");
@@ -621,7 +627,7 @@ test("risk management part two preserves five independent checkbox selections ac
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(16);
-  expect(screen.getByRole("heading", { name: "My Risk Management Rules Part 2" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Risk Management Rules Part 2" })).toBeVisible();
   expect(screen.getByText("It is critical to list the rules that I will actively follow in managing my risk.")).toBeVisible();
   const instructions = screen.getByText("Check the appropriate boxes to complete your Risk Management Part 2 rules.");
   expect(instructions.tagName).toBe("EM");
@@ -639,7 +645,7 @@ test("risk management part two preserves five independent checkbox selections ac
   expect(stored().riskPartTwoRules).toEqual(RISK_PART_TWO_RULES.filter((_, index) => index !== 1));
   expect(stored().riskRules).toEqual([]);
   await user.click(screen.getByRole("button", { name: "Next" }));
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Managing the Trade" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Managing the Trade" })).toBeVisible();
   await selectPage(PAGE_TITLES.length);
   await user.click(screen.getByRole("button", { name: "Close My Trade Plan" }));
   unmount();
@@ -660,7 +666,7 @@ test("trade management rules save dropdowns and notes independently across reloa
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(17);
   expect(screen.getByRole("status")).toHaveTextContent(`Page 17 of ${PAGE_TITLES.length}`);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Managing the Trade" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Managing the Trade" })).toBeVisible();
   expect(screen.getByText("Once my trade has met entry and begins to move in my favor, I will begin moving my Stop Loss Order to lock in any profits.")).toBeVisible();
   const instructions = screen.getByText("Select the appropriate values for each field to complete your rules for establishing how a trade will be managed.");
   expect(instructions.tagName).toBe("EM");
@@ -684,7 +690,7 @@ test("trade management rules save dropdowns and notes independently across reloa
   await user.click(screen.getByRole("button", { name: "Next" }));
   expect(screen.getByLabelText("Break-even reward ratio")).toHaveValue("3:1");
   await user.click(screen.getByRole("button", { name: "Next" }));
-  expect(screen.getByRole("heading", { name: "My Risk Management Rules Part 3" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Risk Management Rules Part 3" })).toBeVisible();
   await selectPage(PAGE_TITLES.length);
   await user.click(screen.getByRole("button", { name: "Close My Trade Plan" }));
   unmount();
@@ -702,7 +708,7 @@ test("risk management part three has forty dollar fields and five weekend choice
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(18);
-  expect(screen.getByRole("heading", { name: "My Risk Management Rules Part 3" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Risk Management Rules Part 3" })).toBeVisible();
   expect(screen.getByText("It is critical that I list the rules that I will actively follow to manage my risk.")).toBeVisible();
   const instructions = screen.getByText("Complete the following table to document the Maximum Risk Parameters.");
   expect(instructions.tagName).toBe("EM");
@@ -754,7 +760,7 @@ test("report rows add, delete, and retain source selections and notes after relo
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(19);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Checking Reports" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Trading Execution – Checking Reports" })).toBeVisible();
   expect(screen.getByText("Being aware of when market reports are published is critical to being prepared for possible shifts in price action.")).toBeVisible();
   const instructions = screen.getByText("Select which reports you will include in your trading execution and the how you plan to use them.");
   expect(instructions.tagName).toBe("EM");
@@ -801,7 +807,7 @@ test("logging rules offer the requested options and retain both selections after
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(20);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Logging the Trade" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: My Trading Execution – Logging the Trade" })).toBeVisible();
   expect(screen.getByText("Logging Trades is critical to helping me stay disciplined with my trading and help me learn from my mistakes and identify what helps meet my goals.")).toBeVisible();
   const instructions = screen.getByText("Select the appropriate values for each field to complete your rules for establishing your plan for logging your trades.");
   expect(instructions.tagName).toBe("EM");
@@ -836,7 +842,7 @@ test("review notes persist without adding unrequested controls", async () => {
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(21);
-  expect(screen.getByRole("heading", { name: "My Trading Execution – Reviewing Results" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "YQ: My Trading Execution – Reviewing Results" })).toBeVisible();
   expect(screen.getByText("I will make sure to not only keep the data results of each trade, but I will also take screen shots with notes. In addition I commit to keeping notes on each trade regarding my feelings, impressions and what I learned from the trade.")).toBeVisible();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Additional considerations for reviewing results"), { target: { value: "Review screenshots\nNotes {0}" } });
@@ -852,7 +858,7 @@ test("schedule rows have all half-hour options, add/delete controls, and saved n
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(22);
-  expect(screen.getByRole("heading", { name: "My Trading Schedule and Time Commitment" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "IQ: My Trading Schedule and Time Commitment" })).toBeVisible();
   const instructions = screen.getByText("Choose the appropriate fields to complete your time commitment plan. Click on the + to add schedule and time commitment consideration.");
   expect(instructions.tagName).toBe("EM");
   expect(instructions).toHaveClass("text-xs");
@@ -910,7 +916,7 @@ test("emergency contacts have six columns, prefilled websites, and saved repeata
   const { unmount } = render(<MyTradePlanDialog />);
   await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
   await selectPage(23);
-  expect(screen.getByRole("heading", { name: "Appendix A – Emergency Contact Reference Data" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "EQ: Appendix A – Emergency Contact Reference Data" })).toBeVisible();
   expect(screen.getByText("I must always be ready for emergency situations with contingency plans and the appropriate emergency contact information to quickly address any issue that may arise.")).toBeVisible();
   expect(screen.getByText("Complete the following table to document the emergency contact information. Click on the + to add schedule and time commitment considerations.").tagName).toBe("EM");
   expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(EMERGENCY_CONTACT_FIELDS.map(({ label }) => label));
@@ -977,7 +983,7 @@ test("every page has a magnifying-glass Preview that prints the complete current
   fireEvent.change(screen.getByLabelText("Version #"), { target: { value: "Preview draft" } });
   for (let page = 1; page <= PAGE_TITLES.length; page++) {
     const preview = screen.getByRole("button", { name: "Preview" });
-    expect(preview.parentElement).toContainElement(screen.getByRole("heading", { name: PAGE_TITLES[page - 1] }));
+    expect(preview.parentElement).toContainElement(screen.getByRole("heading", { name: formatPlanSectionTitle(page - 1, PAGE_TITLES[page - 1]) }));
     expect(preview.querySelector("svg.lucide-search")).not.toBeNull();
     fireEvent.click(preview);
     const report = screen.getByRole("article", { name: "Printable trading plan", hidden: true });

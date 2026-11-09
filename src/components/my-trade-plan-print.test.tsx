@@ -4,7 +4,7 @@ import { afterEach, expect, test } from "vitest";
 import { LanguageProvider, useLanguageSettings } from "@/components/language-provider";
 import { MyTradePlanPrint } from "@/components/my-trade-plan-print";
 import { PAGE_TITLES } from "@/components/my-trade-plan-dialog";
-import { createMyTradePlan, RISK_PART_TWO_RULES, RISK_RULES } from "@/lib/my-trade-plan";
+import { createMyTradePlan, formatPlanSectionTitle, RISK_PART_TWO_RULES, RISK_RULES } from "@/lib/my-trade-plan";
 import { translateText } from "@/lib/translations";
 
 afterEach(() => window.localStorage.clear());
@@ -44,11 +44,11 @@ test("the complete printable plan includes every section and saved field without
   const report = screen.getByRole("article", { name: "Printable trading plan" });
   expect(report.querySelectorAll("section")).toHaveLength(23);
   expect(within(report).getByRole("heading", { level: 1, name: "Personal plan" })).toBeInTheDocument();
-  for (const title of [
+  for (const [index, title] of [
     "My Trading Purpose", "My Strengths", "My Areas of Improvement", "My Income Goals",
     "My Wealth Goals", "Markets I Trade", "My Trading and Investing Accounts", ...PAGE_TITLES.slice(8),
-  ]) {
-    expect(within(report).getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+  ].entries()) {
+    expect(within(report).getByRole("heading", { level: 2, name: formatPlanSectionTitle(index + 1, title) })).toBeInTheDocument();
   }
   expect(report.querySelector('[data-plan-page="1"]')).toHaveClass("worksheet-cover");
   expect(report.querySelector('[data-plan-page="23"]')).toHaveClass("worksheet-appendix");
@@ -72,6 +72,13 @@ test("the complete printable plan includes every section and saved field without
   expect(within(report).getAllByRole("img")).toHaveLength(1);
   expect(report).not.toHaveTextContent("Excluded graphic paragraph");
   expect(report.querySelector("input, textarea, select, button")).toBeNull();
+  const notes = report.querySelectorAll(".worksheet-notes");
+  expect(notes).toHaveLength(13);
+  for (const note of notes) {
+    expect(note.querySelector("h3")).toBeNull();
+    expect(note.children).toHaveLength(1);
+    expect(note.firstElementChild?.tagName).toBe("P");
+  }
   expect(JSON.stringify(plan)).toBe(saved);
 });
 
@@ -163,7 +170,7 @@ test("the printable plan translates labels and diagrams, preserves user text, an
   expect(report).toHaveAttribute("dir", "rtl");
   expect(report).toHaveTextContent(plan.why);
   expect(report).toHaveTextContent("My contact");
-  expect(within(report).getByRole("heading", { level: 2, name: translateText("ar", "My Trading Purpose") })).toBeInTheDocument();
+  expect(within(report).getByRole("heading", { level: 2, name: `YQ: ${translateText("ar", "My Trading Purpose")}` })).toBeInTheDocument();
   expect(report.querySelector("script")).toBeNull();
   expect(within(report).getByRole("img", { name: translateText("ar", "Decision Matrix") })).toHaveAttribute("direction", "ltr");
   expect(within(report).getByRole("columnheader", { name: translateText("ar", "Primary Contact") })).toBeInTheDocument();

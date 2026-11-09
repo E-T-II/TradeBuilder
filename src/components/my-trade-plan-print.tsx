@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { TradePlanGraphic } from "@/components/trade-plan-graphic";
 import {
-  ANALYSIS_COLUMNS, EMERGENCY_CONTACT_FIELDS, formatScheduleTime, PLAN_GRAPHICS,
+  ANALYSIS_COLUMNS, EMERGENCY_CONTACT_FIELDS, formatPlanSectionTitle, formatScheduleTime, PLAN_GRAPHICS,
   RISK_PARAMETERS, RISK_PARAMETER_MARKETS, RISK_PART_TWO_RULES, RISK_RULES,
   TRADING_PURPOSES, type GoalRow, type MyTradePlan,
 } from "@/lib/my-trade-plan";
@@ -51,8 +51,8 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
   const { text: tx, language } = useLanguage();
   const value = (text: string) => text || "—";
   const choice = (text: string) => text ? tx(text) : "—";
-  const note = (label: string, text: string) => text.trim() ? <div className="worksheet-notes">
-    <h3>{tx(label)}</h3><p>{value(text)}</p>
+  const note = (text: string) => text.trim() ? <div className="worksheet-notes">
+    <p>{text}</p>
   </div> : null;
   function table(headers: readonly string[], rows: ReactNode[][]) {
     return <table><thead><tr>{headers.map((header) =>
@@ -84,38 +84,38 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
     <p key="why">{value(plan.why)}</p>,
     <div key="strengths">
       {!plan.strengthNotesOnly && checklist(plan.strengths)}
-      {note("Additional Notes", plan.strengthNotes)}
+      {note(plan.strengthNotes)}
     </div>,
     <div key="improvements">
       {!plan.improvementNotesOnly && checklist(plan.improvements)}
-      {note("Additional Notes", plan.improvementNotes)}
+      {note(plan.improvementNotes)}
     </div>,
     <div key="income">
       {!plan.incomeNotesOnly && goals(plan.incomeGoals)}
-      {note("Additional Notes", plan.incomeNotes)}
+      {note(plan.incomeNotes)}
     </div>,
     <div key="wealth">
       {!plan.wealthNotesOnly && goals(plan.wealthGoals)}
-      {note("Additional Notes", plan.wealthNotes)}
+      {note(plan.wealthNotes)}
     </div>,
     <div key="markets">
       {!plan.marketNotesOnly && list(plan.markets.filter((row) => row.assetClass || row.watchListRules)
         .map((row) => <><strong>{choice(row.assetClass)}</strong>{row.watchListRules ? <> — {row.watchListRules}</> : null}</>))}
-      {note("Additional trading market considerations", plan.marketNotes)}
+      {note(plan.marketNotes)}
     </div>,
     <div key="accounts">
       {!plan.accountNotesOnly && list(plan.accounts.filter((row) => row.type || row.broker || row.amount)
         .map((row) => tx("{0} account with {1} containing {2}.", [
           choice(row.type), choice(row.broker), row.amount ? `${plan.currencySymbol || "$"}${row.amount}` : "—",
         ])))}
-      {note("Additional account information", plan.accountNotes)}
+      {note(plan.accountNotes)}
     </div>,
     table(["Trading Purpose", ...ANALYSIS_COLUMNS], plan.timeframes.map((row, index) =>
       [tx(TRADING_PURPOSES[index]), ...row.map(choice)])),
     <div key="entries">
       {!plan.entryNotesOnly && list(plan.entries.filter((row) => row.tradeType || row.entryRules)
         .map((row) => <><strong>{choice(row.tradeType)}</strong>{row.entryRules ? <> — {row.entryRules}</> : null}</>))}
-      {note("Additional considerations for rules of entry", plan.entryNotes)}
+      {note(plan.entryNotes)}
     </div>,
     <div key="stop">
       {!plan.stopNotesOnly && <>
@@ -125,14 +125,14 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
           tx("{0}% of Daily ATR for {1}.", [value(plan.stopWealthBuffer), tx("Wealth Trades")]),
         ])}
       </>}
-      {note("Additional considerations for stop loss", plan.stopNotes)}
+      {note(plan.stopNotes)}
     </div>,
     <div key="targets">
       {!plan.targetNotesOnly && list(plan.targetRules.filter((row) => row.purpose || row.buffer || row.timeframe)
         .map((row) => tx("For {0}, the target is placed {1}% before the first opposing {2} zone.", [
           choice(row.purpose), value(row.buffer), choice(row.timeframe),
         ])))}
-      {note("Additional target-exit considerations", plan.targetNotes)}
+      {note(plan.targetNotes)}
     </div>,
     <div key="graphics">{PLAN_GRAPHICS.filter(({ id }) => plan.graphics[id].included).map((graphic) =>
       <figure key={graphic.id}>
@@ -150,14 +150,14 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
       </li>)}</ul>,
     <div key="risk-two">
       {!plan.riskPartTwoNotesOnly && checklist(RISK_PART_TWO_RULES.filter((rule) => plan.riskPartTwoRules.includes(rule)))}
-      {note("Additional risk management considerations", plan.riskPartTwoNotes)}
+      {note(plan.riskPartTwoNotes)}
     </div>,
     <div key="management">
       {!plan.managementNotesOnly && <>
         <p>{tx("Move the stop to BREAK EVEN once the trade has reached")} {value(plan.breakEvenRatio)} {tx("in my favor")}</p>
         <p>{tx("Move stop to lock in any profits every time a new Supply Zone (Short Trades), or Demand Zone (Long Trades) is formed in the")} {choice(plan.managementTimeframe)} {tx("zone, after trade has met entry")}</p>
       </>}
-      {note("Additional trade management considerations", plan.managementNotes)}
+      {note(plan.managementNotes)}
     </div>,
     table(["Risk Parameters", ...RISK_PARAMETER_MARKETS], plan.riskParameters.map((row, index) => [
       tx(RISK_PARAMETERS[index]), ...row.map((cell) => index === RISK_PARAMETERS.length - 1 ? choice(cell) : `$${value(cell)}`),
@@ -169,7 +169,7 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
       <p>{tx("Trades will be logged")} {choice(plan.tradeLogSchedule)} {tx("after the trade has closed.")}</p>
     </div>,
     <div key="review">
-      {note("Additional considerations for reviewing results", plan.reviewNotes)}
+      {note(plan.reviewNotes)}
     </div>,
     <div key="schedule">
       {!plan.scheduleNotesOnly && list(plan.schedules.filter((row) => Object.values(row).some(Boolean))
@@ -177,7 +177,7 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
           value(row.hours), choice(row.period), value(formatScheduleTime(row.start, language)),
           value(formatScheduleTime(row.end, language)), choice(row.market), choice(row.purpose),
         ])))}
-      {note("Additional schedule and time considerations", plan.scheduleNotes)}
+      {note(plan.scheduleNotes)}
     </div>,
     <div key="contacts">
       {table(EMERGENCY_CONTACT_FIELDS.map(({ label }) => label),
@@ -200,7 +200,7 @@ export function MyTradePlanPrint({ plan, titles }: { plan: MyTradePlan; titles: 
     {sections.map((section, index) => <section key={titles[index]} data-plan-page={index + 1}
       className={index === 0 ? "worksheet-cover" : index === 22 ? "worksheet-appendix" : undefined}>
       {index > 0 ? <>
-        <h2>{tx(DOCUMENT_TITLES[index] || titles[index])}</h2>
+        <h2>{formatPlanSectionTitle(index, tx(DOCUMENT_TITLES[index] || titles[index]))}</h2>
         {INTRODUCTIONS[index] ? <p className="worksheet-introduction">{tx(INTRODUCTIONS[index])}</p> : null}
       </> : null}
       {section}

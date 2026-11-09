@@ -1,5 +1,15 @@
 export const MY_TRADE_PLAN_STORAGE_KEY = "tradebuilder-my-trade-plan-v1";
 
+export const PLAN_SECTION_TAGS = [
+  "", "YQ", "YQ", "YQ", "YQ", "YQ", "YQ", "IQ", "IQ", "IQ", "EQ", "EQ",
+  "IQ", "EQ", "IQ", "IQ", "EQ", "IQ", "IQ", "EQ", "YQ", "IQ", "EQ",
+] as const;
+
+export function formatPlanSectionTitle(index: number, title: string): string {
+  const tag = PLAN_SECTION_TAGS[index];
+  return tag ? `${tag}: ${title}` : title;
+}
+
 export const EMERGENCY_CONTACT_FIELDS = [
   { key: "purpose", label: "Purpose" },
   { key: "company", label: "Company Name" },
