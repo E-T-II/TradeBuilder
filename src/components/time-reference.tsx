@@ -156,7 +156,7 @@ function BestTimeChart({
         <>
             <line x1={chartLeft + lineInset} y1={topLine} x2={chartRight - lineInset} y2={topLine} stroke={short ? "#ff0000" : "#53d67b"} strokeWidth="1" />
             <line x1={chartLeft + lineInset} y1={bottomLine} x2={chartRight - lineInset} y2={bottomLine} stroke={short ? "#ff0000" : "#53d67b"} strokeWidth="1" />
-            {!short && title === "Best" && <rect x={candleX[0] + 5} y={topLine} width={candleX[3] - candleX[0] - 5} height={bottomLine - topLine} fill="#fb744c" fillOpacity="0.45" />}
+            {title === "Best" && <rect x={candleX[0] + 5} y={topLine} width={candleX[3] - candleX[0] - 5} height={bottomLine - topLine} fill="#fb744c" fillOpacity="0.45" />}
             {duplicateGood && <rect x={candleX[1] + 4} y={topLine} width={poorGraphic ? candleX[9] - candleX[1] - 4 : candleX[6] - candleX[1] - 3} height={bottomLine - topLine} fill="#fb744c" fillOpacity="0.45" />}
             {duplicateGood && <rect x={candlePosition(1)} y={42} width="5" height="20" fill={oppositeCandleColor(candleColors[0])} />}
             {poorGraphic && [3, 4, 5, 6, 7].map((index) => (

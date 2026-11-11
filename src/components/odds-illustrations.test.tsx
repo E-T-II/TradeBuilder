@@ -70,6 +70,21 @@ test.each(LANGUAGES.filter(({ code }) => code !== "en"))("$name preserves all ju
   }
 });
 
+test.each(LANGUAGES)("$name highlights the two Best time basing candles for the target zone", ({ code }) => {
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+  const { container } = render(
+    <LanguageProvider><TimeReference direction="short" selected={1} onSelect={vi.fn()} /></LanguageProvider>,
+  );
+  const panels = container.querySelectorAll('g[role="button"]');
+  const bestHighlight = panels[0].querySelector('rect[fill="#fb744c"][fill-opacity="0.45"]');
+  expect(bestHighlight).toHaveAttribute("x", "150");
+  expect(bestHighlight).toHaveAttribute("y", "82");
+  expect(bestHighlight).toHaveAttribute("width", "22");
+  expect(bestHighlight).toHaveAttribute("height", "32");
+  expect(panels[1].querySelector('rect[x="150"][y="82"][width="27"][height="32"]')).toBeNull();
+  expect(panels[2].querySelector('rect[x="150"][y="82"][width="27"][height="32"]')).toBeNull();
+});
+
 test.each(LANGUAGES.filter(({ code }) => code !== "en"))("$name overlays all eight images without moving the selection border or checkmark", async ({ code }) => {
   const user = userEvent.setup();
   for (const enhancer of ["trend", "curve", "profitZone", "total"] as ComputedEnhancer[]) {
