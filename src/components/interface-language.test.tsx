@@ -8,6 +8,7 @@ import { TradeForm } from "@/components/trade-form";
 import { TradeBackupControls } from "@/components/trade-backup-controls";
 import { TradeLogExport } from "@/components/trade-log-export";
 import { PnlCalendar } from "@/components/pnl-calendar";
+import { DecisionMatrix } from "@/components/decision-matrix";
 import { Disclaimer } from "@/lib/copy";
 import type { FormState } from "@/components/trade-builder-app";
 import { LANGUAGES, LANGUAGE_STORAGE_KEY } from "@/lib/languages";
@@ -27,6 +28,19 @@ afterEach(() => {
   document.documentElement.lang = "en";
   document.documentElement.dir = "ltr";
   vi.restoreAllMocks();
+});
+
+test("German decision matrix translates buy and sell positions while preserving highlighted scenarios", () => {
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "de");
+  const { container } = render(
+    <LanguageProvider><DecisionMatrix zoneType="supply" curve="retail" trend="downtrend" /></LanguageProvider>,
+  );
+  expect(screen.getAllByText("Verkaufsposition")).toHaveLength(6);
+  expect(screen.getAllByText("Kaufposition")).toHaveLength(6);
+  expect(container).not.toHaveTextContent(/Short-Position|Long-Position/);
+  const highlighted = container.querySelectorAll("td.animate-pulse-ring");
+  expect(highlighted).toHaveLength(1);
+  expect(highlighted[0]).toHaveTextContent("Verkaufsposition");
 });
 
 test("switching languages translates the real form, instructions, footer, and backup dialog without altering inputs", async () => {

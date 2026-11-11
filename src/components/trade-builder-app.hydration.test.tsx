@@ -23,7 +23,7 @@ import userEvent from "@testing-library/user-event";
 import { TradeBuilderApp, normalizeForm, toInputs } from "@/components/trade-builder-app";
 import { buildTrade } from "@/lib/trade-builder";
 import { createTradeBackup } from "@/lib/trade-backup";
-import { LANGUAGE_STORAGE_KEY } from "@/lib/languages";
+import { LANGUAGES, LANGUAGE_STORAGE_KEY } from "@/lib/languages";
 import { translate, translateText } from "@/lib/translations";
 
 const KEY = "tradebuilder-form-v3";
@@ -63,6 +63,13 @@ test("My Trade Plan appears above the ticker field instead of in the header", ()
   expect(button.compareDocumentPosition(ticker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
+test.each(LANGUAGES)("$name translates the shared app header", ({ code }) => {
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+  const { container } = render(<TradeBuilderApp />);
+  expect(container.querySelector("header")).toHaveTextContent(translateText(code, "Trade Builder"));
+  if (code !== "en") expect(container.querySelector("header")).not.toHaveTextContent("Trade Builder");
+});
+
 test("language preference is available in the app header without changing the setup or resetting the preference", async () => {
   window.localStorage.setItem(KEY, JSON.stringify(savedForm));
   const user = userEvent.setup();
@@ -70,6 +77,7 @@ test("language preference is available in the app header without changing the se
   await user.click(screen.getByRole("button", { name: "Language preference" }));
   await user.selectOptions(screen.getByRole("combobox"), "ar");
   await user.click(screen.getByRole("button", { name: translate("ar", "closeLanguage") }));
+  expect(screen.getByText(translateText("ar", "Trade Builder")).closest("header")).not.toBeNull();
   expect(screen.getByLabelText(translateText("ar", "Ticker symbol"))).toHaveValue("NVDA");
   expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("ar");
   await user.click(screen.getByRole("button", { name: translateText("ar", "Reset") }));

@@ -23,6 +23,7 @@ test.each(LANGUAGES)("$name has every message, with intact interpolation and num
   }
   if (code !== "en") {
     for (const message of [
+      "Trade Builder",
       "Account balance ($)", "Your balance with your broker, used for all risk limits",
       "Backup and restore", "Fees must be zero or more.",
     ]) expect(translateText(code, message), `${code}: ${message}`).not.toBe(message);
