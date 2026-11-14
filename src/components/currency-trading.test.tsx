@@ -26,6 +26,8 @@ test("rate refresh changes display only; logged, printed, restored, and calendar
   window.localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(setup));
   window.localStorage.setItem(CURRENCY_STORAGE_KEY, "EUR");
   const saved = rate();
+  const now = new Date();
+  const closingDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   window.localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify([saved]));
   const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify([
     { base: "USD", quote: "EUR", rate: 0.8, date: saved.asOf },
@@ -49,9 +51,8 @@ test("rate refresh changes display only; logged, printed, restored, and calendar
     capitalRequirement: expected.capitalRequirement, displayRate: saved, form: setup,
   });
   await user.click(screen.getByRole("radio", { name: "Closed" }));
-  await user.click(screen.getByRole("button", { name: new RegExp(`NVDA \\| Buy ${expected.positionSize} shares`) }));
   fireEvent.change(screen.getByRole("spinbutton", { name: "Profit/Loss for NVDA" }), { target: { value: "100" } });
-  fireEvent.change(screen.getByLabelText("Closing date for NVDA"), { target: { value: saved.asOf } });
+  fireEvent.change(screen.getByLabelText("Closing date for NVDA"), { target: { value: closingDate } });
   await user.click(screen.getByRole("button", { name: "Close NVDA trade details" }));
   const historical = readLog();
   await user.click(screen.getByRole("button", { name: "Display currency" }));
@@ -66,7 +67,7 @@ test("rate refresh changes display only; logged, printed, restored, and calendar
   expect(parseTradeBackup(createTradeBackup(setup, historical)).tradeLog).toEqual(historical);
   await user.click(screen.getByRole("button", { name: "P&L Analysis" }));
   expect(within(screen.getByRole("dialog")).getByRole("cell", {
-    name: `${saved.asOf}: +$100.00 (≈ +EUR 90.00), 1 trade`,
+    name: `${closingDate}: +$100.00 (≈ +EUR 90.00), 1 trade`,
   })).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Close P&L Analysis" }));
   await user.click(screen.getByRole("button", { name: "Display currency" }));

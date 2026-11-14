@@ -46,7 +46,7 @@ import { TradePlanExport } from "@/components/trade-plan-export";
 import { TradeLogExport } from "@/components/trade-log-export";
 import { TradeExecutionFields } from "@/components/trade-execution-fields";
 import { PnlCalendar } from "@/components/pnl-calendar";
-import { EXECUTION_FIELDS, type ExecutionDetails, type ExecutionField } from "@/lib/trade-execution";
+import { EXECUTION_FIELDS, isTradeDate, type ExecutionDetails, type ExecutionField } from "@/lib/trade-execution";
 import { RiskChecks } from "@/components/risk-checks";
 import { Reveal } from "@/components/reveal";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -482,6 +482,13 @@ function TradeBuilderContent() {
   const [showTradeLog, setShowTradeLog] = useState(true);
   const [autoOpenTradeRisk, setAutoOpenTradeRisk] = useState(false);
   const [openTradeDetailsId, setOpenTradeDetailsId] = useState<string | null>(null);
+  const [closingDraft, setClosingDraft] = useState<{
+    id: string;
+    pendingClose: boolean;
+    profitLoss: string;
+    closedOn: string;
+  } | null>(null);
+  const [closingNotice, setClosingNotice] = useState(false);
 
   const firstPersist = useRef(true);
 
@@ -586,6 +593,53 @@ function TradeBuilderContent() {
     ));
   };
 
+  const validClosingDetails = (profitLoss: string, closedOn: string) => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    return profitLoss.trim() !== "" && Number.isFinite(Number(profitLoss)) &&
+      isTradeDate(closedOn) && closedOn <= today;
+  };
+
+  const openTradeDetails = (entry: TradeLogEntry, pendingClose = false) => {
+    setClosingNotice(false);
+    setClosingDraft({
+      id: entry.id,
+      pendingClose,
+      profitLoss: entry.profitLoss ?? "",
+      closedOn: entry.closedOn ?? "",
+    });
+    setOpenTradeDetailsId(entry.id);
+  };
+
+  const updateClosingDraft = (entry: TradeLogEntry, field: "profitLoss" | "closedOn", value: string) => {
+    if (!closingDraft || closingDraft.id !== entry.id) return;
+    const updated = { ...closingDraft, [field]: value };
+    setClosingDraft(updated);
+    if (!entry.isOpen && validClosingDetails(updated.profitLoss, updated.closedOn)) {
+      persistTradeLog(tradeLog.map((trade) =>
+        trade.id === entry.id ? { ...trade, profitLoss: updated.profitLoss, closedOn: updated.closedOn } : trade,
+      ));
+    }
+  };
+
+  const closeTradeDetails = (entry: TradeLogEntry) => {
+    if (closingDraft?.id === entry.id) {
+      const { pendingClose, profitLoss, closedOn } = closingDraft;
+      if (pendingClose && validClosingDetails(profitLoss, closedOn)) {
+        persistTradeLog(tradeLog.map((trade) =>
+          trade.id === entry.id ? { ...trade, isOpen: false, profitLoss, closedOn } : trade,
+        ));
+      } else if (
+        (pendingClose || profitLoss !== (entry.profitLoss ?? "") || closedOn !== (entry.closedOn ?? "")) &&
+        !validClosingDetails(profitLoss, closedOn)
+      ) {
+        setClosingNotice(true);
+      }
+    }
+    setClosingDraft(null);
+    setOpenTradeDetailsId(null);
+  };
+
   const logTrade = () => {
     if (!result?.order) return;
     const entry: TradeLogEntry = {
@@ -624,9 +678,10 @@ function TradeBuilderContent() {
     persistTradeLog(tradeLog.filter((entry) => entry.id !== id));
   };
 
-  const setLogEntryOpen = (id: string, isOpen: boolean) => {
+  const setLogEntryOpen = (id: string) => {
+    setClosingNotice(false);
     persistTradeLog(tradeLog.map((entry) =>
-      entry.id === id ? { ...entry, isOpen } : entry,
+      entry.id === id ? { ...entry, isOpen: true } : entry,
     ));
   };
 
@@ -779,6 +834,7 @@ function TradeBuilderContent() {
                     {showTradeLog ? (
                       <CardContent>
                         {logSaveError ? <p role="alert" className="mb-3 text-sm text-destructive">{tx(logSaveError)}</p> : null}
+                        {closingNotice ? <p role="status" className="mb-3 text-sm text-destructive">{tx("A valid Closing date and Profit/Loss are required; incomplete changes are not saved.")}</p> : null}
                         <section aria-labelledby="trade-performance-heading" className="mb-5 space-y-3">
                           <div>
                             <div className="mb-1 flex items-center justify-between gap-3">
@@ -814,7 +870,7 @@ function TradeBuilderContent() {
                               </div>
                             </>
                           ) : (
-                            <p className="text-sm text-muted-foreground">{tx("Mark a trade closed and enter Profit/Loss or an exit price to see performance.")}</p>
+                            <p className="text-sm text-muted-foreground">{tx("A valid Closing date and Profit/Loss are required; incomplete changes are not saved.")}</p>
                           )}
                         </section>
                         {tradeLog.length === 0 ? (
@@ -824,7 +880,9 @@ function TradeBuilderContent() {
                             {tradeLog.map((entry) => {
                               const outcome = realizedOutcome(entry);
                               const exitValue = entry.exitPrice ?? "";
-                              const profitLossValue = entry.profitLoss ?? "";
+                              const draft = closingDraft?.id === entry.id ? closingDraft : null;
+                              const profitLossValue = draft?.profitLoss ?? entry.profitLoss ?? "";
+                              const detailOutcome = realizedOutcome({ ...entry, isOpen: false, profitLoss: profitLossValue });
                               const feesValue = entry.fees ?? "";
                               const invalidExitPrice =
                                 exitValue !== "" &&
@@ -848,7 +906,8 @@ function TradeBuilderContent() {
                                       <Dialog.Root
                                         open={openTradeDetailsId === entry.id}
                                         onOpenChange={(open) => {
-                                          setOpenTradeDetailsId(open ? entry.id : null);
+                                          if (open) openTradeDetails(entry);
+                                          else closeTradeDetails(entry);
                                         }}
                                       >
                                         <Dialog.Trigger
@@ -894,20 +953,22 @@ function TradeBuilderContent() {
                                             </div>
                                             <div className="space-y-4">
                                               <CurrencyNote savedRate={entry.displayRate ?? null} />
-                                              {!entry.isOpen ? (
+                                              {!entry.isOpen || draft?.pendingClose ? (
                                                 <>
+                                                  <p className="text-xs text-muted-foreground">{tx("A valid Closing date and Profit/Loss are required; incomplete changes are not saved.")}</p>
                                                   <div className="grid gap-3 sm:grid-cols-2">
                                                     <label className="space-y-1">
                                                       <span className="text-xs font-medium">{tx("Profit/Loss ($)")}</span>
                                                       <Input
-                                                        aria-label={`Profit/Loss for ${entry.ticker}`}
+                                                        aria-label={tx("Profit/Loss for {0}", [entry.ticker])}
                                                         aria-invalid={invalidProfitLoss || undefined}
+                                                        required
                                                         type="number"
                                                         step="0.01"
                                                         inputMode="decimal"
                                                         value={profitLossValue}
                                                         onChange={(event) =>
-                                                          updateLogOutcome(entry.id, "profitLoss", event.target.value)
+                                                          updateClosingDraft(entry, "profitLoss", event.target.value)
                                                         }
                                                       />
                                                       <CurrencyAmountHint value={profitLossValue} savedRate={entry.displayRate ?? null} />
@@ -918,24 +979,23 @@ function TradeBuilderContent() {
                                                     <label className="space-y-1">
                                                       <span className="text-xs font-medium">{tx("Closing date")}</span>
                                                       <Input
-                                                        aria-label={`Closing date for ${entry.ticker}`}
+                                                        aria-label={tx("Closing date for {0}", [entry.ticker])}
                                                         type="date"
+                                                        required
                                                         max={maxClosingDate}
                                                         className="dark:scheme:light"
-                                                        value={entry.closedOn ?? ""}
+                                                        value={draft?.closedOn ?? entry.closedOn ?? ""}
                                                         onChange={(event) =>
-                                                          updateLogOutcome(entry.id, "closedOn", event.target.value)
+                                                          updateClosingDraft(entry, "closedOn", event.target.value)
                                                         }
                                                       />
                                                     </label>
                                                   </div>
                                                   <div aria-live="polite" className="text-xs">
-                                                    {outcome !== null ? (
-                                                      <span>{tx("Net P&L")}<strong>{format(outcome, entry.displayRate ?? null, true)}</strong>
+                                                    {detailOutcome !== null ? (
+                                                      <span>{tx("Net P&L")}<strong>{format(detailOutcome, entry.displayRate ?? null, true)}</strong>
                                                       </span>
-                                                    ) : (
-                                                      <span className="text-muted-foreground">{tx("Enter Profit/Loss, or add an exit price in Advanced details.")}</span>
-                                                    )}
+                                                    ) : null}
                                                   </div>
                                                   <details
                                                     key={openTradeDetailsId}
@@ -1001,6 +1061,9 @@ function TradeBuilderContent() {
                                                   onChange={(event) => updateLogOutcome(entry.id, "notes", event.target.value)}
                                                 />
                                               </label>
+                                              <div className="flex justify-end">
+                                                <Dialog.Close render={<Button size="sm" />}>{tx("Done")}</Dialog.Close>
+                                              </div>
                                             </div>
                                           </Dialog.Popup>
                                         </Dialog.Portal>
@@ -1016,15 +1079,15 @@ function TradeBuilderContent() {
                                           <input
                                             type="radio"
                                             name={`trade-status-${entry.id}`}
-                                            checked={entry.isOpen}
-                                            onChange={() => setLogEntryOpen(entry.id, true)}
+                                            checked={entry.isOpen && !draft?.pendingClose}
+                                            onChange={() => setLogEntryOpen(entry.id)}
                                           />{tx("Open")}</label>
                                         <label className="flex items-center gap-1">
                                           <input
                                             type="radio"
                                             name={`trade-status-${entry.id}`}
-                                            checked={!entry.isOpen}
-                                            onChange={() => setLogEntryOpen(entry.id, false)}
+                                            checked={!entry.isOpen || !!draft?.pendingClose}
+                                            onChange={() => openTradeDetails(entry, true)}
                                           />{tx("Closed")}</label>
                                       </div>
                                       <Button
