@@ -155,13 +155,20 @@ test("Pre-steps stays outside the numbered step count", () => {
   expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
 });
 
-test("desktop stepper leaves Pre-steps unnumbered and starts Curve at 1", () => {
-  render(<TopStepper step={1} reachable={STEPS.length} onJump={() => { }} />);
+test("desktop stepper leaves Pre-steps unnumbered and labels the final screen S.E.T.S. as Step 5", () => {
+  const { rerender } = render(<TopStepper step={1} reachable={STEPS.length} onJump={() => { }} />);
   const stepper = screen.getByRole("navigation", { name: "Steps" });
   const preSteps = within(stepper).getByRole("button", { name: "Pre-steps" });
   const curve = within(stepper).getByRole("button", { name: /1\s*Curve/ });
   expect(preSteps.firstElementChild).toHaveTextContent("Pre-steps");
   expect(curve.firstElementChild).toHaveTextContent("1");
+
+  rerender(<TopStepper step={4} reachable={STEPS.length} onJump={() => { }} />);
+  const setsStep = within(stepper).getByRole("button", { name: /5\s*S\.E\.T\.S\./ });
+  expect(setsStep).toBeDisabled();
+
+  rerender(<TopStepper step={5} reachable={STEPS.length} onJump={() => { }} />);
+  expect(within(stepper).getByRole("button", { name: /5\s*S\.E\.T\.S\./ })).toBeDisabled();
 });
 
 describe("given the advanced settings caps", () => {

@@ -35,6 +35,7 @@ import {
 } from "@/lib/trade-builder";
 import {
   firstIncompleteStep,
+  MobileStepProgress,
   STEPS,
   TopStepper,
   TradeForm,
@@ -727,9 +728,7 @@ function TradeBuilderContent() {
         <span className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold tracking-tight">
           <Blocks className="size-5 shrink-0 text-primary" aria-hidden />{tx("Trade Builder")}</span>
         <div className="hidden lg:block">
-          {inForm ? (
-            <TopStepper step={step} reachable={reachable} onJump={goToStep} />
-          ) : null}
+          <TopStepper step={step} reachable={inForm ? reachable : RESULTS_STEP} onJump={goToStep} />
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 lg:gap-3">
           <LanguageSelector />
@@ -774,7 +773,7 @@ function TradeBuilderContent() {
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
-              <p className="text-xs font-medium text-muted-foreground">{tx("Step {0} of {1}", [tx(RESULTS_STEP), tx(RESULTS_STEP)])}</p>
+              <MobileStepProgress step={RESULTS_STEP} />
               {result ? (
                 <>
                   <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">

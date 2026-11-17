@@ -142,6 +142,8 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   await user.click(screen.getByRole("button", { name: /^next$/i }));
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
   expect(screen.getByText("Step 5 of 5")).toBeInTheDocument();
+  const steps = screen.getByRole("navigation", { name: "Steps" });
+  expect(within(steps).getByRole("button", { name: /5\s*S\.E\.T\.S\./ })).toBeDisabled();
   expect(screen.queryByRole("button", { name: "Copy results" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Log trade" }));
   const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];

@@ -79,6 +79,9 @@ export const STEPS = [
   { title: "Score", blurb: "Score the zone structure" },
 ] as const;
 
+const NUMBERED_STEP_COUNT = STEPS.length;
+const NAV_STEPS = [...STEPS, { title: "S.E.T.S." }] as const;
+
 const STEP_FIELDS: (keyof FormState)[][] = [
   ["ticker", "accountBalance", "atr"],
   ["curveLow", "curveHigh"],
@@ -92,6 +95,26 @@ export function firstIncompleteStep(form: FormState): number {
     if (STEP_FIELDS[i].some((key) => form[key].trim() === "")) return i;
   }
   return STEPS.length;
+}
+
+export function MobileStepProgress({ step }: { step: number }) {
+  const { text: tx } = useLanguage();
+  return (
+    <div className="lg:hidden">
+      {step > 0 ? (
+        <p className="text-xs font-medium text-muted-foreground">{tx("Step {0} of {1}", [tx(step), tx(NUMBERED_STEP_COUNT)])}</p>
+      ) : null}
+      <div aria-hidden className="mt-4 flex gap-1.5">
+        {Array.from({ length: NUMBERED_STEP_COUNT }, (_, index) => (
+          <div
+            key={index}
+            className={`h-1 flex-1 rounded-full transition-colors ${index < step ? "bg-primary" : "bg-muted"
+              }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // `group` fields wrap a radiogroup (a div, which <label htmlFor> can't target),
@@ -292,10 +315,10 @@ export function TopStepper({
   const { text: tx } = useLanguage();
   return (
     <nav aria-label={tx("Steps")} className="flex items-center">
-      {STEPS.map((s, i) => {
+      {NAV_STEPS.map((s, i) => {
         const done = i < step;
         const current = i === step;
-        const clickable = i <= reachable && !current;
+        const clickable = i < STEPS.length && i <= reachable && !current;
         return (
           <Fragment key={s.title}>
             {i > 0 ? (
@@ -486,19 +509,7 @@ export function TradeForm({
 
   return (
     <div className={`mx-auto flex w-full flex-col px-5 py-10 lg:py-14 ${step === 4 ? "max-w-5xl" : "max-w-xl"}`}>
-      {step > 0 ? (
-        <p className="text-xs font-medium text-muted-foreground lg:hidden">{tx("Step {0} of {1}", [tx(step), tx(STEPS.length)])}</p>
-      ) : null}
-
-      <div className="mt-4 flex gap-1.5 lg:hidden">
-        {Array.from({ length: STEPS.length }, (_, i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-primary" : "bg-muted"
-              }`}
-          />
-        ))}
-      </div>
+      <MobileStepProgress step={step} />
 
       <div className="mt-8">
         <div className="flex items-center justify-between gap-3">
