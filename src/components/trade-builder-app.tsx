@@ -774,6 +774,7 @@ function TradeBuilderContent() {
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10">
+              <p className="text-xs font-medium text-muted-foreground">{tx("Step {0} of {1}", [tx(RESULTS_STEP), tx(RESULTS_STEP)])}</p>
               {result ? (
                 <>
                   <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">

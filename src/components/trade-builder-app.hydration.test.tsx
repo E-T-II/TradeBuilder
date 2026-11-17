@@ -109,6 +109,7 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   for (let i = 0; i < 4; i++) {
     await user.click(screen.getByRole("button", { name: /^next$/i }));
   }
+  expect(screen.getByText("Step 4 of 5")).toBeInTheDocument();
   const switchedDirection = direction === "long" ? "short" : "long";
   const switchName = direction === "long" ? "Switch to sell short" : "Switch to buy long";
   await user.click(screen.getByRole("button", { name: switchName }));
@@ -140,6 +141,7 @@ test.each(["long", "short"] as const)("switching a %s entry swaps ratings, updat
   expect(screen.queryByRole("button", { name: /switch to/i })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: /^next$/i }));
   await user.click(screen.getByRole("button", { name: /see my trade/i }));
+  expect(screen.getByText("Step 5 of 5")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Copy results" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Log trade" }));
   const logged = JSON.parse(window.localStorage.getItem(TRADE_LOG_KEY)!)[0];

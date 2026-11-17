@@ -22,7 +22,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, test } from "vitest";
 
 import type { FormState } from "@/components/trade-builder-app";
-import { TradeForm } from "@/components/trade-form";
+import { STEPS, TopStepper, TradeForm } from "@/components/trade-form";
 
 const baseForm = (overrides: Partial<FormState> = {}): FormState => ({
   ticker: "NVDA",
@@ -120,6 +120,49 @@ function AdvancedSettings({ initial }: { initial: FormState }) {
     />
   );
 }
+
+test("Pre-steps stays outside the numbered step count", () => {
+  const { container, unmount } = render(
+    <TradeForm
+      form={baseForm()}
+      onChange={() => { }}
+      step={0}
+      onBack={() => { }}
+      onNext={() => { }}
+      showAdvanced={false}
+      onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
+    />,
+  );
+  expect(screen.queryByText("Step 1 of 4")).not.toBeInTheDocument();
+  expect(container.querySelectorAll(".h-1.flex-1")).toHaveLength(5);
+  unmount();
+
+  render(
+    <TradeForm
+      form={baseForm()}
+      onChange={() => { }}
+      step={1}
+      onBack={() => { }}
+      onNext={() => { }}
+      showAdvanced={false}
+      onToggleAdvanced={() => { }}
+      autoOpenTradeRisk={false}
+      onToggleAutoOpenTradeRisk={() => { }}
+    />,
+  );
+  expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
+});
+
+test("desktop stepper leaves Pre-steps unnumbered and starts Curve at 1", () => {
+  render(<TopStepper step={1} reachable={STEPS.length} onJump={() => { }} />);
+  const stepper = screen.getByRole("navigation", { name: "Steps" });
+  const preSteps = within(stepper).getByRole("button", { name: "Pre-steps" });
+  const curve = within(stepper).getByRole("button", { name: /1\s*Curve/ });
+  expect(preSteps.firstElementChild).toHaveTextContent("Pre-steps");
+  expect(curve.firstElementChild).toHaveTextContent("1");
+});
 
 describe("given the advanced settings caps", () => {
   test("given a risk above 2%: should snap the field down to 2 on blur", async () => {

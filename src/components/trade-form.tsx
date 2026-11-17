@@ -314,14 +314,16 @@ export function TopStepper({
               className={`flex items-center gap-2 rounded-full transition-opacity ${clickable ? "hover:opacity-70" : ""
                 }`}
             >
-              <span
-                className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done || current
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
-                  }`}
-              >
-                {done ? <Check className="size-3.5" aria-hidden /> : i + 1}
-              </span>
+              {i > 0 ? (
+                <span
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done || current
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-neutral-200 text-muted-foreground dark:bg-neutral-700"
+                    }`}
+                >
+                  {done ? <Check className="size-3.5" aria-hidden /> : i}
+                </span>
+              ) : null}
               <span
                 className={`whitespace-nowrap text-sm ${done || current
                   ? "font-medium text-foreground"
@@ -484,13 +486,15 @@ export function TradeForm({
 
   return (
     <div className={`mx-auto flex w-full flex-col px-5 py-10 lg:py-14 ${step === 4 ? "max-w-5xl" : "max-w-xl"}`}>
-      <p className="text-xs font-medium text-muted-foreground lg:hidden">{tx("Step {0} of {1}", [tx(step + 1), tx(STEPS.length)])}</p>
+      {step > 0 ? (
+        <p className="text-xs font-medium text-muted-foreground lg:hidden">{tx("Step {0} of {1}", [tx(step), tx(STEPS.length)])}</p>
+      ) : null}
 
       <div className="mt-4 flex gap-1.5 lg:hidden">
-        {STEPS.map((s, i) => (
+        {Array.from({ length: STEPS.length }, (_, i) => (
           <div
-            key={s.title}
-            className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-primary" : "bg-muted"
               }`}
           />
         ))}
