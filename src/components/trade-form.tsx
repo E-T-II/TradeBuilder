@@ -76,7 +76,7 @@ export const STEPS = [
   { title: "Curve", blurb: "Set the curve on your high time frame" },
   { title: "Trend", blurb: "Check the trend on your intermediary time frame" },
   { title: "Zones", blurb: "Mark the supply and demand zones on your low time frame" },
-  { title: "Score", blurb: "Score the zone structure" },
+  { title: "O.E. Scorecard", blurb: "Score the zone structure" },
 ] as const;
 
 const NUMBERED_STEP_COUNT = STEPS.length;

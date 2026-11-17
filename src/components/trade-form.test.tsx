@@ -402,7 +402,7 @@ describe("given the Zones step guard", () => {
 
     await user.click(next);
     expect(
-      screen.getByRole("heading", { name: "Score" }),
+      screen.getByRole("heading", { name: "O.E. Scorecard" }),
     ).toBeInTheDocument();
   });
 });
@@ -446,7 +446,7 @@ describe("given the direction control on the Zones step", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^next$/i }));
-    expect(screen.getByRole("heading", { name: "Score" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "O.E. Scorecard" })).toBeInTheDocument();
     xltChecklist();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /xlt long scenario 1/i })).toBeInTheDocument();
