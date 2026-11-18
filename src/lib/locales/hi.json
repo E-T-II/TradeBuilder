@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "ट्रेड प्लान साफ़ करें",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "पूरा ट्रेड प्लान साफ़ करें? इसे वापस नहीं किया जा सकता। ट्रेड बिल्डर और ट्रेड लॉग नहीं बदलेंगे।",
+  "Cancel": "रद्द करें",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "ट्रेड प्लान साफ़ नहीं हो सका। ब्राउज़र स्टोरेज की अनुमति या उपलब्ध जगह जाँचें और फिर प्रयास करें।",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "वैध समापन तिथि और लाभ/हानि आवश्यक हैं; अधूरे बदलाव सहेजे नहीं गए।",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "शैक्षिक उद्देश्यों के लिए प्रदान किया गया। उपयोगकर्ता अपने सभी ट्रेडिंग निर्णयों के लिए स्वयं ज़िम्मेदार हैं।",
   "Create my trade plan": "मेरी ट्रेडिंग योजना बनाएँ",

@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "ניקוי תוכנית המסחר",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "לנקות את כל תוכנית המסחר? לא ניתן לבטל פעולה זו. בונה העסקאות ויומן העסקאות לא ישתנו.",
+  "Cancel": "ביטול",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "לא ניתן לנקות את תוכנית המסחר. יש לבדוק הרשאות אחסון בדפדפן או מקום פנוי ולנסות שוב.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "נדרשים תאריך סגירה תקין ורווח/הפסד; שינויים לא מלאים לא נשמרו.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "מסופק למטרות לימודיות. המשתמשים אחראים לכל החלטות המסחר שלהם.",
   "Create my trade plan": "יצירת תוכנית המסחר שלי",

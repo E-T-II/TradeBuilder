@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "ട്രേഡ് പ്ലാൻ മായ്ക്കുക",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "മുഴുവൻ ട്രേഡ് പ്ലാനും മായ്ക്കണോ? ഇത് പഴയപടിയാക്കാനാവില്ല. ട്രേഡ് ബിൽഡറും ട്രേഡ് ലോഗും മാറില്ല.",
+  "Cancel": "റദ്ദാക്കുക",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "ട്രേഡ് പ്ലാൻ മായ്ക്കാനായില്ല. ബ്രൗസർ സ്റ്റോറേജ് അനുമതികളോ ലഭ്യമായ സ്ഥലമോ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "സാധുവായ ക്ലോസിംഗ് തീയതിയും ലാഭം/നഷ്ടവും ആവശ്യമാണ്; അപൂർണ്ണമായ മാറ്റങ്ങൾ സംരക്ഷിച്ചില്ല.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "വിദ്യാഭ്യാസ ആവശ്യങ്ങൾക്കായി നൽകിയിരിക്കുന്നു. ഉപയോക്താക്കളുടെ എല്ലാ വ്യാപാര തീരുമാനങ്ങൾക്കും അവർ തന്നെയാണ് ഉത്തരവാദികൾ.",
   "Create my trade plan": "എന്റെ ട്രേഡിംഗ് പദ്ധതി സൃഷ്ടിക്കുക",

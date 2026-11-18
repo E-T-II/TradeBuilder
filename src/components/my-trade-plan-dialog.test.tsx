@@ -106,6 +106,61 @@ test("opens the worksheet, navigates both ways, and retains document information
   expect(screen.getByRole("button", { name: "Create my trade plan" })).toHaveFocus();
 });
 
+test("clearing the plan requires confirmation and resets all pages without changing trade data", async () => {
+  const user = userEvent.setup();
+  window.localStorage.setItem("tradebuilder-form-v3", "builder data");
+  window.localStorage.setItem("tradebuilder-log-v1", "log data");
+  const { unmount } = render(<MyTradePlanDialog />);
+  await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
+  await user.type(screen.getByLabelText("Author's name"), "Example author");
+  await selectPage(2);
+  await user.type(screen.getByLabelText("My why"), "A reason");
+
+  await user.click(screen.getByRole("button", { name: "Clear trade plan" }));
+  let confirmation = screen.getByRole("dialog", { name: "Clear trade plan" });
+  expect(confirmation).toHaveTextContent("This cannot be undone");
+  await user.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+  expect(screen.getByLabelText("My why")).toHaveValue("A reason");
+  expect(stored().author).toBe("Example author");
+
+  await user.click(screen.getByRole("button", { name: "Clear trade plan" }));
+  confirmation = screen.getByRole("dialog", { name: "Clear trade plan" });
+  await user.click(within(confirmation).getByRole("button", { name: "Clear trade plan" }));
+  expect(screen.getByRole("status")).toHaveTextContent("Page 1 of 23");
+  expect(screen.getByLabelText("Author's name")).toHaveValue("");
+  expect(stored()).toEqual(createMyTradePlan());
+  expect(window.localStorage.getItem("tradebuilder-form-v3")).toBe("builder data");
+  expect(window.localStorage.getItem("tradebuilder-log-v1")).toBe("log data");
+  unmount();
+  render(<MyTradePlanDialog />);
+  await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
+  await selectPage(2);
+  expect(screen.getByLabelText("My why")).toHaveValue("");
+});
+
+test("a failed clear preserves unsaved and stored data and can be retried", async () => {
+  const user = userEvent.setup();
+  render(<MyTradePlanDialog />);
+  await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
+  await user.type(screen.getByLabelText("Version #"), "saved");
+  const savedPlan = window.localStorage.getItem(MY_TRADE_PLAN_STORAGE_KEY);
+  const setItem = vi.spyOn(window.localStorage, "setItem").mockImplementation(() => { throw new Error("Full"); });
+  fireEvent.change(screen.getByLabelText("Version #"), { target: { value: "unsaved" } });
+  await user.click(screen.getByRole("button", { name: "Clear trade plan" }));
+  const confirmation = screen.getByRole("dialog", { name: "Clear trade plan" });
+  await user.click(within(confirmation).getByRole("button", { name: "Clear trade plan" }));
+  expect(within(confirmation).getByRole("alert")).toHaveTextContent("could not be cleared");
+  expect(window.localStorage.getItem(MY_TRADE_PLAN_STORAGE_KEY)).toBe(savedPlan);
+  await user.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+  expect(screen.getByLabelText("Version #")).toHaveValue("unsaved");
+  expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
+  setItem.mockRestore();
+  await user.click(screen.getByRole("button", { name: "Clear trade plan" }));
+  await user.click(within(screen.getByRole("dialog", { name: "Clear trade plan" })).getByRole("button", { name: "Clear trade plan" }));
+  expect(stored()).toEqual(createMyTradePlan());
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
 test("renders all checklist choices and saves selected items and additional notes", async () => {
   const user = userEvent.setup();
   render(<MyTradePlanDialog />);
@@ -1072,6 +1127,7 @@ test("invalid saved data is reported and cannot be accidentally overwritten", as
   expect(screen.getByRole("alert")).toHaveTextContent("could not be loaded");
   expect(screen.getByLabelText("Document title")).toBeDisabled();
   expect(screen.getByRole("button", { name: "Preview" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Clear trade plan" })).toBeDisabled();
   expect(window.localStorage.getItem(MY_TRADE_PLAN_STORAGE_KEY)).toBe('{"invalid":true}');
   await selectPage(23);
   expect(screen.getByRole("button", { name: "Finish and Download" })).toBeDisabled();

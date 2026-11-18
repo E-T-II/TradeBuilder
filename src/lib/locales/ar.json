@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "مسح خطة التداول",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "مسح خطة التداول بالكامل؟ لا يمكن التراجع عن ذلك. لن يتغير منشئ التداول أو سجل التداول.",
+  "Cancel": "إلغاء",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "تعذر مسح خطة التداول. تحقق من أذونات تخزين المتصفح أو المساحة المتاحة، ثم حاول مجددًا.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "يلزم إدخال تاريخ إغلاق صحيح والربح/الخسارة؛ لم يتم حفظ التغييرات غير المكتملة.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "مقدم لأغراض تعليمية. يتحمل المستخدمون مسؤولية جميع قرارات التداول الخاصة بهم.",
   "Create my trade plan": "إنشاء خطتي للتداول",

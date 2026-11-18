@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "거래 계획 지우기",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "전체 거래 계획을 지우시겠습니까? 이 작업은 취소할 수 없습니다. 거래 빌더와 거래 기록은 변경되지 않습니다.",
+  "Cancel": "취소",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "거래 계획을 지울 수 없습니다. 브라우저 저장 권한이나 사용 가능한 공간을 확인한 후 다시 시도하세요.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "유효한 청산일과 손익이 필요합니다. 완료되지 않은 변경 사항은 저장되지 않았습니다.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "교육 목적으로 제공됩니다. 사용자는 자신의 모든 거래 결정에 책임을 집니다.",
   "Create my trade plan": "나의 거래 계획 만들기",

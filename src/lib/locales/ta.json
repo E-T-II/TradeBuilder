@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "வர்த்தகத் திட்டத்தை அழிக்கவும்",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "முழு வர்த்தகத் திட்டத்தையும் அழிக்கவா? இதை மீட்டெடுக்க முடியாது. வர்த்தக உருவாக்கியும் பதிவும் மாற்றப்படாது.",
+  "Cancel": "ரத்துசெய்",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "வர்த்தகத் திட்டத்தை அழிக்க முடியவில்லை. உலாவியின் சேமிப்பு அனுமதி அல்லது காலியிடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "சரியான முடிவு தேதியும் லாபம்/நஷ்டமும் தேவை; முழுமையற்ற மாற்றங்கள் சேமிக்கப்படவில்லை.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "கல்வி நோக்கங்களுக்காக வழங்கப்படுகிறது. பயனர்கள் தங்களின் அனைத்து வர்த்தக முடிவுகளுக்கும் பொறுப்பாவார்கள்.",
   "Create my trade plan": "எனது வர்த்தகத் திட்டத்தை உருவாக்கு",

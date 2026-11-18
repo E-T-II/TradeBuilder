@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "トレードプランを消去",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "トレードプラン全体を消去しますか？この操作は元に戻せません。トレードビルダーと取引ログは変更されません。",
+  "Cancel": "キャンセル",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "トレードプランを消去できませんでした。ブラウザのストレージ権限または空き容量を確認して、もう一度お試しください。",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "有効な決済日と損益が必要です。不完全な変更は保存されませんでした。",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "教育目的で提供されています。利用者は、ご自身のすべての取引判断について責任を負います。",
   "Create my trade plan": "私の取引計画を作成",

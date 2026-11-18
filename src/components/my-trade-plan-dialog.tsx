@@ -184,6 +184,8 @@ export function MyTradePlanDialog() {
   const [readError, setReadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearError, setClearError] = useState(false);
   const [printReady, setPrintReady] = useState(false);
   const [printError, setPrintError] = useState("");
   const [pageSearch, setPageSearch] = useState("");
@@ -255,6 +257,22 @@ export function MyTradePlanDialog() {
     save(next);
   }
 
+  function clearPlan() {
+    const emptyPlan = createMyTradePlan();
+    try {
+      window.localStorage.setItem(MY_TRADE_PLAN_STORAGE_KEY, JSON.stringify(emptyPlan));
+    } catch {
+      setClearError(true);
+      return;
+    }
+    setPlan(emptyPlan);
+    setSaveError("");
+    setSaved(true);
+    setClearError(false);
+    setConfirmClear(false);
+    goToPage(0);
+  }
+
   function goToPage(next: number) {
     setPage(next);
     if (content.current) content.current.scrollTop = 0;
@@ -284,11 +302,36 @@ export function MyTradePlanDialog() {
       <Dialog.Popup lang={language} dir={language === "ar" || language === "he" ? "rtl" : "ltr"}
         className={cn("fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(56rem,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-card shadow-lg outline-none",
           (page === 17 || page === 22) && "w-[min(72rem,96vw)]")}>
-        <div className={cn("flex items-start justify-between gap-3 border-b p-5", page === 17 && "p-3")}>
+        <div className={cn("flex flex-wrap items-start justify-between gap-3 border-b p-5", page === 17 && "p-3")}>
           <Dialog.Title className="text-lg font-semibold">{tx("My Trading Plan Creator")}</Dialog.Title>
-          <Dialog.Close render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close My Trade Plan")} />}>
-            <X aria-hidden />
-          </Dialog.Close>
+          <div className="flex items-center gap-2">
+            <Dialog.Root open={confirmClear} onOpenChange={(next) => {
+              setConfirmClear(next);
+              if (!next) setClearError(false);
+            }}>
+              <Dialog.Trigger render={<Button variant="outline" size="sm" disabled={!loaded || !!readError} />}>
+                <Trash2 aria-hidden />{tx("Clear trade plan")}
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Backdrop className="fixed inset-0 z-60 bg-black/50" />
+                <Dialog.Popup lang={language} dir={language === "ar" || language === "he" ? "rtl" : "ltr"}
+                  className="fixed left-1/2 top-1/2 z-70 w-[min(26rem,90vw)] -translate-x-1/2 -translate-y-1/2 space-y-4 rounded-2xl border bg-card p-5 shadow-lg outline-none">
+                  <Dialog.Title className="text-lg font-semibold">{tx("Clear trade plan")}</Dialog.Title>
+                  <Dialog.Description className="text-sm text-muted-foreground">
+                    {tx("Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.")}
+                  </Dialog.Description>
+                  {clearError ? <p role="alert" className="text-sm text-destructive">{tx("The trade plan could not be cleared. Check browser storage permissions or available space, then try again.")}</p> : null}
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Dialog.Close render={<Button variant="outline" />}>{tx("Cancel")}</Dialog.Close>
+                    <Button variant="destructive" onClick={clearPlan}>{tx("Clear trade plan")}</Button>
+                  </div>
+                </Dialog.Popup>
+              </Dialog.Portal>
+            </Dialog.Root>
+            <Dialog.Close render={<Button variant="ghost" size="icon-sm" aria-label={tx("Close My Trade Plan")} />}>
+              <X aria-hidden />
+            </Dialog.Close>
+          </div>
         </div>
         <div ref={content} className={cn("min-h-0 overflow-y-auto p-5", page === 17 && "p-3")}>
           {readError ? <div role="alert" className="mb-4 space-y-2 text-sm text-destructive">

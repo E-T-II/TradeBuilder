@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "Hapus rencana trading",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "Hapus seluruh rencana trading? Tindakan ini tidak dapat dibatalkan. Pembuat dan log trading tidak akan berubah.",
+  "Cancel": "Batal",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "Rencana trading tidak dapat dihapus. Periksa izin atau ruang penyimpanan browser, lalu coba lagi.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "Tanggal penutupan yang valid dan laba/rugi diperlukan; perubahan yang belum lengkap tidak disimpan.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "Disediakan untuk tujuan pendidikan. Pengguna bertanggung jawab atas semua keputusan perdagangan mereka.",
   "Create my trade plan": "Buat rencana trading saya",

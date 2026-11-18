@@ -36,6 +36,20 @@ function changeLanguage(language: LanguageCode) {
   fireEvent.click(screen.getByTestId(`language-${language}`));
 }
 
+test.each(["es", "ar", "he"] as const)("clear confirmation follows the %s interface language", async (language) => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(screen.getByRole("button", { name: "Create my trade plan" }));
+  changeLanguage(language);
+  const label = translateText(language, "Clear trade plan");
+  await user.click(screen.getByRole("button", { name: label }));
+  const confirmation = screen.getByRole("dialog", { name: label });
+  expect(confirmation).toHaveAttribute("dir", language === "es" ? "ltr" : "rtl");
+  expect(confirmation).toHaveTextContent(translateText(language, "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed."));
+  await user.click(within(confirmation).getByRole("button", { name: translateText(language, "Cancel") }));
+  expect(screen.queryByRole("dialog", { name: label })).not.toBeInTheDocument();
+});
+
 const domainMessages = [
   ...PAGE_TITLES, ...TRADE_PLAN_GRAPHIC_MESSAGES, ...STRENGTHS, ...IMPROVEMENTS,
   ...GOAL_MARKETS, ...GOAL_PERIODS, ...ASSET_CLASSES, ...ACCOUNT_TYPES, ...TRADING_PURPOSES,

@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "Limpar plano de trading",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "Limpar todo o plano de trading? Esta ação não pode ser desfeita. O criador de operações e o registro de trades não serão alterados.",
+  "Cancel": "Cancelar",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "Não foi possível limpar o plano de trading. Verifique as permissões ou o espaço de armazenamento do navegador e tente novamente.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "São necessários uma data de fechamento válida e lucro/prejuízo; alterações incompletas não foram salvas.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "Fornecido para fins educacionais. Os usuários são responsáveis por todas as suas decisões de negociação.",
   "Create my trade plan": "Criar meu plano de negociação",

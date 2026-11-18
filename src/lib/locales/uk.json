@@ -1,4 +1,8 @@
 {
+  "Clear trade plan": "Очистити торговий план",
+  "Clear the entire trade plan? This cannot be undone. The trade builder and trade log will not be changed.": "Очистити весь торговий план? Цю дію неможливо скасувати. Конструктор угод і журнал не зміняться.",
+  "Cancel": "Скасувати",
+  "The trade plan could not be cleared. Check browser storage permissions or available space, then try again.": "Не вдалося очистити торговий план. Перевірте дозволи або вільне місце у сховищі браузера та повторіть спробу.",
   "A valid Closing date and Profit/Loss are required; incomplete changes are not saved.": "Потрібні дійсна дата закриття та прибуток/збиток; незавершені зміни не збережено.",
   "Provided for educational purposes. Users are responsible for all their trading choices.": "Надано з освітньою метою. Користувачі несуть відповідальність за всі свої торгові рішення.",
   "Create my trade plan": "Створити мій торговий план",
